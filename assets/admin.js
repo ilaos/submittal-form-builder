@@ -3242,18 +3242,18 @@
     if (!rootEl) return;
 
     // Guarantee a single mount
-    if (rootEl.__SFB_APP_MOUNTED) {
-      try { wp.element.unmountComponentAtNode(rootEl); } catch(e){}
+    // React 18: Use createRoot API instead of deprecated render
+    if (!rootEl.__SFB_ROOT) {
+      rootEl.__SFB_ROOT = wp.element.createRoot(rootEl);
     }
-    rootEl.__SFB_APP_MOUNTED = true;
 
     const view = (rootEl.dataset && rootEl.dataset.view) || (window.SFB_ADMIN && SFB_ADMIN.view) || 'builder';
 
     if (view === 'branding') {
-      wp.element.render(h(BrandingOnlyApp), rootEl);
+      rootEl.__SFB_ROOT.render(h(BrandingOnlyApp));
     } else {
       // default to Builder
-      wp.element.render(h(App), rootEl);
+      rootEl.__SFB_ROOT.render(h(App));
     }
   });
 
