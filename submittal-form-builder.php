@@ -1,3 +1,5 @@
+=== Submittal & Spec Sheet Builder ===
+
 <?php
 /**
  * Plugin Name: Submittal & Spec Sheet Builder
@@ -7257,13 +7259,16 @@ final class SFB_Plugin {
       'meta'   => ['title' => 'Generate a test PDF with sample data'],
     ]);
 
-    // Submenu: Upgrade to Pro
-    $wp_admin_bar->add_node([
-      'parent' => 'sfb',
-      'id'     => 'sfb-upgrade',
-      'title'  => '⭐ Upgrade to Pro',
-      'href'   => add_query_arg('page', 'sfb-upgrade', admin_url('admin.php')),
-    ]);
+    // Submenu: Upgrade to Pro (only show for free users)
+    if (!sfb_is_license_active()) {
+      $wp_admin_bar->add_node([
+        'parent' => 'sfb',
+        'id'     => 'sfb-upgrade',
+        'title'  => '⭐ Upgrade to Pro',
+        'href'   => 'https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/',
+        'meta'   => ['target' => '_blank', 'rel' => 'noopener noreferrer'],
+      ]);
+    }
   }
 
   /** Add help tabs to admin pages */
