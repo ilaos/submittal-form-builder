@@ -291,6 +291,21 @@ final class SFB_Plugin {
     if (!empty($wpdb->last_error)) {
       error_log('SFB ensure_tables LEADS error: ' . $wpdb->last_error);
     }
+
+    // Ensure default form record exists (form ID 1)
+    $form_exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $forms WHERE id = %d", 1));
+    if (!$form_exists) {
+      $wpdb->insert($forms, [
+        'id' => 1,
+        'title' => 'Default Catalog',
+        'settings_json' => wp_json_encode(['field_definitions' => ['Size', 'Flange', 'Thickness', 'KSI']]),
+        'created_at' => current_time('mysql'),
+        'updated_at' => current_time('mysql')
+      ]);
+      if (!empty($wpdb->last_error)) {
+        error_log('SFB ensure_tables DEFAULT FORM error: ' . $wpdb->last_error);
+      }
+    }
   }
 
   /** Handle tracking link redirects */
