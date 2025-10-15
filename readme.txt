@@ -8,94 +8,110 @@ Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create professional submittal packets from a product catalog in minutes. Capture leads, generate branded PDFs, and share tracking links. Agency-ready.
+Create professional submittal packets and spec sheets directly from your WordPress site. Build branded PDFs from your product catalog, capture leads, and simplify documentation workflows for contractors and manufacturers.
 
 == Description ==
 
-**Submittal & Spec Sheet Builder** helps contractors, manufacturers, and agencies create polished submittal packets fast:
+**Submittal & Spec Sheet Builder** helps manufacturers, suppliers, and contractors create professional submittal packets in minutes — right inside WordPress.
 
-- Select products, review specs inline, and **generate a single PDF**.
-- Optional **lead capture** gate before download.
-- **Branding controls** for colors, footer text, and cover page.
-- Share **public tracking links** (Pro/Agency) and see engagement.
+Forget clunky spreadsheets and manual formatting. With this plugin you can:
 
-### Highlights
+- Organize products into categories, types, and models.
+- Let visitors select items and instantly **generate polished PDF packets**.
+- Add your company logo, brand colors, and contact info automatically.
+- Collect project details or contact info before download for **lead capture**.
+- Manage and export leads directly from the admin panel.
 
-- 🧩 **Builder UI:** category → product → type → model, with inline specs.
-- 🧾 **PDF Engine:** cover, summary/TOC, model sheets.
-- 📨 **Leads:** modal form, admin list, CSV export, weekly export (Agency).
-- 🎨 **Branding:** colors, footer, cover; **presets** (Agency) + preview.
-- 📦 **Agency Library:** save current catalog as a reusable Pack (Agency).
-- 🕵️ **White-Label Mode:** remove plugin credit; custom email sender (Pro).
-- 🤝 **Client Handoff Mode:** hide agency panels + Operator permissions (Agency).
-- 📈 **Analytics (light):** PDFs & leads counts, top products (Agency).
-- 🔀 **Advanced Lead Routing:** rules + generic webhook (Agency).
+### Key Features
 
-### Tiers
+- 🧩 **Visual Builder:** Browse by category → product → type → model, with inline specifications.
+- 🧾 **PDF Generation:** Includes cover, table of contents, and product spec sheets.
+- 🎨 **Branding Tools:** Add logos, colors, and custom footer text for consistent presentation.
+- 📨 **Lead Capture:** Optional form before PDF download; export leads as CSV.
+- 📦 **Product Catalog Manager:** Manage all product data inside WordPress — no developer needed.
+- ⚙️ **Agency Tools (optional):** White-label branding, analytics, preset themes, and team handoff features.
 
-- **Free:** Builder, PDF, basic branding, leads list + CSV export.
-- **Pro (site license):** Tracking links, expanded branding/PDF options, White-Label Mode.
-- **Agency (org license):** Branding presets & preview, Agency Library (Packs), Weekly lead export, Client Handoff (with Operator role), Analytics (light), Advanced Lead Routing.
-
-> This plugin is fully translatable. Use the included text domain.
+> Fast, flexible, and built for the real world — ideal for manufacturers, distributors, and construction professionals who need clean submittals without the extra work.
 
 == Privacy ==
 
-This plugin stores submitted lead data in your WordPress database.
-**Optional Agency analytics** store non-PII usage events (counts, product names) locally; remote pings can be disabled via a filter.
-**Webhooks/Lead Routing** send only the fields you configure to your chosen endpoint(s).
+This plugin stores lead form submissions locally in your WordPress database.
 
-- Filter to disable remote analytics: `add_filter('sfb_enable_remote_analytics', '__return_false');`
+Optional analytics and lead routing features can be enabled to collect non-personally identifiable information (product names, counts, timestamps).  
+All data stays within your WordPress site unless you configure an outgoing webhook.
 
+To disable all remote analytics:
+```php
+add_filter('sfb_enable_remote_analytics', '__return_false');
 == Installation ==
 
-1. Upload the plugin ZIP and activate it.
-2. Create a page and add the shortcode: `[submittal_builder]`.
-3. (Optional) In **Settings → Branding**, set your colors and footer.
-4. (Optional) Enable **Leads** (Pro/Agency features live under Branding/Settings).
-5. Generate a submittal: pick products → Review → **Generate PDF**.
+Upload the plugin ZIP via Plugins → Add New → Upload Plugin, then activate it.
+
+Create a new page and add the shortcode:
+
+csharp
+Copy code
+[submittal_builder]
+Configure branding under Settings → Branding (logo, colors, footer).
+
+Add or import your products in Catalog Builder.
+
+Test the front-end builder by selecting products → Review → Generate PDF.
 
 == Screenshots ==
 
-1. Frontend product browser - Contractors search and browse your catalog with live filtering by category and specifications
-2. Product selection - Customers select products for their project with one-click selection and see live count
-3. Review and project info - Customers review selections and add project details for professional documentation
-4. Lead capture (Pro) - Optionally require email before PDF download to capture qualified leads with project details
-5. PDF generated - Instant submittal packet generation with download link - no waiting, no manual work required
-6. Branded PDF cover page - Professional cover with your logo, company info, and project details
-7. Product specification sheet - Detailed spec sheets with industry-specific fields ready for code compliance and bid submittal
-8. Catalog builder - Manage your product catalog with hierarchical tree view and drag-and-drop organization
-9. Customizable fields - Industry presets for HVAC, Electrical, Plumbing, and Steel, or create custom specification fields
-10. Add products easily - Click any node to open inspector, scroll to "Add Child" section to add products, types, and models
+Product browser – browse catalog by category and specification.
+
+Selection step – add items to submittal with live count and visual feedback.
+
+Review screen – confirm selections, add project info, and generate PDFs.
+
+Optional lead capture – collect contact info before download.
+
+Generated PDF – includes cover page, summary, and all selected spec sheets.
+
+Branded cover – automatically styled with your logo and company details.
+
+Product sheet – includes detailed specification fields for compliance.
+
+Catalog builder – manage product hierarchy inside WordPress.
+
+Custom fields – support for HVAC, Electrical, Plumbing, and Steel industries.
+
+Quick add – add new models or types directly from the builder interface.
 
 == Frequently Asked Questions ==
 
-= Does the plugin send data to third parties? =
-By default, no. Agency analytics can optionally ping a remote aggregator with **non-PII** counts; you can disable with a filter. Lead webhooks post only to the URLs **you** configure.
+= Does this plugin send data to any third parties? =
+No. All data is stored locally in your WordPress database unless you configure a webhook or analytics integration.
 
-= Can I brand the PDFs? =
-Yes. Set colors and footer. Pro tier adds **White-Label Mode** (remove credit, custom email sender). Agency tier adds **Brand Presets**.
+= Can I customize the PDF? =
+Yes — you can control branding colors, footer text, and logo. Additional layout presets are available for agencies.
 
-= Can I import a catalog? =
-Yes. Use **Industry Packs** (included) or Agency **Packs** you save from any site.
+= Can I import or reuse catalogs? =
+Yes — you can import existing data or use pre-made industry packs for faster setup.
 
-= Do I need Pro/Agency? =
-Free covers core building and PDFs. Pro/Agency unlock lead and sharing automation, branding presets, and agency ops.
+= Is it compatible with page builders? =
+Yes. The shortcode works inside Elementor, Gutenberg, and most other editors.
 
 == Changelog ==
 
+= 1.2.1 =
+Maintenance:
+
+Removed deprecated internal methods for cleaner codebase.
+
+Verified admin and front-end stability.
+
+Ready for WordPress.org submission.
+
 = 1.0.0 =
-**New:**
-- Review step polish: inline specs, sticky headers, accessible controls.
-- Leads admin with CSV export; **Weekly Lead Export** (Agency).
-- Branding: **Presets (A–C)** with default-to-PDF toggle, Review preset switcher (Agency).
-- **Agency Library (Packs)**: save, export JSON, seed other sites.
-- **White-Label Mode** (Pro): remove credit; custom PDF/email sender.
-- **Client Handoff Mode** (Agency): hide panels + **Operator** role/caps.
-- **Agency Analytics (light)**: PDFs/leads counts, top products, heartbeat.
-- **Advanced Lead Routing**: rules + generic webhook with retries.
-- Stability: multi-phase internal refactor for maintainability.
+Initial release:
+
+Product builder, PDF generation, lead capture, and branding tools.
+
+Added catalog manager, presets, and agency-ready structure.
 
 == Upgrade Notice ==
 
-1.0.0 — First public release with Agency features. Review **Branding → White-Label** and **Agency Settings** after upgrade.
+1.2.1 — Maintenance update. Codebase cleanup for better performance and long-term stability.

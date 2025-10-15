@@ -23,7 +23,10 @@
       "Bash(wp eval:*)",
       "Bash(git checkout:*)",
       "Bash(gh:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(cat:*)",
+      "Bash(git pull:*)",
+      "Bash(git show:*)"
     ],
     "deny": [],
     "ask": []
