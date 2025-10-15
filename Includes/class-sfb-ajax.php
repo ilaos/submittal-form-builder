@@ -39,9 +39,6 @@ final class SFB_Ajax {
    * @param SFB_Plugin $plugin Main plugin instance
    */
   private static function register_admin_hooks($plugin) {
-    // Dismiss welcome notice (onboarding)
-    add_action('wp_ajax_sfb_dismiss_welcome', [$plugin, 'dismiss_welcome_notice']);
-
     // Utilities page handlers
     add_action('wp_ajax_sfb_purge_expired_drafts', [$plugin, 'ajax_purge_expired_drafts']);
     add_action('wp_ajax_sfb_run_smoke_test', [$plugin, 'ajax_run_smoke_test']);

@@ -146,15 +146,11 @@ final class SFB_Plugin {
     add_action('sfb_weekly_lead_export', [$this, 'cron_send_weekly_export']);
     add_action('wp_ajax_sfb_send_weekly_export_now', [$this, 'ajax_send_weekly_export_now']);
 
-    // Onboarding: welcome notice (dismissible, per-user)
-    add_action('admin_notices', [$this, 'show_welcome_notice']);
-    // Phase 5 Refactor: AJAX dismiss hook moved to SFB_Ajax::init()
-
     // License status notices
     add_action('admin_notices', [$this, 'show_license_notices']);
 
     // Phase 5 Refactor: All AJAX hooks moved to SFB_Ajax class
-    // Admin AJAX: sfb_dismiss_welcome, sfb_purge_expired_drafts, sfb_run_smoke_test, sfb_save_brand
+    // Admin AJAX: sfb_purge_expired_drafts, sfb_run_smoke_test, sfb_save_brand
     // Frontend AJAX: sfb_list_products, sfb_generate_frontend_pdf (both with nopriv)
     // Lead Capture AJAX: sfb_submit_lead (with nopriv)
 
@@ -5865,44 +5861,6 @@ final class SFB_Plugin {
 
     fclose($output);
     exit;
-  }
-
-  /** Show welcome notice (dismissible, per-user) */
-  function show_welcome_notice() {
-    // Only show on onboarding page
-    $page = isset($_GET['page']) ? (string) sanitize_key($_GET['page']) : '';
-
-    // Return early if not the onboarding page
-    if ($page !== 'sfb-onboarding') return;
-
-    // Check if user dismissed
-    $user_id = get_current_user_id();
-    if (get_user_meta($user_id, 'sfb_welcome_dismissed', true)) return;
-
-    ?>
-    <div class="notice notice-info is-dismissible" id="sfb-welcome-notice">
-      <p>
-        <strong>Welcome to Submittal & Spec Builder!</strong>
-        Need help getting started?
-        <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-onboarding')); ?>">Run the setup wizard</a>
-        or <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-branding')); ?>">configure your branding</a>.
-      </p>
-    </div>
-    <script>
-    jQuery(function($){
-      $('#sfb-welcome-notice').on('click', '.notice-dismiss', function(){
-        $.post(ajaxurl, {action: 'sfb_dismiss_welcome'});
-      });
-    });
-    </script>
-    <?php
-  }
-
-  /** Dismiss welcome notice (AJAX handler) */
-  function dismiss_welcome_notice() {
-    $user_id = get_current_user_id();
-    update_user_meta($user_id, 'sfb_welcome_dismissed', 1);
-    wp_die();
   }
 
   /** Show license status notices */
