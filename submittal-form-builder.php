@@ -1,16 +1,16 @@
 <?php
 /**
  * Plugin Name: Submittal & Spec Sheet Builder
- * Plugin URI:  https://example.com/submittal-builder
+ * Plugin URI:  https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/
  * Description: Generate professional submittal and spec sheet PDFs with full branding, summaries, and TOCs. Perfect for construction, manufacturing, and professional services.
- * Version:     1.2.0
- * Author:      Webstuffguy
- * Author URI:  https://example.com
+ * Version:     1.2.1
+ * Author:      Webstuffguy Labs
+ * Author URI:  https://webstuffguylabs.com
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: submittal-builder
+ * Text Domain: submittal-spec-sheet-builder
  * Domain Path: /languages
- * Requires at least: 6.0
+ * Requires at least: 6.1
  * Requires PHP: 7.4
  */
 
