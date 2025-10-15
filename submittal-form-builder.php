@@ -32,10 +32,10 @@ if (!defined('SFB_SHOW_DEMO_TOOLS')) {
 require_once plugin_dir_path(__FILE__) . 'Includes/pro/registry.php';
 
 // Load centralized external links configuration
-require_once plugin_dir_path(__FILE__) . 'includes/admin/links.php';
+require_once plugin_dir_path(__FILE__) . 'Includes/admin/links.php';
 
 // Load WooCommerce license API integration
-require_once plugin_dir_path(__FILE__) . 'includes/admin/license-api.php';
+require_once plugin_dir_path(__FILE__) . 'Includes/admin/license-api.php';
 
 // Load professional PDF generator
 require_once plugin_dir_path(__FILE__) . 'Includes/pdf-generator.php';
