@@ -20,18 +20,10 @@ jobs:
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.SFTP_HOST }}
-          username: ${{ secrets.SFTP_USERNAME }}
-          password: ${{ secrets.SFTP_PASSWORD }}
+          username: client_2f8ef049a7_440246     # ← hardcoded temporarily
+          password: ${{ secrets.SFTP_PASSWORD }} # still from secret
           port: 22
+          sftp_only: true
           local_path: ./*
           remote_path: ${{ secrets.SFTP_REMOTE_PATH }}/
-          sftp_only: true
-          # optional, but helps prevent partial uploads
           delete_remote_files: false
-          exclude: |
-            .git*
-            .github/**
-            node_modules/**
-            composer.lock
-            package-lock.json
-            .DS_Store
