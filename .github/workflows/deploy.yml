@@ -1,4 +1,4 @@
-name: Deploy to SFTP (Plugin)
+name: Deploy to GoDaddy SFTP
 
 on:
   push:
@@ -13,24 +13,25 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy via SFTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Deploy via SFTP (GoDaddy)
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.SFTP_HOST }}
-          username: client_2f8ef049a7_440246
+          username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           port: 22
-          protocol: sftp
-          local-dir: ./
-          server-dir: ${{ secrets.SFTP_REMOTE_PATH }}/
-          dangerous-clean-slate: false
+          local_path: ./*
+          remote_path: ${{ secrets.SFTP_REMOTE_PATH }}/
+          sftp_only: true
+          # optional, but helps prevent partial uploads
+          delete_remote_files: false
           exclude: |
-            **/.git*
-            **/.github/**
-            **/node_modules/**
-            **/.DS_Store
-            **/composer.lock
-            **/package-lock.json
+            .git*
+            .github/**
+            node_modules/**
+            composer.lock
+            package-lock.json
+            .DS_Store
