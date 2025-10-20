@@ -15,39 +15,42 @@ jobs:
       - name: Install lftp (for SFTP mirror)
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Deploy plugin via SFTP mirror (try common Managed WP paths)
+      - name: Deploy plugin via SFTP mirror (auth-safe, multi-path)
         env:
-          SFTP_HOST: ${{ secrets.SFTP_HOST }}
-          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
-          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}         # u0p.327.myftpupload.com
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }} # GoDaddy Managed WP SFTP user
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }} # GoDaddy Managed WP SFTP pass
         run: |
           set -e
-          echo "Creating build marker..."
           echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') $GITHUB_SHA" > build.txt
+
+          # 1) AUTH CHECK (no upload yet) – fail fast with clear error
+          echo "Checking SFTP auth..."
+          lftp sftp://${SFTP_HOST} -e "
+            set sftp:connect-program \"ssh -p 22 -o StrictHostKeyChecking=no\";
+            set net:max-retries 1; set net:timeout 15; set cmd:interactive false;
+            open -u \"${SFTP_USERNAME}\",\"${SFTP_PASSWORD}\" sftp://${SFTP_HOST};
+            pwd; bye;
+          " || { echo 'SFTP login failed: verify SFTP_USERNAME/SFTP_PASSWORD (Managed WP creds) and that password is correct even if it contains commas.'; exit 2; }
 
           deploy_one () {
             REMOTE_DIR="$1"
             echo "::group::Deploying to sftp://${SFTP_HOST}${REMOTE_DIR}"
-            lftp -u "${SFTP_USERNAME},${SFTP_PASSWORD}" sftp://${SFTP_HOST} -e "
+            lftp sftp://${SFTP_HOST} -e "
+              set sftp:connect-program \"ssh -p 22 -o StrictHostKeyChecking=no\";
               set sftp:auto-confirm yes;
-              set net:max-retries 1;
-              set net:reconnect-interval-base 5;
-              set net:timeout 20;
+              set net:max-retries 1; set net:timeout 25; set cmd:interactive false;
+              open -u \"${SFTP_USERNAME}\",\"${SFTP_PASSWORD}\" sftp://${SFTP_HOST};
               mkdir -p ${REMOTE_DIR};
-              mirror -R \
-                --verbose \
-                --only-newer \
-                --parallel=2 \
-                --exclude-glob .git* \
-                --exclude-glob .github/ \
-                --exclude-glob node_modules/ \
+              mirror -R --verbose --only-newer --parallel=2 \
+                --exclude-glob .git* --exclude-glob .github/ --exclude-glob node_modules/ \
                 ./ ${REMOTE_DIR};
               bye;
             "
             echo "::endgroup::"
           }
 
-          # Try all plausible plugin paths on GoDaddy Managed WP
+          # Try common Managed WP roots
           deploy_one "/wp-content/plugins/submittal-spec-sheet-builder"
           deploy_one "/html/wp-content/plugins/submittal-spec-sheet-builder"
           deploy_one "/public_html/wp-content/plugins/submittal-spec-sheet-builder"
@@ -60,7 +63,7 @@ jobs:
           code=$(curl -s -o /tmp/build.txt -w "%{http_code}" "$URL" || true)
           echo "HTTP $code"
           if [ "$code" != "200" ]; then
-            echo "build.txt not found at expected URL — deploy may have landed under /html or /public_html."
+            echo "build.txt not found at expected URL — site may serve from /html or /public_html; adjust verify URL after we see which path worked."
             exit 1
           fi
           echo "---- build.txt ----"
