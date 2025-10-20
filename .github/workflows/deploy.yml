@@ -12,73 +12,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create build marker
-        run: |
-          echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') $GITHUB_SHA" > build.txt
-
       - name: Install lftp (for SFTP mirror)
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Explore SFTP directory structure
+      - name: Deploy plugin via SFTP mirror (try common Managed WP paths)
         env:
           SFTP_HOST: ${{ secrets.SFTP_HOST }}
           SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
           SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
         run: |
           set -e
-          echo "Exploring directory structure on GoDaddy SFTP server..."
-          lftp -u "${SFTP_USERNAME},${SFTP_PASSWORD}" sftp://${SFTP_HOST} -e "
-            set debug 3;
-            pwd;
-            echo '---- ROOT ----'; ls;
-            echo '---- /home ----'; cd /home || true; ls;
-            echo '---- /html ----'; cd /html || true; ls;
-            echo '---- /public_html ----'; cd /public_html || true; ls;
-            echo '---- /wp-content ----'; cd /wp-content || true; ls;
-            echo '---- /wp-content/plugins ----'; cd /wp-content/plugins || true; ls;
-            echo '---- /wp-content/plugins/submittal-spec-sheet-builder ----'; cd /wp-content/plugins/submittal-spec-sheet-builder || true; ls;
-            bye;
-          "
+          echo "Creating build marker..."
+          echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') $GITHUB_SHA" > build.txt
 
-      # Deploy to the EXACT Managed WP plugin path
-      - name: Deploy plugin via SFTP mirror
-        env:
-          SFTP_HOST: ${{ secrets.SFTP_HOST }}
-          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
-          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+          deploy_one () {
+            REMOTE_DIR="$1"
+            echo "::group::Deploying to sftp://${SFTP_HOST}${REMOTE_DIR}"
+            lftp -u "${SFTP_USERNAME},${SFTP_PASSWORD}" sftp://${SFTP_HOST} -e "
+              set sftp:auto-confirm yes;
+              set net:max-retries 1;
+              set net:reconnect-interval-base 5;
+              set net:timeout 20;
+              mkdir -p ${REMOTE_DIR};
+              mirror -R \
+                --verbose \
+                --only-newer \
+                --parallel=2 \
+                --exclude-glob .git* \
+                --exclude-glob .github/ \
+                --exclude-glob node_modules/ \
+                ./ ${REMOTE_DIR};
+              bye;
+            "
+            echo "::endgroup::"
+          }
+
+          # Try all plausible plugin paths on GoDaddy Managed WP
+          deploy_one "/wp-content/plugins/submittal-spec-sheet-builder"
+          deploy_one "/html/wp-content/plugins/submittal-spec-sheet-builder"
+          deploy_one "/public_html/wp-content/plugins/submittal-spec-sheet-builder"
+
+      - name: Verify deployed files via HTTP
         run: |
           set -e
-          REMOTE_DIR="/wp-content/plugins/submittal-spec-sheet-builder"
-          echo "Deploying to sftp://${SFTP_HOST}${REMOTE_DIR}"
-
-          lftp -e "
-            set sftp:auto-confirm yes;
-            set net:max-retries 2;
-            set net:timeout 20;
-            open -u ${SFTP_USERNAME},${SFTP_PASSWORD} sftp://${SFTP_HOST};
-            mkdir -p ${REMOTE_DIR};
-            mirror -R \
-              --verbose \
-              --only-newer \
-              --parallel=4 \
-              --exclude-glob .git* \
-              --exclude-glob .github/ \
-              --exclude-glob node_modules/ \
-              ./ ${REMOTE_DIR};
-            bye
-          "
-
-      # Verify we actually deployed to the plugin folder
-      - name: Verify deployed files are in plugin folder
-        env:
-          SFTP_HOST: ${{ secrets.SFTP_HOST }}
-          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
-          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
-        run: |
-          set -e
-          cat > sftp_verify.txt <<'EOF'
-          ls -la /wp-content/plugins/submittal-spec-sheet-builder
-          EOF
-          sftp -oBatchMode=no -b sftp_verify.txt ${SFTP_USERNAME}@${SFTP_HOST} <<EOF2
-          ${SFTP_PASSWORD}
-          EOF2 || true
+          URL="https://u0p.327.myftpupload.com/wp-content/plugins/submittal-spec-sheet-builder/build.txt"
+          echo "Checking $URL ..."
+          code=$(curl -s -o /tmp/build.txt -w "%{http_code}" "$URL" || true)
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "build.txt not found at expected URL — deploy may have landed under /html or /public_html."
+            exit 1
+          fi
+          echo "---- build.txt ----"
+          cat /tmp/build.txt
