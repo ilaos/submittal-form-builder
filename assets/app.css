@@ -24,6 +24,8 @@
 .sfb-type-content{overflow:hidden;transition:max-height 0.3s ease, opacity 0.2s ease;max-height:0;padding-left:10px}
 .sfb-type-group.open .sfb-type-content{max-height:1000px}
 .sfb-model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.sfb-subtype-header{grid-column:1 / -1;font-weight:700;font-size:14px;color:#374151;padding:8px 0 4px;margin-top:8px;border-bottom:2px solid #d1d5db}
+.sfb-subtype-header:first-child{margin-top:0}
 .sfb-card{display:flex;align-items:center;gap:8px;border:1px solid #e5e7eb;background:#f9fafb;padding:8px;border-radius:10px;cursor:pointer}
 .sfb-card:hover{background:#f3f4f6}
 .sfb-card input{transform:scale(1.1)}
