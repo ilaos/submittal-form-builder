@@ -23,16 +23,14 @@ jobs:
           echo "Deployed from GitHub Actions" >> build.txt
 
       - name: Deploy via SFTP (GoDaddy Managed WordPress)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: u0p.327.myftpupload.com
+          host: u0p.327.myftpupload.com
           username: client_2f8ef049a7_440246
           password: ${{ secrets.SFTP_PASSWORD }}
           port: 22
-          protocol: ftps
-          server-dir: /wp-content/plugins/submittal-spec-sheet-builder/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            .github/**
+          source: "./*"
+          target: "/wp-content/plugins/submittal-spec-sheet-builder/"
+          strip_components: 0
+          overwrite: true
+          rm: false
