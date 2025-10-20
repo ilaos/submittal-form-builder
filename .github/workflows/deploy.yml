@@ -22,15 +22,16 @@ jobs:
           echo "Commit: $GITHUB_SHA" >> build.txt
           echo "Deployed from GitHub Actions" >> build.txt
 
-      - name: Deploy via SFTP (GoDaddy Managed WordPress)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: u0p.327.myftpupload.com
-          username: client_2f8ef049a7_440246
-          password: ${{ secrets.SFTP_PASSWORD }}
-          port: 22
-          source: "./*"
-          target: "/wp-content/plugins/submittal-spec-sheet-builder/"
-          strip_components: 0
-          overwrite: true
-          rm: false
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Deploy via SFTP using lftp
+        env:
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+        run: |
+          lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<EOF
+          set sftp:auto-confirm yes
+          set ssl:verify-certificate no
+          mirror --reverse --delete-first --verbose --exclude .git/ --exclude .github/ --exclude node_modules/ ./ /wp-content/plugins/submittal-spec-sheet-builder/
+          bye
+          EOF
