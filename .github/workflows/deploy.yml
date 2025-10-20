@@ -32,7 +32,23 @@ jobs:
           lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<EOF
           set sftp:auto-confirm yes
           set ssl:verify-certificate no
-          mkdir -p /wp-content/plugins/submittal-spec-sheet-builder
-          mirror --reverse --verbose --exclude .git/ --exclude .github/ --exclude node_modules/ ./ /wp-content/plugins/submittal-spec-sheet-builder/
+
+          echo "=== Listing root directory ==="
+          ls -la
+
+          echo "=== Checking for wp-content ==="
+          cd wp-content 2>/dev/null || cd html/wp-content 2>/dev/null || cd public_html/wp-content 2>/dev/null || cd www/wp-content 2>/dev/null
+          pwd
+          ls -la
+
+          echo "=== Creating plugin directory ==="
+          cd plugins
+          mkdir -p submittal-spec-sheet-builder
+
+          echo "=== Deploying files ==="
+          cd submittal-spec-sheet-builder
+          lcd $GITHUB_WORKSPACE
+          mirror --reverse --verbose --exclude .git/ --exclude .github/ --exclude node_modules/ ./ ./
+
           bye
           EOF
