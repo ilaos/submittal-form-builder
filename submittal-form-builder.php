@@ -113,6 +113,9 @@ final class SFB_Plugin {
     // Load translations
     add_action('init', [$this, 'load_textdomain']);
 
+    // Run database migrations
+    add_action('init', [$this, 'check_db_migrations']);
+
     // Bootstrap Pro registry (features + changelog)
     add_action('init', function(){
       // Force feature map & changelog to be constructed and filterable
@@ -182,6 +185,33 @@ final class SFB_Plugin {
     $this->ensure_operator_role();
     // Set flag for first-time activation redirect
     update_option('sfb_just_activated', 1, false);
+  }
+
+  /** Run database migrations if needed */
+  function check_db_migrations() {
+    global $wpdb;
+    $db_version = get_option('sfb_db_version', '1.0');
+
+    // Migration 1.2: Add 'subtype' to node_type ENUM
+    if (version_compare($db_version, '1.2', '<')) {
+      $nodes_table = $wpdb->prefix . 'sfb_nodes';
+
+      // Check if subtype already exists in ENUM
+      $column_info = $wpdb->get_row("SHOW COLUMNS FROM {$nodes_table} LIKE 'node_type'");
+
+      if ($column_info && strpos($column_info->Type, 'subtype') === false) {
+        // Add subtype to ENUM
+        $wpdb->query("ALTER TABLE {$nodes_table} MODIFY COLUMN node_type ENUM('category','product','type','subtype','model') NOT NULL");
+
+        if (empty($wpdb->last_error)) {
+          error_log('SFB: Successfully migrated node_type ENUM to include subtype');
+        } else {
+          error_log('SFB: Migration error - ' . $wpdb->last_error);
+        }
+      }
+
+      update_option('sfb_db_version', '1.2');
+    }
   }
 
   /** Create SFB Operator role if missing */
