@@ -32,6 +32,7 @@ jobs:
           lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<EOF
           set sftp:auto-confirm yes
           set ssl:verify-certificate no
-          mirror --reverse --delete-first --verbose --exclude .git/ --exclude .github/ --exclude node_modules/ ./ /wp-content/plugins/submittal-spec-sheet-builder/
+          mkdir -p /wp-content/plugins/submittal-spec-sheet-builder
+          mirror --reverse --verbose --exclude .git/ --exclude .github/ --exclude node_modules/ ./ /wp-content/plugins/submittal-spec-sheet-builder/
           bye
           EOF
