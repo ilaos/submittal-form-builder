@@ -3,7 +3,7 @@
  * Plugin Name: Submittal & Spec Sheet Builder
  * Plugin URI:  https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/
  * Description: Generate professional submittal and spec sheet PDFs with full branding, summaries, and TOCs. Perfect for construction, manufacturing, and professional services.
- * Version:     1.2.1
+ * Version:     1.2.2-subtype
  * Author:      Webstuffguy Labs
  * Author URI:  https://webstuffguylabs.com
  * License:     GPL v2 or later
@@ -7449,20 +7449,22 @@ final class SFB_Plugin {
       wp_enqueue_media();
     }
 
-    // Styles (shared across all admin pages) - use constant for reliable path
+    // Styles (shared across all admin pages) - use constant for reliable path with filemtime cache busting
+    $admin_css_path = plugin_dir_path(SFB_PLUGIN_FILE) . 'assets/admin.css';
     wp_enqueue_style(
       'sfb-admin',
       plugins_url('assets/admin.css', SFB_PLUGIN_FILE),
       [],
-      self::VERSION
+      file_exists($admin_css_path) ? filemtime($admin_css_path) : self::VERSION
     );
 
-    // Single JS used for both pages
+    // Single JS used for both pages with filemtime cache busting
+    $admin_js_path = plugin_dir_path(__FILE__) . 'assets/admin.js';
     wp_enqueue_script(
       'sfb-admin',
       plugins_url('assets/admin.js', __FILE__),
       ['wp-element','wp-api-fetch'],
-      self::VERSION,
+      file_exists($admin_js_path) ? filemtime($admin_js_path) : self::VERSION,
       true
     );
 
@@ -7495,13 +7497,14 @@ final class SFB_Plugin {
       $localized_data['brand'] = $brand;
     }
 
-    // Enqueue lead routing script on Agency page
+    // Enqueue lead routing script on Agency page with filemtime cache busting
     if ($page === 'sfb-agency' && sfb_is_agency_license()) {
+      $lead_routing_path = plugin_dir_path(__FILE__) . 'assets/js/lead-routing.js';
       wp_enqueue_script(
         'sfb-lead-routing',
         plugins_url('assets/js/lead-routing.js', __FILE__),
         [],
-        self::VERSION,
+        file_exists($lead_routing_path) ? filemtime($lead_routing_path) : self::VERSION,
         true
       );
     }
@@ -7511,12 +7514,17 @@ final class SFB_Plugin {
 
   /** Enqueue frontend assets when shortcode is present (simple global load for now) */
   function enqueue_front() {
-    wp_enqueue_style('sfb-front', plugins_url('assets/app.css', __FILE__), [], self::VERSION);
-    wp_enqueue_script('sfb-front', plugins_url('assets/app.js', __FILE__), ['jquery'], self::VERSION, true);
+    $app_css_path = plugin_dir_path(__FILE__) . 'assets/app.css';
+    $app_js_path = plugin_dir_path(__FILE__) . 'assets/app.js';
+    $frontend_css_path = plugin_dir_path(__FILE__) . 'assets/css/frontend.css';
+    $frontend_js_path = plugin_dir_path(__FILE__) . 'assets/js/frontend.js';
 
-    // Register new frontend builder assets
-    wp_register_style('sfb-frontend', plugins_url('assets/css/frontend.css', __FILE__), [], self::VERSION);
-    wp_register_script('sfb-frontend', plugins_url('assets/js/frontend.js', __FILE__), [], self::VERSION, true);
+    wp_enqueue_style('sfb-front', plugins_url('assets/app.css', __FILE__), [], file_exists($app_css_path) ? filemtime($app_css_path) : self::VERSION);
+    wp_enqueue_script('sfb-front', plugins_url('assets/app.js', __FILE__), ['jquery'], file_exists($app_js_path) ? filemtime($app_js_path) : self::VERSION, true);
+
+    // Register new frontend builder assets with filemtime cache busting
+    wp_register_style('sfb-frontend', plugins_url('assets/css/frontend.css', __FILE__), [], file_exists($frontend_css_path) ? filemtime($frontend_css_path) : self::VERSION);
+    wp_register_script('sfb-frontend', plugins_url('assets/js/frontend.js', __FILE__), [], file_exists($frontend_js_path) ? filemtime($frontend_js_path) : self::VERSION, true);
 
     // Register lead capture script (Pro feature - loaded when modal is present)
     wp_register_script('sfb-lead-capture', plugins_url('assets/js/lead-capture.js', __FILE__), ['sfb-frontend'], self::VERSION, true);
