@@ -243,7 +243,7 @@ final class SFB_Plugin {
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         form_id BIGINT UNSIGNED NOT NULL,
         parent_id BIGINT UNSIGNED NULL,
-        node_type ENUM('category','product','type','model') NOT NULL,
+        node_type ENUM('category','product','type','subtype','model') NOT NULL,
         title VARCHAR(190) NOT NULL,
         slug VARCHAR(190) NULL,
         position DECIMAL(10,2) DEFAULT 0.00,

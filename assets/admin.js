@@ -61,18 +61,19 @@
     return out;
   }
 
-  const TYPE_LABEL = { category:'Category', product:'Product', type:'Type', model:'Model' };
-  const TYPE_ICON = { category:'📁', product:'🧱', type:'⚙️', model:'🔩' };
-  const ALLOWED_CHILDREN = { category:['product'], product:['type'], type:['model'], model:[] };
+  const TYPE_LABEL = { category:'Category', product:'Product', type:'Type', subtype:'Subtype', model:'Model' };
+  const TYPE_ICON = { category:'📁', product:'🧱', type:'⚙️', subtype:'📋', model:'🔩' };
+  const ALLOWED_CHILDREN = { category:['product'], product:['type'], type:['subtype','model'], subtype:['model'], model:[] };
 
   // --- Drag + hierarchy config ---
-  const TYPE = { category: 'category', product: 'product', type: 'type', model: 'model' };
+  const TYPE = { category: 'category', product: 'product', type: 'type', subtype: 'subtype', model: 'model' };
 
   // Valid child mapping (Set-based for faster lookups)
   const CHILDREN_OF = {
     category: new Set(['product']),
     product:  new Set(['type']),
-    type:     new Set(['model']),
+    type:     new Set(['subtype', 'model']),
+    subtype:  new Set(['model']),
     model:    new Set([]),
   };
 
@@ -107,12 +108,12 @@
 
   function canNest(childType, parentType) {
     if (!parentType) return false;
-    const allowed = ALLOWED_CHILDREN_MAP[parentType] || null;
-    return !!allowed && allowed === childType;
+    return CHILDREN_OF[parentType]?.has(childType) ?? false;
   }
 
   function isLeaf(type) {
-    return ALLOWED_CHILDREN_MAP[type] === null;
+    const children = CHILDREN_OF[type];
+    return !children || children.size === 0;
   }
 
   // Small helper to flash invalid drop feedback
@@ -166,12 +167,13 @@
 
   function computeCounts(node, allNodes) {
     // Recursively count children by type
-    const counts = { type: 0, model: 0 };
+    const counts = { type: 0, subtype: 0, model: 0 };
 
     function countDescendants(nodeId) {
       const children = allNodes.filter(n => n.parent_id === nodeId);
       children.forEach(child => {
         if (child.node_type === 'type') counts.type++;
+        if (child.node_type === 'subtype') counts.subtype++;
         if (child.node_type === 'model') counts.model++;
         countDescendants(child.id);
       });
@@ -1085,7 +1087,15 @@
       });
     }
 
-    const allowedChildren = ALLOWED_CHILDREN[node.node_type] || [];
+    let allowedChildren = ALLOWED_CHILDREN[node.node_type] || [];
+
+    // Special rule: If Type has Subtypes, disable adding Models directly
+    if (node.node_type === 'type') {
+      const hasSubtypes = allNodes.some(n => n.parent_id === node.id && n.node_type === 'subtype');
+      if (hasSubtypes) {
+        allowedChildren = allowedChildren.filter(t => t !== 'model');
+      }
+    }
 
     return h(Fragment, null,
       // Breadcrumbs
@@ -1947,6 +1957,64 @@
     }
 
     function createNode(payload, skipUndo = false){
+      // Migration helper: If creating first Subtype under a Type that has Models, offer to move them
+      if (payload.node_type === 'subtype' && payload.parent_id) {
+        const parentType = nodes.find(n => n.id === payload.parent_id);
+        if (parentType && parentType.node_type === 'type') {
+          const existingModels = nodes.filter(n => n.parent_id === payload.parent_id && n.node_type === 'model');
+          const existingSubtypes = nodes.filter(n => n.parent_id === payload.parent_id && n.node_type === 'subtype');
+
+          // If this is the first subtype and there are existing models, offer migration
+          if (existingSubtypes.length === 0 && existingModels.length > 0) {
+            const confirmed = confirm(
+              `This Type has ${existingModels.length} existing Model(s).\n\n` +
+              `Once you create a Subtype, Models can only be added under Subtypes.\n\n` +
+              `Would you like to move the existing Models under the new Subtype?\n\n` +
+              `Click OK to create the Subtype and move Models, or Cancel to just create the Subtype.`
+            );
+
+            if (confirmed) {
+              // Create the subtype first, then move models
+              wp.apiFetch({ path:'/sfb/v1/node/create', method:'POST', data: payload })
+                .then(res=> {
+                  if (res?.ok && res.node?.id){
+                    const newSubtypeId = res.node.id;
+
+                    // Move all existing models to the new subtype
+                    const movePromises = existingModels.map(model =>
+                      wp.apiFetch({
+                        path: '/sfb/v1/node/save',
+                        method: 'POST',
+                        data: { ...model, parent_id: newSubtypeId }
+                      })
+                    );
+
+                    Promise.all(movePromises)
+                      .then(() => {
+                        nextSelectIdRef.current = newSubtypeId;
+                        load();
+                        alert(`Subtype created and ${existingModels.length} Model(s) moved successfully!`);
+                      })
+                      .catch(err => {
+                        console.error('Error moving models:', err);
+                        alert('Subtype created, but error moving models: ' + (err?.message || err));
+                        load();
+                      });
+                  } else {
+                    alert('Failed to create Subtype');
+                  }
+                })
+                .catch(err => {
+                  console.error(err);
+                  alert('Create error: ' + (err?.message || err));
+                });
+              return; // Exit early, handled by special flow
+            }
+          }
+        }
+      }
+
+      // Normal create flow
       wp.apiFetch({ path:'/sfb/v1/node/create', method:'POST', data: payload })
         .then(res=> {
           if (res?.ok && res.node?.id){

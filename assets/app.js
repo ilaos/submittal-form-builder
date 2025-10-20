@@ -313,32 +313,74 @@
 
           const group = el('div', { class: 'sfb-type-group' + (persisted ? ' open' : '') });
 
+          // Check if type has subtypes
+          const subtypes = (type.children || []).filter(child => child.node_type === 'subtype');
+          const hasSubtypes = subtypes.length > 0;
+
           const grid = el('div', { class: 'sfb-model-grid sfb-type-content' });
-          (type.children || []).forEach(model => {
-            const meta = (model.settings && model.settings.fields) || {};
-            const idKey = String(model.id);
-            const card = el('label', { class: 'sfb-card', title: tooltip(meta) });
-            const chk = el('input', { type: 'checkbox', 'data-id': idKey });
-            chk.checked = selected.has(idKey);
-            chk.addEventListener('change', e => {
-              if (e.target.checked) {
-                selected.set(idKey, {
-                  id: model.id,
-                  title: model.title,
-                  meta,
-                  path: [cat.title, prod.title, type.title]
+
+          if (hasSubtypes) {
+            // Render subtypes with their models
+            subtypes.forEach(subtype => {
+              // Add subtype heading
+              const subtypeHeader = el('div', { class: 'sfb-subtype-header' }, subtype.title);
+              grid.appendChild(subtypeHeader);
+
+              // Render models under this subtype
+              (subtype.children || []).forEach(model => {
+                const meta = (model.settings && model.settings.fields) || {};
+                const idKey = String(model.id);
+                const card = el('label', { class: 'sfb-card', title: tooltip(meta) });
+                const chk = el('input', { type: 'checkbox', 'data-id': idKey });
+                chk.checked = selected.has(idKey);
+                chk.addEventListener('change', e => {
+                  if (e.target.checked) {
+                    selected.set(idKey, {
+                      id: model.id,
+                      title: model.title,
+                      meta,
+                      path: [cat.title, prod.title, type.title, subtype.title]
+                    });
+                  } else {
+                    selected.delete(idKey);
+                  }
+                  renderCart();
+                  if (appStatus.drafts.autosave_enabled) {
+                    scheduleDraftSave();
+                  }
                 });
-              } else {
-                selected.delete(idKey);
-              }
-              renderCart();
-              if (appStatus.drafts.autosave_enabled) {
-                scheduleDraftSave();
-              }
+                card.append(chk, el('div', { class: 'sfb-card-title' }, model.title));
+                grid.appendChild(card);
+              });
             });
-            card.append(chk, el('div', { class: 'sfb-card-title' }, model.title));
-            grid.appendChild(card);
-          });
+          } else {
+            // Backward compatibility: render models directly under type
+            (type.children || []).forEach(model => {
+              const meta = (model.settings && model.settings.fields) || {};
+              const idKey = String(model.id);
+              const card = el('label', { class: 'sfb-card', title: tooltip(meta) });
+              const chk = el('input', { type: 'checkbox', 'data-id': idKey });
+              chk.checked = selected.has(idKey);
+              chk.addEventListener('change', e => {
+                if (e.target.checked) {
+                  selected.set(idKey, {
+                    id: model.id,
+                    title: model.title,
+                    meta,
+                    path: [cat.title, prod.title, type.title]
+                  });
+                } else {
+                  selected.delete(idKey);
+                }
+                renderCart();
+                if (appStatus.drafts.autosave_enabled) {
+                  scheduleDraftSave();
+                }
+              });
+              card.append(chk, el('div', { class: 'sfb-card-title' }, model.title));
+              grid.appendChild(card);
+            });
+          }
 
           // Use shared collapsible header
           const { header } = createCollapsibleHeader(type.title, (isOpen) => {
