@@ -29,26 +29,41 @@ jobs:
         env:
           SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
         run: |
-          lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<EOF
+          lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<'LFTP_COMMANDS'
           set sftp:auto-confirm yes
           set ssl:verify-certificate no
 
           echo "=== Listing root directory ==="
           ls -la
 
-          echo "=== Checking for wp-content ==="
-          cd wp-content 2>/dev/null || cd html/wp-content 2>/dev/null || cd public_html/wp-content 2>/dev/null || cd www/wp-content 2>/dev/null
+          echo "=== Trying to find WordPress installation ==="
+          !echo "Attempting: wp-content"
+          cd wp-content || !echo "FAILED: wp-content not found"
+
+          !echo "Attempting: html"
+          cd html || !echo "Still in root, trying html"
+
+          !echo "Current directory after navigation:"
           pwd
           ls -la
 
-          echo "=== Creating plugin directory ==="
-          cd plugins
-          mkdir -p submittal-spec-sheet-builder
+          echo "=== Looking for plugins directory ==="
+          cd plugins || mkdir plugins
+          pwd
+          ls -la
 
-          echo "=== Deploying files ==="
+          echo "=== Creating/entering plugin directory ==="
+          mkdir -p submittal-spec-sheet-builder
           cd submittal-spec-sheet-builder
-          lcd $GITHUB_WORKSPACE
-          mirror --reverse --verbose --exclude .git/ --exclude .github/ --exclude node_modules/ ./ ./
+          pwd
+
+          echo "=== Uploading files ==="
+          mirror --reverse --verbose --only-newer --exclude .git/ --exclude .github/ --exclude node_modules/ $GITHUB_WORKSPACE ./
+
+          echo "=== Verifying upload - listing deployed files ==="
+          ls -la
+          !echo "Checking for key files:"
+          ls -la build.txt readme.txt submittal-form-builder.php
 
           bye
-          EOF
+          LFTP_COMMANDS
