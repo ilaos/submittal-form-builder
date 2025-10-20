@@ -1,5 +1,3 @@
-=== Submittal & Spec Sheet Builder ===
-
 <?php
 /**
  * Plugin Name: Submittal & Spec Sheet Builder
