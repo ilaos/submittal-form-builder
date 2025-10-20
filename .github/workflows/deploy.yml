@@ -16,14 +16,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy via SFTP (GoDaddy)
+      - name: Create build marker
+        run: |
+          echo "Build: $(date +%F-%T)" > build.txt
+          echo "Commit: $GITHUB_SHA" >> build.txt
+          echo "Deployed from GitHub Actions" >> build.txt
+
+      - name: Deploy via SFTP (GoDaddy Managed WordPress)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ${{ secrets.SFTP_HOST }}
-          username: client_2f8ef049a7_440246     # ← hardcoded temporarily
-          password: ${{ secrets.SFTP_PASSWORD }} # still from secret
+          server: u0p.327.myftpupload.com
+          username: client_2f8ef049a7_440246
+          password: ${{ secrets.SFTP_PASSWORD }}
           port: 22
           sftp_only: true
           local_path: ./*
-          remote_path: ${{ secrets.SFTP_REMOTE_PATH }}/
+          remote_path: /wp-content/plugins/submittal-spec-sheet-builder/
           delete_remote_files: false
