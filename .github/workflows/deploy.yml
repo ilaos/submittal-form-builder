@@ -27,24 +27,27 @@ jobs:
         run: |
           set -e
           echo "Exploring directory structure on GoDaddy SFTP server..."
+          # Create a list of commands to explore common GoDaddy WP paths
           cat > sftp_cmds.txt <<'EOF'
           pwd
           ls -la /
+          ls -la /home || true
+          ls -la /html || true
+          ls -la /public_html || true
           ls -la /wp-content || true
           ls -la /wp-content/plugins || true
           ls -la /wp-content/plugins/submittal-spec-sheet-builder || true
-          ls -la /html || true
-          ls -la /public_html || true
-          ls -la /home || true
           ls -la / || true
           EOF
 
-          # Run batch SFTP commands
-          sftp -oBatchMode=no -b sftp_cmds.txt ${SFTP_USERNAME}@${SFTP_HOST} <<'SFTPEOF'
-          ${SFTP_PASSWORD}
-          SFTPEOF
-
-          echo "Directory exploration complete."
+          # Run batch SFTP command
+          lftp -u "${SFTP_USERNAME},${SFTP_PASSWORD}" sftp://${SFTP_HOST} -e "
+            set sftp:auto-confirm yes;
+            set net:max-retries 2;
+            set net:timeout 20;
+            source sftp_cmds.txt;
+            bye;
+          "
 
       # Deploy to the EXACT Managed WP plugin path
       - name: Deploy plugin via SFTP mirror
