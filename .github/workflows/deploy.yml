@@ -1,71 +1,89 @@
-name: Deploy to GoDaddy SFTP
+name: deploy
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch: {}
-
-concurrency:
-  group: deploy-plugin
-  cancel-in-progress: true
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Create build marker
         run: |
-          echo "Build: $(date +%F-%T)" > build.txt
-          echo "Commit: $GITHUB_SHA" >> build.txt
-          echo "Deployed from GitHub Actions" >> build.txt
+          echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') $GITHUB_SHA" > build.txt
 
-      - name: Install lftp
+      - name: Install lftp (for SFTP mirror)
         run: sudo apt-get update && sudo apt-get install -y lftp
 
+      # Explore key directories so logs show exactly where WP lives
       - name: Explore SFTP directory structure
         env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
           SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
         run: |
-          lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<'EXPLORE'
-          set sftp:auto-confirm yes
-          set ssl:verify-certificate no
-
-          echo "=== ROOT DIRECTORY ==="
+          set -e
+          cat > sftp_cmds.txt <<'EOF'
           pwd
           ls -la
+          ls -la /wp-content
+          ls -la /wp-content/plugins
+          ls -la /wp-content/plugins/submittal-spec-sheet-builder
+          ls -la /html
+          ls -la /html/wp-content/plugins
+          ls -la /public_html
+          ls -la /public_html/wp-content/plugins
+          ls -la /wp-config.php
+          ls -la /html/wp-config.php
+          ls -la /public_html/wp-config.php
+          EOF
+          sftp -oBatchMode=no -b sftp_cmds.txt ${SFTP_USERNAME}@${SFTP_HOST} <<EOF2
+          ${SFTP_PASSWORD}
+          EOF2 || true
 
-          echo ""
-          echo "=== SEARCHING FOR WORDPRESS ==="
+      # Deploy to the EXACT Managed WP plugin path
+      - name: Deploy plugin via SFTP mirror
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+        run: |
+          set -e
+          REMOTE_DIR="/wp-content/plugins/submittal-spec-sheet-builder"
+          echo "Deploying to sftp://${SFTP_HOST}${REMOTE_DIR}"
 
-          echo "Trying: ./html"
-          cd html 2>/dev/null && pwd && ls -la || echo "Not found"
-          cd .. 2>/dev/null
+          lftp -e "
+            set sftp:auto-confirm yes;
+            set net:max-retries 2;
+            set net:timeout 20;
+            open -u ${SFTP_USERNAME},${SFTP_PASSWORD} sftp://${SFTP_HOST};
+            mkdir -p ${REMOTE_DIR};
+            mirror -R \
+              --verbose \
+              --only-newer \
+              --parallel=4 \
+              --exclude-glob .git* \
+              --exclude-glob .github/ \
+              --exclude-glob node_modules/ \
+              ./ ${REMOTE_DIR};
+            bye
+          "
 
-          echo ""
-          echo "Trying: ./www"
-          cd www 2>/dev/null && pwd && ls -la || echo "Not found"
-          cd .. 2>/dev/null
-
-          echo ""
-          echo "Trying: ./public_html"
-          cd public_html 2>/dev/null && pwd && ls -la || echo "Not found"
-          cd .. 2>/dev/null
-
-          echo ""
-          echo "Trying: ./httpdocs"
-          cd httpdocs 2>/dev/null && pwd && ls -la || echo "Not found"
-          cd .. 2>/dev/null
-
-          echo ""
-          echo "=== SEARCHING FOR EXISTING PLUGIN ==="
-          find . -maxdepth 5 -type d -name "submittal-spec-sheet-builder" 2>/dev/null || echo "Plugin directory not found"
-
-          echo ""
-          echo "=== SEARCHING FOR wp-config.php ==="
-          find . -maxdepth 3 -name "wp-config.php" 2>/dev/null || echo "wp-config.php not found"
-
-          bye
-          EXPLORE
+      # Verify we actually deployed to the plugin folder
+      - name: Verify deployed files are in plugin folder
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+        run: |
+          set -e
+          cat > sftp_verify.txt <<'EOF'
+          ls -la /wp-content/plugins/submittal-spec-sheet-builder
+          EOF
+          sftp -oBatchMode=no -b sftp_verify.txt ${SFTP_USERNAME}@${SFTP_HOST} <<EOF2
+          ${SFTP_PASSWORD}
+          EOF2 || true
