@@ -25,45 +25,47 @@ jobs:
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Deploy via SFTP using lftp
+      - name: Explore SFTP directory structure
         env:
           SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
         run: |
-          lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<'LFTP_COMMANDS'
+          lftp -u client_2f8ef049a7_440246,"$SFTP_PASSWORD" sftp://u0p.327.myftpupload.com:22 <<'EXPLORE'
           set sftp:auto-confirm yes
           set ssl:verify-certificate no
 
-          echo "=== Listing root directory ==="
-          ls -la
-
-          echo "=== Trying to find WordPress installation ==="
-          !echo "Attempting: wp-content"
-          cd wp-content || !echo "FAILED: wp-content not found"
-
-          !echo "Attempting: html"
-          cd html || !echo "Still in root, trying html"
-
-          !echo "Current directory after navigation:"
+          echo "=== ROOT DIRECTORY ==="
           pwd
           ls -la
 
-          echo "=== Looking for plugins directory ==="
-          cd plugins || mkdir plugins
-          pwd
-          ls -la
+          echo ""
+          echo "=== SEARCHING FOR WORDPRESS ==="
 
-          echo "=== Creating/entering plugin directory ==="
-          mkdir -p submittal-spec-sheet-builder
-          cd submittal-spec-sheet-builder
-          pwd
+          echo "Trying: ./html"
+          cd html 2>/dev/null && pwd && ls -la || echo "Not found"
+          cd .. 2>/dev/null
 
-          echo "=== Uploading files ==="
-          mirror --reverse --verbose --only-newer --exclude .git/ --exclude .github/ --exclude node_modules/ $GITHUB_WORKSPACE ./
+          echo ""
+          echo "Trying: ./www"
+          cd www 2>/dev/null && pwd && ls -la || echo "Not found"
+          cd .. 2>/dev/null
 
-          echo "=== Verifying upload - listing deployed files ==="
-          ls -la
-          !echo "Checking for key files:"
-          ls -la build.txt readme.txt submittal-form-builder.php
+          echo ""
+          echo "Trying: ./public_html"
+          cd public_html 2>/dev/null && pwd && ls -la || echo "Not found"
+          cd .. 2>/dev/null
+
+          echo ""
+          echo "Trying: ./httpdocs"
+          cd httpdocs 2>/dev/null && pwd && ls -la || echo "Not found"
+          cd .. 2>/dev/null
+
+          echo ""
+          echo "=== SEARCHING FOR EXISTING PLUGIN ==="
+          find . -maxdepth 5 -type d -name "submittal-spec-sheet-builder" 2>/dev/null || echo "Plugin directory not found"
+
+          echo ""
+          echo "=== SEARCHING FOR wp-config.php ==="
+          find . -maxdepth 3 -name "wp-config.php" 2>/dev/null || echo "wp-config.php not found"
 
           bye
-          LFTP_COMMANDS
+          EXPLORE
