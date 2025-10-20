@@ -27,27 +27,18 @@ jobs:
         run: |
           set -e
           echo "Exploring directory structure on GoDaddy SFTP server..."
-          cat > sftp_cmds.txt <<'EOF'
-          set debug 3;
-          pwd;
-          echo "---- ROOT ----";
-          ls;
-          echo "---- /home ----";
-          cd /home || true; ls;
-          echo "---- /html ----";
-          cd /html || true; ls;
-          echo "---- /public_html ----";
-          cd /public_html || true; ls;
-          echo "---- /wp-content ----";
-          cd /wp-content || true; ls;
-          echo "---- /wp-content/plugins ----";
-          cd /wp-content/plugins || true; ls;
-          echo "---- /wp-content/plugins/submittal-spec-sheet-builder ----";
-          cd /wp-content/plugins/submittal-spec-sheet-builder || true; ls;
-          bye;
-          EOF
-
-          lftp -u "${SFTP_USERNAME},${SFTP_PASSWORD}" sftp://${SFTP_HOST} -f sftp_cmds.txt
+          lftp -u "${SFTP_USERNAME},${SFTP_PASSWORD}" sftp://${SFTP_HOST} -e "
+            set debug 3;
+            pwd;
+            echo '---- ROOT ----'; ls;
+            echo '---- /home ----'; cd /home || true; ls;
+            echo '---- /html ----'; cd /html || true; ls;
+            echo '---- /public_html ----'; cd /public_html || true; ls;
+            echo '---- /wp-content ----'; cd /wp-content || true; ls;
+            echo '---- /wp-content/plugins ----'; cd /wp-content/plugins || true; ls;
+            echo '---- /wp-content/plugins/submittal-spec-sheet-builder ----'; cd /wp-content/plugins/submittal-spec-sheet-builder || true; ls;
+            bye;
+          "
 
       # Deploy to the EXACT Managed WP plugin path
       - name: Deploy plugin via SFTP mirror
