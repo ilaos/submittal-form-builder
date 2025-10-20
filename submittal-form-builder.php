@@ -7587,7 +7587,7 @@ final class SFB_Plugin {
    * @param int $node_id
    * @return array
    */
-  private function delete_node_recursive( $form_id, $node_id ) {
+  public function delete_node_recursive( $form_id, $node_id ) {
       global $wpdb;
       $node_id = (int) $node_id;
       if ( $node_id <= 0 ) return [];
