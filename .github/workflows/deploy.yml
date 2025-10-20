@@ -15,55 +15,53 @@ jobs:
       - name: Install lftp (for SFTP mirror)
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      - name: Deploy plugin via SFTP mirror (auth-safe, multi-path)
+      - name: Deploy plugin via SFTP mirror (simple, multi-path)
         env:
-          SFTP_HOST: ${{ secrets.SFTP_HOST }}         # u0p.327.myftpupload.com
-          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }} # GoDaddy Managed WP SFTP user
-          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }} # GoDaddy Managed WP SFTP pass
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
         run: |
           set -e
           echo "$(date -u +'%Y-%m-%dT%H:%M:%SZ') $GITHUB_SHA" > build.txt
 
-          # 1) AUTH CHECK (no upload yet) – fail fast with clear error
-          echo "Checking SFTP auth..."
-          lftp sftp://${SFTP_HOST} -e "
-            set sftp:connect-program \"ssh -p 22 -o StrictHostKeyChecking=no\";
-            set net:max-retries 1; set net:timeout 15; set cmd:interactive false;
-            open -u \"${SFTP_USERNAME}\",\"${SFTP_PASSWORD}\" sftp://${SFTP_HOST};
-            pwd; bye;
-          " || { echo 'SFTP login failed: verify SFTP_USERNAME/SFTP_PASSWORD (Managed WP creds) and that password is correct even if it contains commas.'; exit 2; }
-
           deploy_one () {
             REMOTE_DIR="$1"
             echo "::group::Deploying to sftp://${SFTP_HOST}${REMOTE_DIR}"
-            lftp sftp://${SFTP_HOST} -e "
-              set sftp:connect-program \"ssh -p 22 -o StrictHostKeyChecking=no\";
+            lftp -e "
+              set net:max-retries 1;
+              set net:timeout 25;
               set sftp:auto-confirm yes;
-              set net:max-retries 1; set net:timeout 25; set cmd:interactive false;
               open -u \"${SFTP_USERNAME}\",\"${SFTP_PASSWORD}\" sftp://${SFTP_HOST};
               mkdir -p ${REMOTE_DIR};
               mirror -R --verbose --only-newer --parallel=2 \
                 --exclude-glob .git* --exclude-glob .github/ --exclude-glob node_modules/ \
                 ./ ${REMOTE_DIR};
               bye;
-            "
+            " || { echo 'deploy failed for' ${REMOTE_DIR}; echo '::endgroup::'; return 1; }
             echo "::endgroup::"
+            echo "SUCCESS:${REMOTE_DIR}" > /tmp/deploy_path.txt
+            exit 0
           }
 
-          # Try common Managed WP roots
-          deploy_one "/wp-content/plugins/submittal-spec-sheet-builder"
-          deploy_one "/html/wp-content/plugins/submittal-spec-sheet-builder"
-          deploy_one "/public_html/wp-content/plugins/submittal-spec-sheet-builder"
+          # Try common Managed WP roots (first success exits 0)
+          deploy_one "/wp-content/plugins/submittal-spec-sheet-builder" \
+          || deploy_one "/html/wp-content/plugins/submittal-spec-sheet-builder" \
+          || deploy_one "/public_html/wp-content/plugins/submittal-spec-sheet-builder"
+
+          echo "All paths failed."
+          exit 1
 
       - name: Verify deployed files via HTTP
         run: |
           set -e
           URL="https://u0p.327.myftpupload.com/wp-content/plugins/submittal-spec-sheet-builder/build.txt"
-          echo "Checking $URL ..."
           code=$(curl -s -o /tmp/build.txt -w "%{http_code}" "$URL" || true)
           echo "HTTP $code"
           if [ "$code" != "200" ]; then
-            echo "build.txt not found at expected URL — site may serve from /html or /public_html; adjust verify URL after we see which path worked."
+            echo "build.txt not at /wp-content — site might serve from /html or /public_html."
+            echo "Try visiting (manually):"
+            echo "  https://u0p.327.myftpupload.com/html/wp-content/plugins/submittal-spec-sheet-builder/build.txt"
+            echo "  https://u0p.327.myftpupload.com/public_html/wp-content/plugins/submittal-spec-sheet-builder/build.txt"
             exit 1
           fi
           echo "---- build.txt ----"
