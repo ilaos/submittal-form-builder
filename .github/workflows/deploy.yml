@@ -19,7 +19,6 @@ jobs:
       - name: Install lftp (for SFTP mirror)
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Explore key directories so logs show exactly where WP lives
       - name: Explore SFTP directory structure
         env:
           SFTP_HOST: ${{ secrets.SFTP_HOST }}
@@ -27,23 +26,25 @@ jobs:
           SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
         run: |
           set -e
+          echo "Exploring directory structure on GoDaddy SFTP server..."
           cat > sftp_cmds.txt <<'EOF'
           pwd
-          ls -la
-          ls -la /wp-content
-          ls -la /wp-content/plugins
-          ls -la /wp-content/plugins/submittal-spec-sheet-builder
-          ls -la /html
-          ls -la /html/wp-content/plugins
-          ls -la /public_html
-          ls -la /public_html/wp-content/plugins
-          ls -la /wp-config.php
-          ls -la /html/wp-config.php
-          ls -la /public_html/wp-config.php
+          ls -la /
+          ls -la /wp-content || true
+          ls -la /wp-content/plugins || true
+          ls -la /wp-content/plugins/submittal-spec-sheet-builder || true
+          ls -la /html || true
+          ls -la /public_html || true
+          ls -la /home || true
+          ls -la / || true
           EOF
-          sftp -oBatchMode=no -b sftp_cmds.txt ${SFTP_USERNAME}@${SFTP_HOST} <<EOF2
+
+          # Run batch SFTP commands
+          sftp -oBatchMode=no -b sftp_cmds.txt ${SFTP_USERNAME}@${SFTP_HOST} <<'SFTPEOF'
           ${SFTP_PASSWORD}
-          EOF2 || true
+          SFTPEOF
+
+          echo "Directory exploration complete."
 
       # Deploy to the EXACT Managed WP plugin path
       - name: Deploy plugin via SFTP mirror
