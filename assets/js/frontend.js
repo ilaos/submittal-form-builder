@@ -1160,9 +1160,16 @@
       formData.append('action', 'sfb_generate_frontend_pdf');
       formData.append('nonce', elements.nonce);
 
+      // Convert selectedFieldValues Map to plain object for JSON
+      const fieldValuesObj = {};
+      state.selectedFieldValues.forEach((values, compositeKey) => {
+        fieldValuesObj[compositeKey] = values;
+      });
+
       if (review) {
         // Use review payload (includes quantities, notes, overrides)
         formData.append('review', JSON.stringify(review));
+        formData.append('selected_field_values', JSON.stringify(fieldValuesObj));
       } else {
         // Fallback to legacy format
         const products = Array.from(state.selectedProducts.values());
@@ -1170,6 +1177,7 @@
         formData.append('products', JSON.stringify(productsData));
         formData.append('project_name', state.projectName || '');
         formData.append('notes', state.projectNotes || '');
+        formData.append('selected_field_values', JSON.stringify(fieldValuesObj));
       }
 
       // Generate PDF via AJAX with robust error handling

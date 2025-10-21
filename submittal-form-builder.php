@@ -6432,8 +6432,18 @@ final class SFB_Plugin {
         wp_send_json_error(['message' => __('No products selected', 'submittal-builder')], 400);
       }
 
-      // --- Extract and validate product IDs safely ---
+      // --- Receive user-selected field values from frontend dropdowns ---
+      $selected_field_values_raw = isset($_POST['selected_field_values']) ? wp_unslash($_POST['selected_field_values']) : '{}';
+      $selected_field_values = json_decode($selected_field_values_raw, true);
+      if (json_last_error() !== JSON_ERROR_NONE || !is_array($selected_field_values)) {
+        error_log('[SFB] Invalid JSON in selected_field_values: ' . json_last_error_msg());
+        $selected_field_values = [];
+      }
+      error_log('[SFB] Received selected field values: ' . print_r($selected_field_values, true));
+
+      // --- Extract and validate product IDs, and build composite_key map ---
       $product_ids = [];
+      $composite_key_to_id_map = [];
       foreach ($products as $p) {
         // Try multiple possible ID fields
         $id = null;
@@ -6447,6 +6457,10 @@ final class SFB_Plugin {
 
         if ($id) {
           $product_ids[] = $id;
+          // Build map from composite_key to ID for field value lookup
+          if (isset($p['composite_key'])) {
+            $composite_key_to_id_map[$p['composite_key']] = $id;
+          }
         } else {
           error_log('[SFB] Skipping product without valid ID: ' . print_r($p, true));
         }
@@ -6502,6 +6516,18 @@ final class SFB_Plugin {
         // Extract specs from settings
         $specs = isset($settings['fields']) ? $settings['fields'] : [];
         $base_note = isset($settings['note']) ? $settings['note'] : '';
+
+        // Merge user-selected field values from frontend dropdowns
+        // Find this product's composite_key and apply selected values
+        $product_composite_key = array_search($product_id, $composite_key_to_id_map);
+        if ($product_composite_key && isset($selected_field_values[$product_composite_key])) {
+          $user_selected = $selected_field_values[$product_composite_key];
+          if (is_array($user_selected)) {
+            // Merge user selections into specs (user selections override database values)
+            $specs = array_merge($specs, $user_selected);
+            error_log('[SFB] Merged user-selected values for product ' . $product_id . ': ' . print_r($user_selected, true));
+          }
+        }
 
         // Get quantity and note from review payload if available
         $quantity = 1;
