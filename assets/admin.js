@@ -1356,6 +1356,8 @@
                       newConfigs[index] = {...fieldConfig, type: 'text'};
                       delete newConfigs[index].options; // Remove options if switching to text
                       setFieldConfigs(newConfigs);
+                      // Trigger save after state update
+                      setTimeout(() => autoSave(), 0);
                     }
                   }),
                   'Text Input'
@@ -1370,6 +1372,8 @@
                       const newConfigs = [...fieldConfigs];
                       newConfigs[index] = {...fieldConfig, type: 'select', options: fieldConfig.options || []};
                       setFieldConfigs(newConfigs);
+                      // Trigger save after state update
+                      setTimeout(() => autoSave(), 0);
                     }
                   }),
                   'Dropdown'
