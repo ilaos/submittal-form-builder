@@ -1157,42 +1157,64 @@
           </div>
         `;
       } else {
-        // Group products by category
+        // Group products by category, then optionally by subtype if present
         const groupedProducts = {};
         products.forEach(product => {
           const category = product.category || 'Uncategorized';
+          const subtype = product.subtype_label || '';
+
+          // Create category group if it doesn't exist
           if (!groupedProducts[category]) {
-            groupedProducts[category] = [];
+            groupedProducts[category] = {};
           }
-          groupedProducts[category].push(product);
+
+          // Group by subtype within category (or use empty string for no subtype)
+          if (!groupedProducts[category][subtype]) {
+            groupedProducts[category][subtype] = [];
+          }
+
+          groupedProducts[category][subtype].push(product);
         });
 
-        // Render groups
-        const html = Object.entries(groupedProducts).map(([category, categoryProducts]) => {
-          const productsHtml = categoryProducts.map(product => {
-            // Get 1-line spec summary
-            const specs = product.specs ?
-              Object.entries(product.specs).slice(0, 2)
-                .map(([k, v]) => v)
-                .join(' · ') : '';
+        // Render groups (category → subtypes → products)
+        const html = Object.entries(groupedProducts).map(([category, subtypeGroups]) => {
+          // Render subtype groups within category
+          const subtypeHtml = Object.entries(subtypeGroups).map(([subtype, subtypeProducts]) => {
+            const productsHtml = subtypeProducts.map(product => {
+              // Get 1-line spec summary
+              const specs = product.specs ?
+                Object.entries(product.specs).slice(0, 2)
+                  .map(([k, v]) => v)
+                  .join(' · ') : '';
 
-            return `
-              <div class="sfb-tray-product-item" data-composite-key="${escapeHtml(product.composite_key)}" role="listitem">
-                <div class="sfb-tray-product-info">
-                  <div class="sfb-tray-product-name">${escapeHtml(product.model)}</div>
-                  ${specs ? `<div class="sfb-tray-product-specs">${escapeHtml(specs)}</div>` : ''}
+              return `
+                <div class="sfb-tray-product-item" data-composite-key="${escapeHtml(product.composite_key)}" role="listitem">
+                  <div class="sfb-tray-product-info">
+                    <div class="sfb-tray-product-name">${escapeHtml(product.model)}</div>
+                    ${specs ? `<div class="sfb-tray-product-specs">${escapeHtml(specs)}</div>` : ''}
+                  </div>
+                  <button class="sfb-tray-remove-btn" data-composite-key="${escapeHtml(product.composite_key)}" aria-label="Remove ${escapeHtml(product.model)}">
+                    ×
+                  </button>
                 </div>
-                <button class="sfb-tray-remove-btn" data-composite-key="${escapeHtml(product.composite_key)}" aria-label="Remove ${escapeHtml(product.model)}">
-                  ×
-                </button>
+              `;
+            }).join('');
+
+            // If there's a subtype, show it as a subheading
+            return subtype ? `
+              <div class="sfb-tray-subgroup">
+                <h4 class="sfb-tray-subgroup__title">${escapeHtml(subtype)}</h4>
+                <div class="sfb-tray-subgroup__list" role="list">${productsHtml}</div>
               </div>
+            ` : `
+              <div class="sfb-tray-group__list" role="list">${productsHtml}</div>
             `;
           }).join('');
 
           return `
             <div class="sfb-tray-group">
               <h3 class="sfb-tray-group__title" role="heading" aria-level="3">${escapeHtml(category)}</h3>
-              <div class="sfb-tray-group__list" role="list">${productsHtml}</div>
+              ${subtypeHtml}
             </div>
           `;
         }).join('');
