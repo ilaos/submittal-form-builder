@@ -6231,6 +6231,8 @@ final class SFB_Plugin {
       // Resolve full lineage: model -> [subtype] -> type -> product -> category
       $category = 'Uncategorized';
       $category_slug = 'uncategorized';
+      $category_id = 0; // Category node ID for tracking actual database position
+      $category_position = 99999; // Default high value for uncategorized
       $product_label = '';
       $product_slug = '';
       $product_id = 0; // Product node ID for tracking actual database position
@@ -6267,6 +6269,8 @@ final class SFB_Plugin {
                 $category_node = $nodes_by_id[$product_node['parent_id']];
                 $category = $category_node['title'];
                 $category_slug = $category_node['slug'] ?: sanitize_title($category);
+                $category_id = (int) $category_node['id'];
+                $category_position = isset($category_node['position']) ? (int) $category_node['position'] : 99999;
               }
             }
           }
@@ -6287,6 +6291,8 @@ final class SFB_Plugin {
               $category_node = $nodes_by_id[$product_node['parent_id']];
               $category = $category_node['title'];
               $category_slug = $category_node['slug'] ?: sanitize_title($category);
+              $category_id = (int) $category_node['id'];
+              $category_position = isset($category_node['position']) ? (int) $category_node['position'] : 99999;
             }
           }
         }
@@ -6329,6 +6335,8 @@ final class SFB_Plugin {
         'model' => $node['title'],
         'specs' => empty($specs) ? new stdClass() : $specs,
         'category' => $category,
+        'category_id' => $category_id,
+        'category_position' => $category_position,
         'product_label' => $product_label,
         'product_id' => $product_id,
         'product_position' => $product_position,
