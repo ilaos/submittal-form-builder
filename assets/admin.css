@@ -253,6 +253,25 @@
   cursor:not-allowed;
 }
 
+/* Inline edit button */
+.sfb-inline-edit-btn {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border-radius: 3px;
+}
+.sfb-tree-row:hover .sfb-inline-edit-btn {
+  opacity: 0.5;
+}
+.sfb-inline-edit-btn:hover {
+  opacity: 1 !important;
+  background: rgba(79, 70, 229, 0.1);
+}
+
 /* Inline title input */
 .sfb-title-inline{
   display:inline-flex;

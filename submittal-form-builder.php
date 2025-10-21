@@ -7780,8 +7780,11 @@ final class SFB_Plugin {
     $size_limits = [
       'small'  => ['max_categories' => 2, 'max_types' => 2, 'max_items' => 2, 'multiply' => 1],
       'medium' => ['max_categories' => 999, 'max_types' => 999, 'max_items' => 999, 'multiply' => 1], // Load all
-      'large'  => ['max_categories' => 999, 'max_types' => 999, 'max_items' => 999, 'multiply' => 100],  // Load all + multiply by 100
+      'large'  => ['max_categories' => 999, 'max_types' => 999, 'max_items' => 999, 'multiply' => 31],  // Load all + multiply by 31 (~900 items)
     ][$size] ?? ['max_categories' => 999, 'max_types' => 999, 'max_items' => 999, 'multiply' => 1];
+
+    // Debug logging
+    error_log('[SFB] Seeding size: ' . $size . ', multiply: ' . $size_limits['multiply']);
 
     // Seed from industry pack JSON
     $stats = ['categories' => 0, 'products' => 0, 'types' => 0, 'models' => 0];

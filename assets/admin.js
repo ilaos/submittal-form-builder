@@ -769,9 +769,17 @@
               )
             : h('span', {
                 className:'sfb-node-title',
-                style:{fontWeight: node.node_type!=='model'?'600':'400'},
+                style:{fontWeight: node.node_type!=='model'?'600':'400', display: 'inline-flex', alignItems: 'center', gap: '4px'},
                 onDoubleClick: (e)=> { e.stopPropagation(); startEdit(); }
-              }, node.title),
+              },
+              node.title,
+              h('button', {
+                className: 'sfb-inline-edit-btn',
+                onClick: (e) => { e.stopPropagation(); startEdit(); },
+                'aria-label': 'Edit name',
+                title: 'Click to edit (or double-click title)'
+              }, '✏️')
+            ),
           h('span', {className:'sfb-badge '+node.node_type}, TYPE_LABEL[node.node_type]),
           // Count badge for categories and products
           counts && (counts.type > 0 || counts.subtype > 0 || counts.model > 0) && h('span', {className:'sfb-count-badge'},
@@ -3127,7 +3135,7 @@
                     onChange: () => setCatalogModal(prev => ({...prev, size: 'large'}))
                   }),
                   h('span', null, 'Large'),
-                  h('small', null, ' (~2,880 items)')
+                  h('small', null, ' (~900 items)')
                 )
               )
             ),
