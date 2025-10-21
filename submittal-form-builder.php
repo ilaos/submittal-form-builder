@@ -6304,6 +6304,25 @@ final class SFB_Plugin {
         $specs = $settings['fields'];
       }
 
+      // Get inherited field_configs from parent Type/Subtype for frontend dropdowns
+      $field_configs = [];
+      if ($node['parent_id'] && isset($nodes_by_id[$node['parent_id']])) {
+        $parent_node = $nodes_by_id[$node['parent_id']];
+        $parent_settings = !empty($parent_node['settings_json']) ? json_decode($parent_node['settings_json'], true) : [];
+
+        // Check if parent (Type or Subtype) has field_configs
+        if (isset($parent_settings['field_configs']) && is_array($parent_settings['field_configs'])) {
+          $field_configs = $parent_settings['field_configs'];
+        } else if ($parent_node['node_type'] === 'subtype' && $parent_node['parent_id'] && isset($nodes_by_id[$parent_node['parent_id']])) {
+          // If parent is Subtype without configs, check grandparent Type
+          $grandparent_node = $nodes_by_id[$parent_node['parent_id']];
+          $grandparent_settings = !empty($grandparent_node['settings_json']) ? json_decode($grandparent_node['settings_json'], true) : [];
+          if (isset($grandparent_settings['field_configs']) && is_array($grandparent_settings['field_configs'])) {
+            $field_configs = $grandparent_settings['field_configs'];
+          }
+        }
+      }
+
       // Build model slug
       $model_slug = $node['slug'] ?: sanitize_title($node['title']);
 
@@ -6334,6 +6353,7 @@ final class SFB_Plugin {
         'id' => (int) $node['id'],
         'model' => $node['title'],
         'specs' => empty($specs) ? new stdClass() : $specs,
+        'field_configs' => $field_configs, // Field type configurations for frontend dropdowns
         'category' => $category,
         'category_id' => $category_id,
         'category_position' => $category_position,
