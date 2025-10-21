@@ -15,9 +15,10 @@
     products: [], // All available products (raw from server)
     productsMap: new Map(), // Map<composite_key, product> - deduplicated
     byCategory: new Map(), // Map<category, composite_key[]> - category index
-    categoryOrder: [], // Array to preserve category order as they appear in products
+    categoryPositionMap: new Map(), // Map<category_id, position> - actual category node positions from database
+    categoryIdMap: new Map(), // Map<category_name, category_id> - for looking up category positions
     byTypeWithinCategory: new Map(), // Map<'category:type', composite_key[]> - type index
-    productOrderMap: new Map(), // Map<category::product_label, order_index> - tracks global product order from API
+    productOrderMap: new Map(), // Map<category::product_label, product_id> - tracks global product order from API
     productPositionMap: new Map(), // Map<product_id, position> - actual product node positions from database
     selected: new Set(), // Set of composite_keys for selected products (localStorage persistence)
     selectedProducts: new Map(), // Map<composite_key, product> - selected using composite keys (for compatibility)
@@ -326,12 +327,11 @@
     state.products = rawProducts;
     state.productsMap.clear();
     state.byCategory.clear();
-    state.categoryOrder = [];
+    state.categoryPositionMap.clear();
+    state.categoryIdMap.clear();
     state.byTypeWithinCategory.clear();
     state.productOrderMap.clear();
     state.productPositionMap.clear();
-
-    let productOrderIndex = 0;
 
     rawProducts.forEach(product => {
       const key = product.composite_key;
@@ -345,12 +345,16 @@
       if (!state.productsMap.has(key)) {
         state.productsMap.set(key, product);
 
-        // Build category index
+        // Build category index and track category positions
         const category = product.category || 'Uncategorized';
         if (!state.byCategory.has(category)) {
           state.byCategory.set(category, []);
-          // Track category order as they first appear (preserves database order)
-          state.categoryOrder.push(category);
+
+          // Track category position by category_id
+          if (product.category_id && !state.categoryPositionMap.has(product.category_id)) {
+            state.categoryPositionMap.set(product.category_id, product.category_position || 99999);
+            state.categoryIdMap.set(category, product.category_id);
+          }
         }
         state.byCategory.get(category).push(key);
 
@@ -384,8 +388,14 @@
   function renderCategories() {
     if (!elements.categoryList) return;
 
-    // Use categoryOrder array to preserve the order from the database
-    const categories = state.categoryOrder;
+    // Sort categories by their actual database position (via category_id lookup)
+    const categories = Array.from(state.byCategory.keys()).sort((a, b) => {
+      const categoryIdA = state.categoryIdMap.get(a) || 0;
+      const categoryIdB = state.categoryIdMap.get(b) || 0;
+      const positionA = state.categoryPositionMap.get(categoryIdA) ?? 99999;
+      const positionB = state.categoryPositionMap.get(categoryIdB) ?? 99999;
+      return positionA - positionB;
+    });
 
     if (categories.length === 0) {
       elements.categoryList.innerHTML = '<p class="sfb-hint">No categories available</p>';
