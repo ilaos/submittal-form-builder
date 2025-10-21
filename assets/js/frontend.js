@@ -477,13 +477,16 @@
         productMeta[productKey] = {
           position: model.product_position || 99999
         };
+        console.log(`[SFB Group] Product "${productKey}" first seen with position: ${model.product_position} (model: ${model.model})`);
       }
       groupedByProduct[productKey].push(model);
     });
 
     // Sort products by their database position
     const productOrder = Object.keys(groupedByProduct).sort((a, b) => {
-      return productMeta[a].position - productMeta[b].position;
+      const result = productMeta[a].position - productMeta[b].position;
+      console.log(`[SFB Sort] "${a}" (pos ${productMeta[a].position}) vs "${b}" (pos ${productMeta[b].position}) = ${result}`);
+      return result;
     });
 
     // Render product groups with headers (sorted by product position)
