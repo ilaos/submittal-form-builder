@@ -49,6 +49,31 @@ if (!defined('ABSPATH')) exit;
           <?php esc_html_e('Clear all filters', 'submittal-builder'); ?>
         </button>
       </div>
+
+      <?php
+      // Show branding box for free version users
+      $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
+      if (!$is_pro):
+      ?>
+      <div class="sfb-free-branding">
+        <div class="sfb-free-branding__content">
+          <div class="sfb-free-branding__icon">✨</div>
+          <div class="sfb-free-branding__text">
+            <strong><?php esc_html_e('Powered by', 'submittal-builder'); ?></strong>
+            <span><?php esc_html_e('Submittal Builder', 'submittal-builder'); ?></span>
+          </div>
+          <a
+            href="https://webstuffguylabs.com/submittal-builder/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="sfb-free-branding__link"
+            aria-label="<?php esc_attr_e('Learn more about Submittal Builder Pro', 'submittal-builder'); ?>"
+          >
+            <?php esc_html_e('Upgrade to Pro', 'submittal-builder'); ?> →
+          </a>
+        </div>
+      </div>
+      <?php endif; ?>
     </aside>
 
     <!-- Main Content: Product Grid -->
