@@ -15,6 +15,7 @@
     products: [], // All available products (raw from server)
     productsMap: new Map(), // Map<composite_key, product> - deduplicated
     byCategory: new Map(), // Map<category, composite_key[]> - category index
+    categoryOrder: [], // Array to preserve category order as they appear in products
     byTypeWithinCategory: new Map(), // Map<'category:type', composite_key[]> - type index
     selected: new Set(), // Set of composite_keys for selected products (localStorage persistence)
     selectedProducts: new Map(), // Map<composite_key, product> - selected using composite keys (for compatibility)
@@ -323,6 +324,7 @@
     state.products = rawProducts;
     state.productsMap.clear();
     state.byCategory.clear();
+    state.categoryOrder = [];
     state.byTypeWithinCategory.clear();
 
     rawProducts.forEach(product => {
@@ -341,6 +343,8 @@
         const category = product.category || 'Uncategorized';
         if (!state.byCategory.has(category)) {
           state.byCategory.set(category, []);
+          // Track category order as they first appear (preserves database order)
+          state.categoryOrder.push(category);
         }
         state.byCategory.get(category).push(key);
 
@@ -360,7 +364,8 @@
   function renderCategories() {
     if (!elements.categoryList) return;
 
-    const categories = Array.from(state.byCategory.keys());
+    // Use categoryOrder array to preserve the order from the database
+    const categories = state.categoryOrder;
 
     if (categories.length === 0) {
       elements.categoryList.innerHTML = '<p class="sfb-hint">No categories available</p>';
@@ -461,18 +466,21 @@
       elements.productsEmpty.style.display = 'none';
     }
 
-    // Group models by product_label
+    // Group models by product_label (preserving order)
     const groupedByProduct = {};
+    const productOrder = []; // Track order as products first appear
     filtered.forEach(model => {
       const productKey = model.product_label || 'Uncategorized';
       if (!groupedByProduct[productKey]) {
         groupedByProduct[productKey] = [];
+        productOrder.push(productKey); // Track order from filtered array
       }
       groupedByProduct[productKey].push(model);
     });
 
-    // Render product groups with headers
-    const html = Object.entries(groupedByProduct).map(([productLabel, models]) => {
+    // Render product groups with headers (using productOrder to maintain database order)
+    const html = productOrder.map(productLabel => {
+      const models = groupedByProduct[productLabel];
       // Skip empty groups (shouldn't happen, but safety check)
       if (models.length === 0) return '';
 
