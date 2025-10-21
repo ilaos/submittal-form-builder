@@ -453,6 +453,12 @@
     const isHighlighted = highlightedNodeId === node.id;
     const hasChildren = (node.children||[]).length > 0;
     const isCollapsed = collapsed.has(node.id);
+
+    // Debug: log type mismatch issues for node 42
+    if (node.id === 42 || node.id === '42') {
+      console.log('[SFB Row] Node 42 - id:', node.id, 'type:', typeof node.id, 'isCollapsed:', isCollapsed, 'collapsed.has(42):', collapsed.has(42), 'collapsed.has("42"):', collapsed.has("42"));
+    }
+
     const allowedChild = ALLOWED_CHILDREN[node.node_type];
     const isBulkSelected = bulkSelected && bulkSelected.has(node.id);
 
@@ -1697,6 +1703,17 @@
       [flat]
     );
 
+    // Normalize tree IDs as well (tree is created from raw API data with string IDs)
+    const normalizedTree = useMemo(() => {
+      const normalize = (node) => ({
+        ...node,
+        id: toID(node.id),
+        parent_id: toID(node.parent_id ?? 0),
+        children: (node.children || []).map(normalize)
+      });
+      return tree.map(normalize);
+    }, [tree]);
+
     // Toggle a single node with logging
     const toggleCollapse = (nodeId) => {
       nodeId = toID(nodeId);
@@ -1988,6 +2005,7 @@
     }
 
     function createNode(payload, skipUndo = false, skipAutoSelect = false){
+      console.log('[SFB createNode] Starting create:', payload.node_type, 'parent:', payload.parent_id, 'title:', payload.title);
       // Migration helper: If creating first Subtype under a Type that has Models, offer to move them
       if (payload.node_type === 'subtype' && payload.parent_id) {
         const parentType = flat.find(n => n.id === payload.parent_id);
@@ -2860,11 +2878,11 @@
           );
         })(),
         loading ? h('p',null,'Loading...') :
-          (tree.length>0
+          (normalizedTree.length>0
             ? h('div', {
                 className: 'sfb-tree-wrapper'
               },
-              tree.map(n=>h(Row,{
+              normalizedTree.map(n=>h(Row,{
                 key:n.id,
                 node:n,
                 onSelect:setSelected,
