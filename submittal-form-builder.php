@@ -6376,7 +6376,6 @@ final class SFB_Plugin {
         $products = is_array($review['products'] ?? null) ? $review['products'] : [];
 
         error_log('[SFB] Using review payload format with ' . count($products) . ' products');
-        error_log('[SFB] Review payload structure: ' . print_r($review, true));
       } else {
         // Legacy format: direct products array
         $products_raw = isset($_POST['products']) ? wp_unslash($_POST['products']) : '[]';
@@ -8240,6 +8239,52 @@ final class SFB_Plugin {
       error_log('SFB api_bulk_move error: ' . $e->getMessage());
       return new WP_Error('server_error', $e->getMessage(), ['status' => 500]);
     }
+  }
+
+  /**
+   * Recursively clone a node and all its descendants
+   *
+   * @param int $node_id The node ID to clone
+   * @param int $new_parent_id The parent ID for the cloned node
+   * @param int $position The position for the cloned node
+   * @param array &$map Reference to array mapping old IDs to new IDs
+   * @return int The new node ID
+   */
+  function clone_node_recursive($node_id, $new_parent_id, $position, &$map) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'sfb_nodes';
+
+    // Get the original node
+    $orig = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d", $node_id), ARRAY_A);
+    if (!$orig) {
+      return 0;
+    }
+
+    // Create the cloned node
+    $clone = $orig;
+    unset($clone['id']); // Remove ID so a new one is generated
+    $clone['parent_id'] = $new_parent_id;
+    $clone['position'] = $position;
+
+    // Insert the clone
+    $wpdb->insert($table, $clone);
+    $new_id = $wpdb->insert_id;
+
+    // Map old ID to new ID
+    $map[$node_id] = $new_id;
+
+    // Get all children of the original node
+    $children = $wpdb->get_results($wpdb->prepare(
+      "SELECT id, position FROM $table WHERE parent_id=%d ORDER BY position",
+      $node_id
+    ), ARRAY_A);
+
+    // Recursively clone each child
+    foreach ($children as $child) {
+      $this->clone_node_recursive($child['id'], $new_id, $child['position'], $map);
+    }
+
+    return $new_id;
   }
 
   /** Bulk duplicate nodes */
