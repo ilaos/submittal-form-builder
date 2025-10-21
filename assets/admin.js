@@ -1018,6 +1018,32 @@
     const isTypeOrSubtype = node.node_type === 'type' || node.node_type === 'subtype';
     const fields = (node.settings && node.settings.fields) || {};
 
+    // Helper: Get inherited field configs for models by looking up parent chain
+    const getInheritedFieldConfigs = () => {
+      if (!isModel || !allNodes) return null;
+
+      // Model → parent can be Type or Subtype
+      let parentNode = allNodes.find(n => n.id === node.parent_id);
+      if (!parentNode) return null;
+
+      // Check if parent (Type or Subtype) has field_configs
+      if (parentNode.settings && parentNode.settings.field_configs && parentNode.settings.field_configs.length > 0) {
+        return parentNode.settings.field_configs;
+      }
+
+      // If parent is Subtype, check grandparent Type
+      if (parentNode.node_type === 'subtype') {
+        const grandparentNode = allNodes.find(n => n.id === parentNode.parent_id);
+        if (grandparentNode && grandparentNode.settings && grandparentNode.settings.field_configs) {
+          return grandparentNode.settings.field_configs;
+        }
+      }
+
+      return null; // No inherited configs found
+    };
+
+    const inheritedFieldConfigs = isModel ? getInheritedFieldConfigs() : null;
+
     const [title, setTitle] = useState(node.title);
     const [slug, setSlug] = useState(node.slug || '');
     const [note, setNote] = useState((node.settings && node.settings.note) || '');
@@ -1274,19 +1300,40 @@
           )
         ),
 
-        // Fields Tab (Model only) - POC: Dynamically rendered based on fieldDefinitions
+        // Fields Tab (Model only) - Rendered based on inherited field configs or defaults
         activeTab === 'fields' && isModel && h(Fragment, null,
-          (fieldDefinitions || []).map(fieldName =>
-            h('div', {key: fieldName, className:'sfb-field'},
+          // Show info banner if inheriting field types from parent
+          inheritedFieldConfigs && h('div', {style:{marginBottom:'12px',padding:'8px 12px',background:'#eff6ff',borderLeft:'3px solid #3b82f6',borderRadius:'4px',fontSize:'12px',color:'#1e40af'}},
+            '✓ Field types inherited from parent ', (allNodes.find(n => n.id === node.parent_id) || {}).node_type || 'node'
+          ),
+          // Use inherited configs if available, otherwise fallback to simple text fields
+          (inheritedFieldConfigs || fieldDefinitions.map(name => ({name, type: 'text'}))).map((fieldConfig, index) => {
+            const fieldName = typeof fieldConfig === 'string' ? fieldConfig : fieldConfig.name;
+            const fieldType = typeof fieldConfig === 'object' ? fieldConfig.type : 'text';
+            const fieldOptions = typeof fieldConfig === 'object' ? fieldConfig.options : null;
+
+            return h('div', {key: index, className:'sfb-field'},
               h('label', null, fieldName),
-              h('input', {
-                type:'text',
-                value: fieldValues[fieldName] || '',
-                onChange: e => setFieldValues({...fieldValues, [fieldName]: e.target.value}),
-                onBlur: autoSave
-              })
-            )
-          )
+              // Render select dropdown or text input based on field type
+              fieldType === 'select' && fieldOptions && fieldOptions.length > 0
+                ? h('select', {
+                    value: fieldValues[fieldName] || '',
+                    onChange: e => setFieldValues({...fieldValues, [fieldName]: e.target.value}),
+                    onBlur: autoSave
+                  },
+                    h('option', {value:''}, `Choose a ${fieldName}...`),
+                    fieldOptions.map(opt =>
+                      h('option', {key: opt, value: opt}, opt)
+                    )
+                  )
+                : h('input', {
+                    type:'text',
+                    value: fieldValues[fieldName] || '',
+                    onChange: e => setFieldValues({...fieldValues, [fieldName]: e.target.value}),
+                    onBlur: autoSave
+                  })
+            );
+          })
         ),
 
         // Field Types Tab (Type/Subtype only) - Configure field types for child models
