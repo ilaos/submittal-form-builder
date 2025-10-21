@@ -3078,3 +3078,54 @@ a:focus-visible {
     font-size: 12px;
   }
 }
+
+/* ========== Configurable Fields (Dropdowns) ========== */
+.sfb-config-fields {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.sfb-config-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sfb-config-field:last-child {
+  margin-bottom: 0;
+}
+
+.sfb-config-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 60px;
+}
+
+.sfb-config-select {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.sfb-config-select:hover {
+  border-color: #9ca3af;
+}
+
+.sfb-config-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.sfb-config-select:invalid,
+.sfb-config-select:required:invalid {
+  border-color: #ef4444;
+}

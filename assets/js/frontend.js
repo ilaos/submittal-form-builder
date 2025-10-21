@@ -22,6 +22,7 @@
     productPositionMap: new Map(), // Map<product_id, position> - actual product node positions from database
     selected: new Set(), // Set of composite_keys for selected products (localStorage persistence)
     selectedProducts: new Map(), // Map<composite_key, product> - selected using composite keys (for compatibility)
+    selectedFieldValues: new Map(), // Map<composite_key, {fieldName: selectedValue}> - track user-selected dropdown values
     activeCategory: null,
     activeType: null, // Track active type filter
     searchQuery: '',
@@ -430,6 +431,47 @@
     });
   }
 
+  // ========== Build Configurable Fields (Dropdowns) ==========
+  function buildConfigurableFields(product) {
+    // Check if product has field_configs with select-type fields
+    if (!product.field_configs || !Array.isArray(product.field_configs)) {
+      return ''; // No configurable fields
+    }
+
+    // Filter to only select-type fields
+    const selectFields = product.field_configs.filter(fc => fc.type === 'select' && fc.options && fc.options.length > 0);
+
+    if (selectFields.length === 0) {
+      return ''; // No dropdown fields
+    }
+
+    // Get currently selected values for this product
+    const selectedValues = state.selectedFieldValues.get(product.composite_key) || {};
+
+    // Build dropdown HTML for each select field
+    const dropdownsHtml = selectFields.map(fieldConfig => {
+      const currentValue = selectedValues[fieldConfig.name] || product.specs[fieldConfig.name] || '';
+
+      return `
+        <div class="sfb-config-field">
+          <label class="sfb-config-label">${escapeHtml(fieldConfig.name)}:</label>
+          <select
+            class="sfb-config-select"
+            data-composite-key="${escapeHtml(product.composite_key)}"
+            data-field-name="${escapeHtml(fieldConfig.name)}"
+            onclick="event.stopPropagation();">
+            <option value="">Choose ${escapeHtml(fieldConfig.name)}...</option>
+            ${fieldConfig.options.map(opt =>
+              `<option value="${escapeHtml(opt)}" ${currentValue === opt ? 'selected' : ''}>${escapeHtml(opt)}</option>`
+            ).join('')}
+          </select>
+        </div>
+      `;
+    }).join('');
+
+    return `<div class="sfb-config-fields">${dropdownsHtml}</div>`;
+  }
+
   // ========== Render Products ==========
   function renderProducts() {
     console.log('[SFB] renderProducts() called');
@@ -627,6 +669,7 @@
             ${cardHead}
             <h4 class="sfb-product-name">${escapeHtml(product.model)}</h4>
             ${specsHtml}
+            ${buildConfigurableFields(product)}
           </div>
         `;
       }).join('');
@@ -648,6 +691,9 @@
 
     // Attach product card handlers (click-anywhere)
     attachCardHandlers();
+
+    // Attach dropdown change handlers
+    attachDropdownHandlers();
   }
 
   /**
@@ -669,6 +715,33 @@
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           const compositeKey = card.dataset.compositeKey;
+          toggleByCard(compositeKey);
+        }
+      });
+    });
+  }
+
+  /**
+   * Attach change handlers to configuration dropdowns
+   */
+  function attachDropdownHandlers() {
+    const dropdowns = elements.productsGrid.querySelectorAll('.sfb-config-select');
+
+    dropdowns.forEach(dropdown => {
+      dropdown.addEventListener('change', (e) => {
+        const compositeKey = e.target.dataset.compositeKey;
+        const fieldName = e.target.dataset.fieldName;
+        const selectedValue = e.target.value;
+
+        // Store the selected value
+        const currentValues = state.selectedFieldValues.get(compositeKey) || {};
+        currentValues[fieldName] = selectedValue;
+        state.selectedFieldValues.set(compositeKey, currentValues);
+
+        console.log(`[SFB] Field "${fieldName}" set to "${selectedValue}" for product ${compositeKey}`);
+
+        // Auto-select the product if a dropdown value is chosen
+        if (selectedValue && !state.selected.has(compositeKey)) {
           toggleByCard(compositeKey);
         }
       });
