@@ -7625,7 +7625,7 @@ final class SFB_Plugin {
   /**
    * Optional: Normalize positions for remaining siblings after deletion.
    */
-  private function normalize_sibling_positions( $form_id, $parent_id ) {
+  public function normalize_sibling_positions( $form_id, $parent_id ) {
       global $wpdb;
       $nodes_table = $this->table_nodes();
       $parent_id = $parent_id ? (int) $parent_id : 0;
@@ -7784,7 +7784,7 @@ final class SFB_Plugin {
     ][$size] ?? ['max_categories' => 999, 'max_types' => 999, 'max_items' => 999, 'multiply' => 1];
 
     // Seed from industry pack JSON
-    $stats = ['categories' => 0, 'types' => 0, 'models' => 0];
+    $stats = ['categories' => 0, 'products' => 0, 'types' => 0, 'models' => 0];
     $position = 0;
     $category_count = 0;
 
@@ -7821,27 +7821,53 @@ final class SFB_Plugin {
         $stats['categories']++;
       }
 
-      // Insert types
+      // Insert products (treating JSON "types" as products for proper 4-level hierarchy)
       if (isset($cat_data['types']) && is_array($cat_data['types'])) {
-        $type_pos = 0;
-        $type_count = 0;
+        $product_pos = 0;
+        $product_count = 0;
 
-        foreach ($cat_data['types'] as $type_data) {
-          // Apply size limit for types
-          if ($type_count >= $size_limits['max_types']) {
+        foreach ($cat_data['types'] as $product_data) {
+          // Apply size limit for products
+          if ($product_count >= $size_limits['max_types']) {
             break;
           }
-          $type_count++;
+          $product_count++;
 
-          $type_slug = sanitize_title($type_data['title']);
+          $product_slug = sanitize_title($product_data['title']);
 
-          // In merge mode, check if type already exists
+          // In merge mode, check if product already exists
+          $product_id = null;
+          if ($mode === 'merge') {
+            $product_id = $wpdb->get_var($wpdb->prepare(
+              "SELECT id FROM {$nodes_table} WHERE form_id = %d AND parent_id = %d AND node_type = 'product' AND slug = %s LIMIT 1",
+              $form_id,
+              $cat_id,
+              $product_slug
+            ));
+          }
+
+          if (!$product_id) {
+            $wpdb->insert($nodes_table, [
+              'form_id' => $form_id,
+              'parent_id' => $cat_id,
+              'node_type' => 'product',
+              'title' => $product_data['title'],
+              'slug' => $product_slug,
+              'position' => $product_pos++,
+              'settings_json' => json_encode(['_demo_seed' => 1, '_demo_pack' => $industry_pack])
+            ]);
+            $product_id = $wpdb->insert_id;
+            $stats['products']++;
+          }
+
+          // Create a default Type under this Product
+          $type_slug = sanitize_title($product_data['title'] . '-standard');
           $type_id = null;
           if ($mode === 'merge') {
             $type_id = $wpdb->get_var($wpdb->prepare(
               "SELECT id FROM {$nodes_table} WHERE form_id = %d AND parent_id = %d AND node_type = 'type' AND slug = %s LIMIT 1",
               $form_id,
-              $cat_id,
+              $product_id,
               $type_slug
             ));
           }
@@ -7849,11 +7875,11 @@ final class SFB_Plugin {
           if (!$type_id) {
             $wpdb->insert($nodes_table, [
               'form_id' => $form_id,
-              'parent_id' => $cat_id,
+              'parent_id' => $product_id,
               'node_type' => 'type',
-              'title' => $type_data['title'],
+              'title' => 'Standard',
               'slug' => $type_slug,
-              'position' => $type_pos++,
+              'position' => 0,
               'settings_json' => json_encode(['_demo_seed' => 1, '_demo_pack' => $industry_pack])
             ]);
             $type_id = $wpdb->insert_id;
@@ -7861,11 +7887,11 @@ final class SFB_Plugin {
           }
 
           // Insert items (models)
-          if (isset($type_data['items']) && is_array($type_data['items'])) {
+          if (isset($product_data['items']) && is_array($product_data['items'])) {
             $item_pos = 0;
             $item_count = 0;
 
-            foreach ($type_data['items'] as $item_data) {
+            foreach ($product_data['items'] as $item_data) {
               // Apply size limit for items
               if ($item_count >= $size_limits['max_items']) {
                 break;
@@ -7960,7 +7986,7 @@ final class SFB_Plugin {
       'elapsed_ms' => $elapsed,
       'counts' => [
         'categories' => $stats['categories'],
-        'products' => 0, // No separate product level in new schema
+        'products' => $stats['products'],
         'types' => $stats['types'],
         'models' => $stats['models'],
       ],
