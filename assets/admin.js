@@ -439,7 +439,7 @@
     }
   }
 
-  function Row({ node, onSelect, selectedId, collapsed, onToggle, onAddChild, onRename, onDuplicate, onDelete, onDragDrop, searchQuery, searchFilter, bulkSelected, onBulkToggle, allNodes, loadForm, drag, setDrag, dragDisabled, flat, nodesById, lastClickedId, setLastClickedId }){
+  function Row({ node, onSelect, selectedId, collapsed, onToggle, onAddChild, onRename, onDuplicate, onDelete, onDragDrop, searchQuery, searchFilter, bulkSelected, onBulkToggle, allNodes, loadForm, drag, setDrag, dragDisabled, flat, nodesById, lastClickedId, setLastClickedId, highlightedNodeId, pendingInlineCreate, setPendingInlineCreate }){
     const ref = useRef(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(node.title);
@@ -450,6 +450,7 @@
     const inputRef = useRef(null);
 
     const isSel = selectedId === node.id;
+    const isHighlighted = highlightedNodeId === node.id;
     const hasChildren = (node.children||[]).length > 0;
     const isCollapsed = collapsed.has(node.id);
     const allowedChild = ALLOWED_CHILDREN[node.node_type];
@@ -534,6 +535,14 @@
       return () => window.removeEventListener('sfb-rename', handleRename);
     }, [node.id]);
 
+    // Handle pending inline create trigger from Inspector modal
+    useEffect(()=> {
+      if (pendingInlineCreate && pendingInlineCreate.parentId === node.id) {
+        setCreatingChild(pendingInlineCreate.nodeType);
+        setPendingInlineCreate(null); // Clear the trigger
+      }
+    }, [pendingInlineCreate, node.id, setPendingInlineCreate]);
+
     const startEdit = (e) => {
       if (e) e.stopPropagation();
       setEditValue(node.title);
@@ -602,7 +611,7 @@
     return h(Fragment, null,
       h('div', {
         ref,
-        className:'sfb-tree-row'+(isSel?' selected':'')+(isDimmed?' sfb-dim':'')+(dropZone?' sfb-drop-'+dropZone:'')+(isEditing?' editing':'')+(isBulkSelected?' bulk-selected':''),
+        className:'sfb-tree-row'+(isSel?' selected':'')+(isDimmed?' sfb-dim':'')+(dropZone?' sfb-drop-'+dropZone:'')+(isEditing?' editing':'')+(isBulkSelected?' bulk-selected':'')+(isHighlighted?' sfb-node-highlight':''),
         'data-id': String(node.id),
         'data-parent-id': String(node.parent_id ?? ''),
         'data-node-type': node.node_type,
@@ -765,10 +774,12 @@
               }, node.title),
           h('span', {className:'sfb-badge '+node.node_type}, TYPE_LABEL[node.node_type]),
           // Count badge for categories and products
-          counts && (counts.type > 0 || counts.model > 0) && h('span', {className:'sfb-count-badge'},
+          counts && (counts.type > 0 || counts.subtype > 0 || counts.model > 0) && h('span', {className:'sfb-count-badge'},
             node.node_type === 'category'
-              ? `${counts.type} Types / ${counts.model} Models`
-              : `${counts.model} Models`
+              ? `${counts.type} Types / ${counts.subtype} Subtypes / ${counts.model} Models`
+              : node.node_type === 'product'
+                ? `${counts.type} Types / ${counts.subtype} Subtypes / ${counts.model} Models`
+                : `${counts.model} Models`
           ),
           // Error indicator
           hasErrors && h('span', {className:'sfb-error-dot', title: validationErrors.join(', ')}, '●')
@@ -814,7 +825,7 @@
         (node.children||[]).map(ch=> h(Row,{
           key:ch.id, node:ch, onSelect, selectedId, collapsed, onToggle, onAddChild, onRename, onDuplicate, onDelete, onDragDrop,
           searchQuery, searchFilter, bulkSelected, onBulkToggle, allNodes, loadForm, drag, setDrag, dragDisabled, flat, nodesById,
-          lastClickedId, setLastClickedId
+          lastClickedId, setLastClickedId, highlightedNodeId, pendingInlineCreate, setPendingInlineCreate
         })),
         creatingChild && h(InlineCreateRow, {
           key: 'creating',
@@ -975,7 +986,7 @@
     );
   }
 
-  function Inspector({ node, onSave, onCreate, onDelete, onReorder, breadcrumbs, onSelectNode, allNodes, fieldDefinitions }){
+  function Inspector({ node, onSave, onCreate, onDelete, onReorder, breadcrumbs, onSelectNode, allNodes, fieldDefinitions, onTriggerInlineCreate }){
     if (!node) return h('p', {style:{padding:'20px',textAlign:'center',color:'#6b7280'}}, 'Select a node to view details');
 
     const [activeTab, setActiveTab] = useState('details');
@@ -1037,7 +1048,7 @@
 
     // Auto-focus title for new nodes
     useEffect(()=> {
-      if (titleInputRef.current && (node.title.startsWith('New ') || node.title === 'Category' || node.title === 'Product' || node.title === 'Type' || node.title === 'Model' || node.title === 'Untitled')) {
+      if (titleInputRef.current && (node.title.startsWith('New ') || node.title === 'Category' || node.title === 'Product' || node.title === 'Type' || node.title === 'Subtype' || node.title === 'Model' || node.title === 'Untitled')) {
         titleInputRef.current.focus();
         titleInputRef.current.select();
       }
@@ -1149,16 +1160,36 @@
         activeTab === 'details' && h(Fragment, null,
           h('div', {className:'sfb-field'},
             h('label', null, 'Title'),
-            h('input', {
-              ref: titleInputRef,
-              type: 'text',
-              value: title,
-              onChange: e => setTitle(e.target.value),
-              onBlur: autoSave
-            })
+            h('div', {style: {position: 'relative'}},
+              h('input', {
+                ref: titleInputRef,
+                type: 'text',
+                value: title,
+                onChange: e => setTitle(e.target.value),
+                onBlur: autoSave,
+                onKeyDown: e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.target.blur(); // Trigger onBlur which calls autoSave
+                  }
+                }
+              }),
+              saveStatus && h('div', {
+                style: {
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: '11px',
+                  color: saveStatus === 'saved' ? '#059669' : '#6b7280',
+                  fontWeight: '500',
+                  pointerEvents: 'none'
+                }
+              }, saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : '')
+            )
           ),
           h('div', {className:'sfb-field'},
-            h('label', null, 'Node Type'),
+            h('label', null, 'Type'),
             h('div', {className:'sfb-field-readonly'}, TYPE_LABEL[node.node_type])
           ),
           h('div', {className:'sfb-field'},
@@ -1176,12 +1207,20 @@
                 h('button', {
                   key: t,
                   className: 'button',
-                  onClick: () => onCreate({
-                    form_id: node.form_id || 1,
-                    parent_id: node.id,
-                    node_type: t,
-                    title: TYPE_LABEL[t]
-                  })
+                  onClick: () => {
+                    // Trigger inline creation mode instead of immediate creation
+                    if (onTriggerInlineCreate) {
+                      onTriggerInlineCreate(node, t);
+                    } else {
+                      // Fallback to old behavior if callback not provided
+                      onCreate({
+                        form_id: node.form_id || 1,
+                        parent_id: node.id,
+                        node_type: t,
+                        title: TYPE_LABEL[t]
+                      });
+                    }
+                  }
                 }, '+ ' + TYPE_LABEL[t])
               )
             )
@@ -1565,8 +1604,11 @@
     const [tree, setTree] = useState([]);
     const [selected, setSelected] = useState(null);
     const nextSelectIdRef = useRef(null);
+    const skipReselectionRef = useRef(false); // Flag to prevent re-selecting after inline creation
     const [collapsed, setCollapsed] = useState(loadCollapsedSet);
     const [bulkSelected, setBulkSelected] = useState(new Set()); // Set of node IDs
+    const [highlightedNodeId, setHighlightedNodeId] = useState(null); // ID of newly created node to highlight
+    const [pendingInlineCreate, setPendingInlineCreate] = useState(null); // {parentId, nodeType} to trigger inline creation
     const lastSelectedRef = useRef(null); // for Shift-click range selection
     const { query, setQuery, filter, setFilter, debouncedQuery } = useSearchFilter();
     const [fieldDefinitions, setFieldDefinitions] = useState(['Size', 'Flange', 'Thickness', 'KSI']); // POC: Form-wide field definitions
@@ -1803,9 +1845,11 @@
               selectById(res.nodes, nextSelectIdRef.current);
               window.__SFB_SCROLL_TO = nextSelectIdRef.current;
               nextSelectIdRef.current = null;
-            } else if (selected) {
+            } else if (selected && !skipReselectionRef.current) {
               selectById(res.nodes, selected.id);
             }
+            // Reset skip flag after load
+            skipReselectionRef.current = false;
           } else {
             console.warn('SFB: form not ok', res);
           }
@@ -1956,13 +2000,13 @@
         .catch(err=>{ console.error(err); alert('Save error: '+(err?.message||err)); });
     }
 
-    function createNode(payload, skipUndo = false){
+    function createNode(payload, skipUndo = false, skipAutoSelect = false){
       // Migration helper: If creating first Subtype under a Type that has Models, offer to move them
       if (payload.node_type === 'subtype' && payload.parent_id) {
-        const parentType = nodes.find(n => n.id === payload.parent_id);
+        const parentType = flat.find(n => n.id === payload.parent_id);
         if (parentType && parentType.node_type === 'type') {
-          const existingModels = nodes.filter(n => n.parent_id === payload.parent_id && n.node_type === 'model');
-          const existingSubtypes = nodes.filter(n => n.parent_id === payload.parent_id && n.node_type === 'subtype');
+          const existingModels = flat.filter(n => n.parent_id === payload.parent_id && n.node_type === 'model');
+          const existingSubtypes = flat.filter(n => n.parent_id === payload.parent_id && n.node_type === 'subtype');
 
           // If this is the first subtype and there are existing models, offer migration
           if (existingSubtypes.length === 0 && existingModels.length > 0) {
@@ -2019,8 +2063,24 @@
         .then(res=> {
           if (res?.ok && res.node?.id){
             const newId = res.node.id;
-            nextSelectIdRef.current = newId;
+            if (!skipAutoSelect) {
+              nextSelectIdRef.current = newId;
+            }
+
+            // Auto-expand parent node so new child is visible
+            if (payload.parent_id) {
+              setCollapsed(prev => {
+                const next = new Set(prev);
+                next.delete(payload.parent_id);
+                return next;
+              });
+            }
+
             load();
+
+            // Highlight the newly created node
+            setHighlightedNodeId(newId);
+            setTimeout(() => setHighlightedNodeId(null), 2500);
 
             // Push undo: create → delete
             if (!skipUndo) {
@@ -2028,7 +2088,7 @@
                 execute: () => deleteNode(newId, true),
                 redo: () => createNode(payload, true)
               });
-              showToast('Node created');
+              showToast(`${TYPE_LABEL[payload.node_type]} created`);
             }
           } else {
             alert('Create failed');
@@ -2042,12 +2102,13 @@
     }
 
     function addChildInline(parentNode, childType, title){
+      skipReselectionRef.current = true; // Prevent re-selecting parent after inline creation
       createNode({
         form_id: parentNode.form_id || 1,
         parent_id: parentNode.id,
         node_type: childType,
         title: title || TYPE_LABEL[childType]
-      });
+      }, false, true); // skipUndo=false, skipAutoSelect=true
     }
 
     function deleteNode(id, skipUndo = false){
@@ -2055,7 +2116,7 @@
       const nodeToDelete = normalizedFlat.find(n => n.id === id);
       if (!nodeToDelete) return;
 
-      if (!skipUndo && !confirm('Delete this node and all its children?')) return;
+      if (!skipUndo && !confirm(`Delete this ${TYPE_LABEL[nodeToDelete.node_type]} and all its children?`)) return;
 
       // Capture entire subtree for undo
       const captureSubtree = (nodeId) => {
@@ -2092,7 +2153,7 @@
                 },
                 redo: () => deleteNode(id, true)
               });
-              showToast('Node deleted');
+              showToast(`${TYPE_LABEL[nodeToDelete.node_type]} deleted`);
             }
           } else {
             alert('Delete failed');
@@ -2159,7 +2220,7 @@
                   if (currentNode) renameNode(currentNode, newTitle, null, true);
                 }
               });
-              showToast('Node renamed');
+              showToast(`${TYPE_LABEL[node.node_type]} renamed`);
             }
           } else {
             alert('Rename failed');
@@ -2743,12 +2804,18 @@
           h('div',{className:'sfb-pill'+(filter==='category'?' active':''), onClick:()=>setFilter('category')}, 'Category'),
           h('div',{className:'sfb-pill'+(filter==='product'?' active':''), onClick:()=>setFilter('product')}, 'Product'),
           h('div',{className:'sfb-pill'+(filter==='type'?' active':''), onClick:()=>setFilter('type')}, 'Type'),
+          h('div',{className:'sfb-pill'+(filter==='subtype'?' active':''), onClick:()=>setFilter('subtype')}, 'Subtype'),
           h('div',{className:'sfb-pill'+(filter==='model'?' active':''), onClick:()=>setFilter('model')}, 'Model'),
           h('div',{style:{borderLeft:'1px solid #e5e7eb',paddingLeft:'8px',marginLeft:'4px',display:'flex',gap:'4px'}},
             h('div',{className:'sfb-pill',onClick:()=>collapseByType('product'),title:'Collapse all Products'},'⊟ Products'),
             h('div',{className:'sfb-pill',onClick:()=>collapseByType('type'),title:'Collapse all Types'},'⊟ Types'),
+            h('div',{className:'sfb-pill',onClick:()=>collapseByType('subtype'),title:'Collapse all Subtypes'},'⊟ Subtypes'),
             h('div',{className:'sfb-pill',onClick:()=>collapseByType('model'),title:'Collapse all Models'},'⊟ Models')
           )
+        ),
+        // Filter active notice
+        filter !== 'all' && h('div', {className: 'sfb-filter-notice'},
+          `Filter active: Only showing ${filter === 'category' ? 'Categories' : filter === 'product' ? 'Products' : filter === 'type' ? 'Types' : filter === 'subtype' ? 'Subtypes' : 'Models'}. Click "All" above to see everything.`
         ),
         // Drag disabled banner
         dragDisabled && h('div', {className: 'sfb-drag-disabled-banner'},
@@ -2805,7 +2872,10 @@
                 flat,
                 nodesById,
                 lastClickedId:lastSelectedRef.current,
-                setLastClickedId:(id)=>{lastSelectedRef.current=id;}
+                setLastClickedId:(id)=>{lastSelectedRef.current=id;},
+                highlightedNodeId,
+                pendingInlineCreate,
+                setPendingInlineCreate
               }))
             )
             : h('div',{className:'sfb-empty'},
@@ -2837,18 +2907,45 @@
       // Inspector Modal (opens when node is selected)
       selected && h('div', {
         className: 'sfb-modal-overlay',
-        onClick: () => setSelected(null)
+        onClick: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelected(null);
+        },
+        onMouseDown: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        },
+        onKeyDown: (e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            setSelected(null);
+          }
+        }
       },
         h('div', {
           className: 'sfb-modal sfb-inspector-modal',
-          onClick: (e) => e.stopPropagation()
+          onClick: (e) => {
+            e.stopPropagation();
+            // Don't let clicks inside modal content bubble to overlay
+          }
         },
           h('div', {className: 'sfb-modal-header'},
-            h('h3', null, 'Edit Node'),
+            h('h3', null, `Edit ${TYPE_LABEL[selected.node_type]}`),
             h('button', {
               type: 'button',
               className: 'sfb-modal-close',
-              onClick: () => setSelected(null),
+              onMouseDown: (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent?.stopImmediatePropagation();
+                setSelected(null);
+              },
+              onClick: (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent?.stopImmediatePropagation();
+              },
               'aria-label': 'Close'
             }, '×')
           ),
@@ -2865,7 +2962,19 @@
                 window.__SFB_SCROLL_TO = node.id;
               },
               allNodes: normalizedFlat,
-              fieldDefinitions: fieldDefinitions // POC: Pass dynamic field definitions
+              fieldDefinitions: fieldDefinitions, // POC: Pass dynamic field definitions
+              onTriggerInlineCreate: (parentNode, nodeType) => {
+                // Close modal
+                setSelected(null);
+                // Trigger inline creation in the tree
+                setPendingInlineCreate({ parentId: parentNode.id, nodeType });
+                // Expand parent if collapsed
+                setCollapsed(prev => {
+                  const next = new Set(prev);
+                  next.delete(parentNode.id);
+                  return next;
+                });
+              }
             })
           )
         )

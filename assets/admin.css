@@ -131,13 +131,50 @@
   background:#f8fafc;
 }
 .sfb-pill.active{
-  background:#eef2ff;
-  border-color:#c7d2fe;
+  background:#4f46e5;
+  border-color:#4f46e5;
   font-weight:600;
-  color:#4338ca;
+  color:#fff;
+  box-shadow:0 2px 4px rgba(79,70,229,0.3);
+}
+
+/* Filter notice banner */
+.sfb-filter-notice{
+  background:#fef3c7;
+  border:1px solid #fbbf24;
+  border-radius:4px;
+  padding:8px 12px;
+  margin-bottom:12px;
+  font-size:12px;
+  color:#92400e;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.sfb-filter-notice::before{
+  content:"⚠️";
 }
 .sfb-dim{
   opacity:.35;
+}
+
+/* Highlight newly created node */
+.sfb-node-highlight{
+  animation: sfb-highlight-pulse 2s ease-out;
+}
+@keyframes sfb-highlight-pulse {
+  0% {
+    background: #fef3c7;
+    box-shadow: 0 0 0 3px #fbbf24;
+  }
+  50% {
+    background: #fef3c7;
+    box-shadow: 0 0 0 3px #fbbf24;
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
 }
 
 /* Tree rows with hierarchy */
