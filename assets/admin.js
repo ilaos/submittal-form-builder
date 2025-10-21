@@ -2820,13 +2820,7 @@
           h('div',{className:'sfb-pill'+(filter==='product'?' active':''), onClick:()=>setFilter('product')}, 'Product'),
           h('div',{className:'sfb-pill'+(filter==='type'?' active':''), onClick:()=>setFilter('type')}, 'Type'),
           h('div',{className:'sfb-pill'+(filter==='subtype'?' active':''), onClick:()=>setFilter('subtype')}, 'Subtype'),
-          h('div',{className:'sfb-pill'+(filter==='model'?' active':''), onClick:()=>setFilter('model')}, 'Model'),
-          h('div',{style:{borderLeft:'1px solid #e5e7eb',paddingLeft:'8px',marginLeft:'4px',display:'flex',gap:'4px'}},
-            h('div',{className:'sfb-pill',onClick:()=>collapseByType('product'),title:'Collapse all Products'},'⊟ Products'),
-            h('div',{className:'sfb-pill',onClick:()=>collapseByType('type'),title:'Collapse all Types'},'⊟ Types'),
-            h('div',{className:'sfb-pill',onClick:()=>collapseByType('subtype'),title:'Collapse all Subtypes'},'⊟ Subtypes'),
-            h('div',{className:'sfb-pill',onClick:()=>collapseByType('model'),title:'Collapse all Models'},'⊟ Models')
-          )
+          h('div',{className:'sfb-pill'+(filter==='model'?' active':''), onClick:()=>setFilter('model')}, 'Model')
         ),
         // Filter active notice
         filter !== 'all' && h('div', {className: 'sfb-filter-notice'},
