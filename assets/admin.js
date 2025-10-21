@@ -805,7 +805,7 @@
           hasErrors && h('span', {className:'sfb-error-dot', title: validationErrors.join(', ')}, '●')
         ),
         // Kebab menu
-        !isEditing && h('div', {className:'sfb-row-actions', style:{position:'relative'}},
+        !isEditing && h('div', {className:'sfb-row-actions' + (showMenu ? ' sfb-menu-open' : ''), style:{position:'relative'}},
           h('div', {
             className:'sfb-kebab',
             onClick:(e)=>{ e.stopPropagation(); setShowMenu(!showMenu); }
