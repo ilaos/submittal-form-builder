@@ -402,10 +402,12 @@
 
   // ========== Render Products ==========
   function renderProducts() {
+    console.log('[SFB] renderProducts() called');
     if (!elements.productsGrid) return;
 
     // Get filtered composite keys
     let filteredKeys = [];
+    console.log('[SFB] Active category:', state.activeCategory);
 
     // Start with all products or category filter
     if (state.activeCategory) {
