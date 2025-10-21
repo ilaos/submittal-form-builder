@@ -2092,6 +2092,7 @@
     }
 
     function addChildInline(parentNode, childType, title){
+      console.log('[SFB addChildInline] Creating child:', childType, 'under parent:', parentNode.id, 'collapsed state:', Array.from(collapsed));
       skipReselectionRef.current = true; // Prevent re-selecting parent after inline creation
       createNode({
         form_id: parentNode.form_id || 1,
