@@ -404,7 +404,7 @@ Retrieve complete form with all nodes (categories, products, types, models) and 
 - `nodes` (array) - Flat array of all nodes in hierarchical order
 - `node.id` (int) - Unique node ID
 - `node.parent_id` (int|null) - Parent node ID (null for categories)
-- `node.node_type` (string) - `category`, `product`, `type`, or `model`
+- `node.node_type` (string) - `category`, `product`, `type`, `subtype`, or `model`
 - `node.title` (string) - Node display name
 - `node.position` (int) - Sort order within parent
 - `node.settings` (object) - Node metadata (fields for models)
@@ -491,6 +491,30 @@ Field definitions are stored in `sfb_forms.settings_json` under the `field_defin
 
 ## Node Operations
 
+All product data is stored as hierarchical nodes. Understanding the hierarchy is important for proper catalog organization.
+
+### Node Hierarchy
+
+Products follow a 5-level structure:
+
+| Level | Type | Field Name | Purpose | Example |
+|-------|------|------------|---------|---------|
+| 1 | Category | `category` | Sidebar filtering | "Framing", "Valves" |
+| 2 | Product | `product_label` | **Main grouping** (frontend/PDF headers) | "25 GAUGE 18 MIL" |
+| 3 | Type | `type_label` | Model card badge | "1-1/4\" FLNG" |
+| 4 | Subtype | (optional) | Additional grouping | "18 mil" |
+| 5 | Model | `model` | Individual item | "162S162-43" |
+
+**Important:** The `product_label` field (Level 2) is used as the main organizing principle:
+- **Frontend:** Models are grouped under colored Product headers
+- **PDF:** Summary page grouped by Product; breadcrumbs show "Category / Product"
+
+When creating nodes via API, ensure Product names are descriptive and professional, as they appear prominently in generated output.
+
+**See Also:** [Product Management Guide](../website/product-management.md#how-hierarchy-affects-what-users-see) for visual examples.
+
+---
+
 ### POST /sfb/v1/node/save
 Update an existing node's fields (title, settings, etc.).
 
@@ -546,7 +570,7 @@ wp.apiFetch({
 ---
 
 ### POST /sfb/v1/node/create
-Create a new node (category, product, type, or model).
+Create a new node (category, product, type, subtype, or model).
 
 **Permission:** Admin
 
@@ -563,7 +587,7 @@ Create a new node (category, product, type, or model).
 **Parameters:**
 - `form_id` (int, required) - Form ID. Usually `1`.
 - `parent_id` (int|null, required) - Parent node ID (null for top-level categories)
-- `node_type` (string, required) - `category`, `product`, `type`, or `model`
+- `node_type` (string, required) - `category`, `product`, `type`, `subtype`, or `model`
 - `title` (string, required) - Node display name
 - `settings` (object, optional) - Initial metadata
 
@@ -1067,11 +1091,14 @@ Generate a PDF packet from selected products.
 
 **Parameters:**
 - `form_id` (int, required) - Form ID. Usually `1`.
-- `items` (array, required) - Array of selected products with metadata
-  - `id` (int) - Product/model node ID
-  - `title` (string) - Product display name
-  - `meta` (object) - Specification fields
-  - `path` (array) - Breadcrumb hierarchy
+- `items` (array, required) - Array of selected models with metadata
+  - `id` (int) - Model node ID
+  - `model` (string) - Model name/number (e.g., "162S162-43")
+  - `product_label` (string) - Product name for grouping (e.g., "25 GAUGE 18 MIL")
+  - `category` (string) - Category name for breadcrumb
+  - `type_label` (string, optional) - Type for display
+  - `specs` (object) - Specification fields (key-value pairs)
+  - `path` (array) - Full breadcrumb hierarchy
 - `meta` (object, required) - Project metadata
   - `project` (string, optional) - Project name
   - `contractor` (string, optional) - Contractor name

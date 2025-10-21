@@ -1314,42 +1314,6 @@
     );
   }
 
-  function SplitButton({ selected, onAddCategory, onAddChild }){
-    const [open, setOpen] = useState(false);
-
-    useEffect(()=> {
-      if (open) {
-        const handleClick = () => setOpen(false);
-        document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
-      }
-    }, [open]);
-
-    const allowedChild = selected ? ALLOWED_CHILDREN[selected.node_type] : [];
-    const canAddChild = selected && allowedChild && allowedChild.length > 0;
-
-    return h('div',{className:'sfb-split'+(open?' open':'')},
-      h('button',{
-        className:'button sfb-split-main',
-        onClick:onAddCategory
-      },'+ Add Category'),
-      h('button',{
-        className:'button sfb-split-caret',
-        onClick:(e)=>{ e.stopPropagation(); setOpen(!open); }
-      },'▼'),
-      h('div',{className:'dropdown'},
-        canAddChild && allowedChild.map(type =>
-          h('div',{
-            key:type,
-            className:'item',
-            onClick:()=> { onAddChild(selected, type); setOpen(false); }
-          }, `Add ${TYPE_LABEL[type]}`)
-        ),
-        !canAddChild && h('div',{className:'item disabled'},'Select a node first')
-      )
-    );
-  }
-
   // Command Palette
   function CommandPalette({ isOpen, onClose, nodes, onSelectNode, onAction, selected }){
     const [searchTerm, setSearchTerm] = useState('');
@@ -2752,9 +2716,39 @@
 
     return h('div',{id:'sfb-admin-shell'},
       h('div',{className:'sfb-col sfb-col-left'},
-        h('h2',null,'Form Tree'),
+        h('div',{className:'sfb-catalog-header'},
+          h('h2',null,'Product Catalog'),
+          h('button',{
+            className:'sfb-help-toggle',
+            onClick:() => {
+              const helpBox = document.querySelector('.sfb-hierarchy-help');
+              if(helpBox) helpBox.classList.toggle('sfb-help-hidden');
+            },
+            title:'Show/hide hierarchy guide'
+          },'ⓘ Hierarchy Guide')
+        ),
+        h('div',{className:'sfb-hierarchy-help sfb-help-hidden'},
+          h('div',{className:'sfb-help-content'},
+            h('strong',null,'Product Hierarchy:'),
+            h('div',{className:'sfb-help-levels'},
+              h('div',null,'1️⃣ Category → Sidebar filtering'),
+              h('div',null,'2️⃣ Product → Main grouping (headers in frontend/PDF)'),
+              h('div',null,'3️⃣ Type → Badge on model cards'),
+              h('div',null,'4️⃣ Subtype → Optional sub-grouping'),
+              h('div',null,'5️⃣ Model → Individual items')
+            ),
+            h('div',{className:'sfb-help-tip'},
+              h('strong',null,'💡 Tip:'),
+              ' Product names become colored section headers. Choose descriptive names like "25 GAUGE 18 MIL" instead of generic ones.'
+            )
+          )
+        ),
         h('div',{className:'sfb-tree-controls'},
-          h(SplitButton, { selected, onAddCategory:addCategory, onAddChild:addChildInline }),
+          h('button',{
+            className:'button sfb-btn-add-category',
+            onClick:addCategory,
+            title:'Add a new top-level Category to organize your products'
+          },'+ Add Category'),
           h('button',{className:'button',onClick:openCatalogModal},'Load Sample Catalog'),
           h('button',{
             className:'button',

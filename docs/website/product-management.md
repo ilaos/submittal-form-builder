@@ -21,15 +21,17 @@ WordPress Admin → Submittal Builder → Catalog Builder
 
 ## Product Hierarchy
 
-Products are organized in a 4-level hierarchy designed to match how contractors and engineers think about product selection.
+Products are organized in a flexible 4-5 level hierarchy designed to match how contractors and engineers think about product selection.
 
 ### Structure
 
 ```
-Category (e.g., "C-Studs")
-  └── Product (e.g., "Steel Studs")
-      └── Type (e.g., "20 Gauge")
-          └── Model (e.g., "362S162-20", "600S162-20")
+Category (e.g., "Valves")
+  └── Product (e.g., "Ball Valves")
+      └── Type (e.g., "2-Way")
+          ├── Subtype (e.g., "1-1/4" Flange") [Optional]
+          │   └── Model (e.g., "BV-125-FL")
+          └── Model (e.g., "BV-200") [If no subtypes]
 ```
 
 ### Levels Explained
@@ -38,9 +40,9 @@ Category (e.g., "C-Studs")
 Top-level grouping of related products.
 
 **Examples:**
+- Valves
 - C-Studs
 - Track
-- Angles
 - HVAC Units
 - Electrical Panels
 
@@ -52,6 +54,7 @@ Top-level grouping of related products.
 Specific product line within a category.
 
 **Examples:**
+- Ball Valves (under Valves category)
 - Steel Studs (under C-Studs category)
 - Hat Channel (under Framing category)
 - Air Handlers (under HVAC category)
@@ -64,6 +67,7 @@ Specific product line within a category.
 Variant or specification type.
 
 **Examples:**
+- 2-Way (under Ball Valves)
 - 20 Gauge (under Steel Studs)
 - 25 Gauge (under Steel Studs)
 - Single Zone (under HVAC Units)
@@ -72,16 +76,135 @@ Variant or specification type.
 
 ---
 
-**Level 4: Model**
+**Level 4: Subtype** (Optional)
+Size, configuration, or specification subgroup within a Type.
+
+**Examples:**
+- 1-1/4" Flange (under 2-Way Ball Valves)
+- 1-1/2" Flange (under 2-Way Ball Valves)
+- 18 mil (under 20 Gauge Steel Studs)
+
+**Purpose:** Additional grouping for sizes, configurations, or specifications
+
+**Note:** This level is optional. If you don't need subgroupings, you can add Models directly under Types.
+
+---
+
+**Level 5: Model**
 Individual product model with specific specifications.
 
 **Examples:**
+- BV-125-FL (under 1-1/4" Flange subtype)
 - 362S162-20 (under 20 Gauge Steel Studs)
 - 600S162-20 (under 20 Gauge Steel Studs)
 
 **Purpose:** Specific orderable product with full specs
 
-**Note:** This is the level that appears in generated PDFs.
+**Note:** These appear in generated PDFs with their full hierarchy path.
+
+---
+
+## How Hierarchy Affects What Users See
+
+Understanding the hierarchy is important because **Product (Level 2)** is the main organizing principle for both the frontend and PDF output.
+
+### Quick Reference Card
+
+| Hierarchy Level | Example | Where It Appears |
+|----------------|---------|------------------|
+| **Category** | "Framing" | Sidebar navigation for filtering |
+| **Product** | "25 GAUGE 18 MIL" | **Colored section headers** grouping models together |
+| **Type** | "1-1/4\" FLNG" | Blue badge on model cards |
+| **Subtype** | (optional) | Can be used for additional grouping |
+| **Model** | "162S162-43" | Individual card title / main item name |
+
+### Frontend Product Browser
+
+When customers browse products on your site, here's what they see:
+
+```
+┌─────────────────────────────────────────┐
+│ Sidebar: Categories                     │
+│ ☑ Framing                               │
+│ ☐ Valves                                │
+│ ☐ HVAC                                  │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ 25 GAUGE 18 MIL          7 models      │ ← Product header (your theme color)
+├─────────────────────────────────────────┤
+│ ┌──────────┐  ┌──────────┐  ┌──────────┐│
+│ │1-1/4 FLNG│  │1-1/2 FLNG│  │2" FLNG   ││ ← Type badges
+│ │          │  │          │  │          ││
+│ │162S162-43│  │250S162-54│  │350S162-54││ ← Model names
+│ │          │  │          │  │          ││
+│ │Size: 1.25│  │Size: 1.5 │  │Size: 2.0 ││
+│ └──────────┘  └──────────┘  └──────────┘│
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ 20 GAUGE 30 MIL          5 models      │ ← Next product
+├─────────────────────────────────────────┤
+│ (more models...)                        │
+└─────────────────────────────────────────┘
+```
+
+**Key Points:**
+- **Category** appears in the sidebar for filtering (click to show only those products)
+- **Product** becomes the colored header - all models with the same Product name are grouped together
+- **Type** shows as a small blue badge on each model card
+- **Model** is the main name displayed on each card
+
+### PDF Submittal Packet
+
+The PDF uses the same Product-based grouping:
+
+**Summary Page:**
+```
+SUMMARY
+This packet contains 12 models across 2 products.
+
+┌─────────────────────────────────────────┐
+│ 25 GAUGE 18 MIL (7 models)             │
+├─────────────────────────────────────────┤
+│ Qty │ Model        │ Specs     │ Notes  │
+│  1  │ 162S162-43   │ Size: 1.25│        │
+│  1  │ 250S162-54   │ Size: 1.5 │        │
+│  1  │ 350S162-54   │ Size: 2.0 │        │
+│ ... │ ...          │ ...       │        │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ 20 GAUGE 30 MIL (5 models)             │
+├─────────────────────────────────────────┤
+│ ... │ ...          │ ...       │        │
+└─────────────────────────────────────────┘
+```
+
+**Individual Model Pages:**
+```
+Page header breadcrumb:
+Framing / 25 GAUGE 18 MIL
+
+Model: 162S162-43
+[Full specifications and details]
+```
+
+### Why This Matters
+
+When planning your catalog, think about **Product** as your main grouping:
+
+✅ **Good Product Grouping:**
+- "25 GAUGE 18 MIL" (groups all 25-gauge 18-mil models together)
+- "Ball Valves 2-Way" (groups all 2-way ball valve models together)
+- "Air Handlers Single Zone" (groups all single-zone models together)
+
+❌ **Avoid This:**
+- Using generic products like "Standard" or "Various" (makes poor section headers)
+- Putting too many different items in one Product (creates giant unwieldy sections)
+- Using the same Product name across different categories (creates confusion)
+
+**Pro Tip:** Your Product name will appear on every PDF page as part of the breadcrumb and as section headers in the summary, so choose descriptive, professional names.
 
 ---
 
@@ -93,7 +216,7 @@ The Catalog Builder features a visual tree interface for managing your product h
 
 **Left Panel: Product Tree**
 - Hierarchical view of all products
-- Expandable/collapsible nodes
+- Expandable/collapsible items
 - Drag-and-drop reordering
 - Right-click context menus
 
@@ -237,12 +360,52 @@ Types are added under products.
 
 ---
 
+### Adding Subtypes (Optional)
+
+Subtypes provide an additional grouping level between Types and Models.
+
+**When to Use Subtypes:**
+- Grouping models by size (e.g., "1-1/4" Flange", "1-1/2" Flange")
+- Grouping by configuration (e.g., "Flanged", "Threaded")
+- Grouping by specification range (e.g., "18 mil", "27 mil")
+- Any other subgrouping that helps organize models
+
+**When to Skip Subtypes:**
+If your models don't need additional grouping, you can add Models directly under Types.
+
+**Steps:**
+1. **Click on a Type** in the tree
+2. **Inspector modal opens**
+3. **Details tab** → scroll to "Add Child"
+4. **Click "+ Subtype" button**
+5. **Enter subtype name** (e.g., "1-1/4\" Flange")
+6. **Click Save**
+7. **Subtype appears** under the type
+
+**Alternative:** Use kebab menu (⋮) or press Shift+N when type is selected.
+
+**Best Practices:**
+- Use when you have multiple size variants
+- Use when you have configuration options
+- Be specific about what differentiates the subgroup
+- Keep names concise
+
+**Examples:**
+- ✅ "1-1/4\" Flange" - Specific size/type
+- ✅ "Flanged Connection" - Clear configuration
+- ✅ "18 mil Coating" - Specific specification
+- ❌ "Subtype 1" - Not descriptive
+
+**Note:** Once you create a Subtype, you'll add Models under the Subtype instead of directly under the Type.
+
+---
+
 ### Adding Models
 
 Models are the actual products with specifications.
 
-**Steps:**
-1. **Click on a Type** in the tree
+**Steps (when adding directly under Type):**
+1. **Click on a Type** in the tree (if you're not using Subtypes)
 2. **Inspector modal opens**
 3. **Details tab** → scroll to "Add Child"
 4. **Click "+ Model" button**
@@ -250,7 +413,16 @@ Models are the actual products with specifications.
 6. **Click Save**
 7. **Model appears** under the type
 
-**Alternative:** Use kebab menu (⋮) or press Shift+N when type is selected.
+**Steps (when adding under Subtype):**
+1. **Click on a Subtype** in the tree (if you created Subtypes)
+2. **Inspector modal opens**
+3. **Details tab** → scroll to "Add Child"
+4. **Click "+ Model" button**
+5. **Enter model number** (e.g., "BV-125-FL")
+6. **Click Save**
+7. **Model appears** under the subtype
+
+**Alternative:** Use kebab menu (⋮) or press Shift+N when type or subtype is selected.
 
 **Best Practices:**
 - Use manufacturer model numbers
@@ -302,10 +474,10 @@ KSI: 33
 
 ## Editing Products
 
-### Editing Node Details
+### Editing Item Details
 
 **To Edit Any Item:**
-1. Click on node in tree
+1. Click on the item in the tree (Category, Product, Type, Subtype, or Model)
 2. Inspector opens with Details tab
 3. Edit name, slug, or other properties
 4. Changes save automatically
@@ -321,7 +493,7 @@ KSI: 33
 ### Editing Specifications
 
 **To Edit Model Specs:**
-1. Click on model node
+1. Click on the model in the tree
 2. Switch to **Fields tab** in inspector
 3. Edit specification values
 4. Changes save automatically
@@ -340,9 +512,9 @@ To edit multiple models with similar specs:
 ### Reordering Items
 
 **Drag and Drop:**
-1. Click and hold on any node
+1. Click and hold on any item
 2. Drag to new position
-3. Drop between other nodes or into different parent
+3. Drop between other items or into different parent
 4. Order saves automatically
 
 **Use Cases:**
@@ -361,8 +533,8 @@ To edit multiple models with similar specs:
 ### Moving Items
 
 **Change Parent:**
-1. Drag node
-2. Drop onto new parent node
+1. Drag the item
+2. Drop onto new parent item
 3. Item moves to new location
 4. Composite keys update automatically
 
@@ -376,24 +548,24 @@ Move "362S162-20" from "20 Gauge" to "25 Gauge" type.
 ### Delete Individual Items
 
 **Method 1: Inspector**
-1. Click on node to delete
+1. Click on the item to delete
 2. Inspector opens
 3. Click "Delete" button at bottom
 4. Confirm deletion
-5. Node removed from tree
+5. Item removed from tree
 
 **Method 2: Kebab Menu**
-1. Hover over node
+1. Hover over the item
 2. Click ⋮ menu
 3. Select "🗑️ Delete"
 4. Confirm deletion
 
 **Method 3: Keyboard**
-1. Select node
+1. Select the item
 2. Press **Delete** or **Backspace** key
 3. Confirm deletion
 
-**Warning:** Deleting a parent (category, product, type) deletes all children.
+**Warning:** Deleting a parent (Category, Product, Type, or Subtype) deletes all children.
 
 ---
 
@@ -401,7 +573,7 @@ Move "362S162-20" from "20 Gauge" to "25 Gauge" type.
 
 **To Delete Multiple Items:**
 1. Hold **Ctrl** (Windows) or **Cmd** (Mac)
-2. Click multiple nodes to select
+2. Click multiple items to select
 3. Press **Delete** key
 4. Confirm bulk deletion
 
@@ -436,14 +608,26 @@ Every model has a unique composite key that identifies it across the system.
 
 ### Format
 
+**Without Subtypes:**
 ```
 category-slug:product-slug:type-slug:model-slug
 ```
 
-### Example
+**With Subtypes:**
+```
+category-slug:product-slug:type-slug:subtype-slug:model-slug
+```
 
+### Examples
+
+**Without Subtype:**
 ```
 c-studs:steel-studs:20-gauge:362s162-20
+```
+
+**With Subtype:**
+```
+valves:ball-valves:2-way:1-1-4-flange:bv-125-fl
 ```
 
 ### Where It's Used
@@ -456,7 +640,7 @@ c-studs:steel-studs:20-gauge:362s162-20
 
 ### Automatic Generation
 
-Composite keys are generated automatically from node names:
+Composite keys are generated automatically from item names:
 - Lowercase
 - Spaces become hyphens
 - Special characters removed
@@ -466,6 +650,7 @@ Composite keys are generated automatically from node names:
 - "C-Studs" → `c-studs`
 - "Steel Studs" → `steel-studs`
 - "20 Gauge" → `20-gauge`
+- "1-1/4\" Flange" → `1-1-4-flange`
 - "362S162-20" → `362s162-20`
 
 ---
@@ -581,7 +766,9 @@ Track,Track (C1P1),20 Gauge,250T125-20,2.5",20 GA,33
 **Cause:** Product missing required specifications or hierarchy incomplete.
 
 **Solution:**
-1. Verify product has all 4 levels (category → product → type → model)
+1. Verify product has at least 4 levels:
+   - Without Subtypes: Category → Product → Type → Model
+   - With Subtypes: Category → Product → Type → Subtype → Model
 2. Check that model has specifications filled in
 3. Ensure Fields tab has values, not just Details tab
 4. Clear cache (if caching enabled)
@@ -596,7 +783,8 @@ Track,Track (C1P1),20 Gauge,250T125-20,2.5",20 GA,33
 1. Verify you're adding child to correct parent type:
    - Categories can have Products
    - Products can have Types
-   - Types can have Models
+   - Types can have Subtypes or Models
+   - Subtypes can have Models
    - Models have no children
 2. Refresh page and try again
 3. Check browser console for JavaScript errors

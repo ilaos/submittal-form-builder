@@ -96,18 +96,9 @@ if (!defined('ABSPATH')) exit;
             <?php esc_html_e('View', 'submittal-builder'); ?> →
           </button>
         </div>
-
-        <div class="sfb-toolbar__viewtoggle sfb-view-toggle">
-          <button type="button" class="sfb-view-btn sfb-view-grid active" data-view="grid" aria-label="<?php esc_attr_e('Grid view', 'submittal-builder'); ?>">
-            <span class="sfb-icon-grid">⊞</span>
-          </button>
-          <button type="button" class="sfb-view-btn sfb-view-list" data-view="list" aria-label="<?php esc_attr_e('List view', 'submittal-builder'); ?>">
-            <span class="sfb-icon-list">☰</span>
-          </button>
-        </div>
       </div>
 
-      <div id="sfb-products-grid" class="sfb-products-grid" data-view="grid">
+      <div id="sfb-products-grid" class="sfb-products-grid">
         <!-- Products loaded via JS -->
         <div class="sfb-loading-placeholder">
           <div class="sfb-spinner-small"></div>

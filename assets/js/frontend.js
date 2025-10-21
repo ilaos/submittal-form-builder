@@ -75,7 +75,6 @@
       productsEmpty: document.getElementById('sfb-products-empty'),
       resultsCount: document.getElementById('sfb-results-count'),
       clearFilters: document.getElementById('sfb-clear-filters'),
-      viewBtns: document.querySelectorAll('.sfb-view-btn'),
       selectionCounter: document.getElementById('sfb-selection-counter'),
       selectionCountNumber: document.getElementById('sfb-selection-count-number'),
       selectionViewBtn: document.getElementById('sfb-selection-view-btn'),
@@ -122,11 +121,6 @@
     if (elements.clearFilters) {
       elements.clearFilters.addEventListener('click', clearFilters);
     }
-
-    // View toggle
-    elements.viewBtns.forEach(btn => {
-      btn.addEventListener('click', () => toggleView(btn.dataset.view));
-    });
 
     // Selection counter "View" button
     if (elements.selectionViewBtn) {
@@ -462,112 +456,136 @@
       return;
     }
 
-    elements.productsGrid.style.display = 'grid';
+    elements.productsGrid.style.display = 'block';
     if (elements.productsEmpty) {
       elements.productsEmpty.style.display = 'none';
     }
 
-    // Render product cards
-    const html = filtered.map(product => {
-      const isSelected = state.selected.has(product.composite_key);
-
-      // Format specs inline - 2 lines max with labels
-      let specsHtml = '';
-
-      // Handle both array and object specs formats
-      let specs = product.specs;
-      let hasSpecs = false;
-
-      if (specs) {
-        if (Array.isArray(specs)) {
-          hasSpecs = specs.length > 0;
-        } else if (typeof specs === 'object') {
-          hasSpecs = Object.keys(specs).length > 0;
-        }
+    // Group models by product_label
+    const groupedByProduct = {};
+    filtered.forEach(model => {
+      const productKey = model.product_label || 'Uncategorized';
+      if (!groupedByProduct[productKey]) {
+        groupedByProduct[productKey] = [];
       }
+      groupedByProduct[productKey].push(model);
+    });
 
-      if (hasSpecs) {
-        const lines = [];
+    // Render product groups with headers
+    const html = Object.entries(groupedByProduct).map(([productLabel, models]) => {
+      // Skip empty groups (shouldn't happen, but safety check)
+      if (models.length === 0) return '';
 
-        // If specs is an object (expected format)
-        if (!Array.isArray(specs)) {
-          // Line 1: Size and Thickness/Gauge (if available)
-          const line1Parts = [];
-          if (specs.Size || specs.size) {
-            const size = specs.Size || specs.size;
-            line1Parts.push(`Size: ${escapeHtml(size)}`);
-          }
-          if (specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge) {
-            const thickness = specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge;
-            line1Parts.push(`Thick: ${escapeHtml(thickness)}`);
-          }
-          if (line1Parts.length > 0) {
-            lines.push(line1Parts.join(' · '));
-          }
+      const modelsHtml = models.map(product => {
+        const isSelected = state.selected.has(product.composite_key);
 
-          // Line 2: KSI and/or Flange (if available)
-          const line2Parts = [];
-          if (specs.KSI || specs.ksi) {
-            const ksi = specs.KSI || specs.ksi;
-            line2Parts.push(`KSI: ${escapeHtml(ksi)}`);
-          }
-          if (specs.Flange || specs.flange) {
-            const flange = specs.Flange || specs.flange;
-            line2Parts.push(`Flange: ${escapeHtml(flange)}`);
-          }
-          if (line2Parts.length > 0) {
-            lines.push(line2Parts.join(' · '));
-          }
+        // Format specs inline - 2 lines max with labels
+        let specsHtml = '';
 
-          // Fallback: if no specific fields found, show first 2-3 specs
-          if (lines.length === 0) {
-            const specEntries = Object.entries(specs).slice(0, 3);
-            const line1 = specEntries.slice(0, 2).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(' · ');
-            const line2 = specEntries.length > 2 ? `${escapeHtml(specEntries[2][0])}: ${escapeHtml(specEntries[2][1])}` : '';
-            if (line1) lines.push(line1);
-            if (line2) lines.push(line2);
+        // Handle both array and object specs formats
+        let specs = product.specs;
+        let hasSpecs = false;
+
+        if (specs) {
+          if (Array.isArray(specs)) {
+            hasSpecs = specs.length > 0;
+          } else if (typeof specs === 'object') {
+            hasSpecs = Object.keys(specs).length > 0;
           }
         }
 
-        if (lines.length > 0) {
-          specsHtml = `
-            <div class="sfb-card-specs">
-              ${lines.map(line => `<div>${line}</div>`).join('')}
-            </div>
-          `;
-        }
-      }
+        if (hasSpecs) {
+          const lines = [];
 
-      // Build card head with new badge strategy: Type = chip, Product = chip, Category = crumb
-      let cardHead = '';
-      if (product.type_label || product.product_label || product.category) {
-        const badges = [];
-        if (product.type_label) {
-          badges.push(`<span class="badge--type">${escapeHtml(product.type_label)}</span>`);
+          // If specs is an object (expected format)
+          if (!Array.isArray(specs)) {
+            // Line 1: Size and Thickness/Gauge (if available)
+            const line1Parts = [];
+            if (specs.Size || specs.size) {
+              const size = specs.Size || specs.size;
+              line1Parts.push(`Size: ${escapeHtml(size)}`);
+            }
+            if (specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge) {
+              const thickness = specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge;
+              line1Parts.push(`Thick: ${escapeHtml(thickness)}`);
+            }
+            if (line1Parts.length > 0) {
+              lines.push(line1Parts.join(' · '));
+            }
+
+            // Line 2: KSI and/or Flange (if available)
+            const line2Parts = [];
+            if (specs.KSI || specs.ksi) {
+              const ksi = specs.KSI || specs.ksi;
+              line2Parts.push(`KSI: ${escapeHtml(ksi)}`);
+            }
+            if (specs.Flange || specs.flange) {
+              const flange = specs.Flange || specs.flange;
+              line2Parts.push(`Flange: ${escapeHtml(flange)}`);
+            }
+            if (line2Parts.length > 0) {
+              lines.push(line2Parts.join(' · '));
+            }
+
+            // Fallback: if no specific fields found, show first 2-3 specs
+            if (lines.length === 0) {
+              const specEntries = Object.entries(specs).slice(0, 3);
+              const line1 = specEntries.slice(0, 2).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(' · ');
+              const line2 = specEntries.length > 2 ? `${escapeHtml(specEntries[2][0])}: ${escapeHtml(specEntries[2][1])}` : '';
+              if (line1) lines.push(line1);
+              if (line2) lines.push(line2);
+            }
+          }
+
+          if (lines.length > 0) {
+            specsHtml = `
+              <div class="sfb-card-specs">
+                ${lines.map(line => `<div>${line}</div>`).join('')}
+              </div>
+            `;
+          }
         }
-        if (product.product_label) {
-          badges.push(`<span class="badge--product">${escapeHtml(product.product_label)}</span>`);
+
+        // Build card head with new badge strategy: Type = chip, Category = crumb (Product removed)
+        let cardHead = '';
+        if (product.type_label || product.category) {
+          const badges = [];
+          if (product.type_label) {
+            badges.push(`<span class="badge--type">${escapeHtml(product.type_label)}</span>`);
+          }
+          if (product.category) {
+            badges.push(`<span class="crumb--category">${escapeHtml(product.category)}</span>`);
+          }
+          cardHead = `<div class="sfb-card__head">${badges.join('')}</div>`;
         }
-        if (product.category) {
-          badges.push(`<span class="crumb--category">${escapeHtml(product.category)}</span>`);
-        }
-        cardHead = `<div class="sfb-card__head">${badges.join('')}</div>`;
-      }
+
+        return `
+          <div class="sfb-product-card ${isSelected ? 'sfb-product-card-selected' : ''}"
+               data-composite-key="${escapeHtml(product.composite_key)}"
+               role="button"
+               tabindex="0"
+               aria-pressed="${isSelected ? 'true' : 'false'}"
+               aria-label="${escapeHtml(product.model)} - ${isSelected ? 'Selected' : 'Not selected'}. ${product.category ? 'Category: ' + escapeHtml(product.category) + '.' : ''} Press Enter or Space to ${isSelected ? 'remove' : 'add'}.">
+            <button class="sfb-sr-only sfb-card__toggle" aria-pressed="${isSelected ? 'true' : 'false'}">
+              Toggle selection for ${escapeHtml(product.model)}
+            </button>
+            <div class="sfb-card__selected-indicator" aria-hidden="true">✓ ADDED</div>
+            ${cardHead}
+            <h4 class="sfb-product-name">${escapeHtml(product.model)}</h4>
+            ${specsHtml}
+          </div>
+        `;
+      }).join('');
 
       return `
-        <div class="sfb-product-card ${isSelected ? 'sfb-product-card-selected' : ''}"
-             data-composite-key="${escapeHtml(product.composite_key)}"
-             role="button"
-             tabindex="0"
-             aria-pressed="${isSelected ? 'true' : 'false'}"
-             aria-label="${escapeHtml(product.model)} - ${isSelected ? 'Selected' : 'Not selected'}. ${product.category ? 'Category: ' + escapeHtml(product.category) + '.' : ''} Press Enter or Space to ${isSelected ? 'remove' : 'add'}.">
-          <button class="sfb-sr-only sfb-card__toggle" aria-pressed="${isSelected ? 'true' : 'false'}">
-            Toggle selection for ${escapeHtml(product.model)}
-          </button>
-          <div class="sfb-card__selected-indicator" aria-hidden="true">✓ ADDED</div>
-          ${cardHead}
-          <h4 class="sfb-product-name">${escapeHtml(product.model)}</h4>
-          ${specsHtml}
+        <div class="sfb-product-group">
+          <div class="sfb-product-header">
+            <h3 class="sfb-product-header__title">${escapeHtml(productLabel)}</h3>
+            <span class="sfb-product-header__count">${models.length} model${models.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="sfb-product-models-grid">
+            ${modelsHtml}
+          </div>
         </div>
       `;
     }).join('');
@@ -722,14 +740,6 @@
     }
   }
 
-  function toggleView(view) {
-    elements.viewBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.view === view);
-    });
-    if (elements.productsGrid) {
-      elements.productsGrid.dataset.view = view;
-    }
-  }
 
   // ========== Step Navigation ==========
   function goToStep(step) {

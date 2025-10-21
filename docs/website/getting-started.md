@@ -71,16 +71,37 @@ Frontend Page → [submittal_builder] shortcode
 
 - Interactive product browser with search
 - Filter by category and type
-- Select products with single click
+- Select models with single click
 - Real-time selection counter
 - Keyboard navigation support
 
 **User Experience:**
-- Gallery or list view toggle
+- Product-grouped layout (models organized by product)
 - Live search across all data
-- Category filters
+- Category filters in sidebar
 - Selected products tray
 - Accessible (WCAG AA compliant)
+
+**How Products Are Organized:**
+
+Models are grouped by **Product** with colored header sections:
+
+```
+┌────────────────────────────────┐
+│ 25 GAUGE 18 MIL    7 models   │ ← Product header
+├────────────────────────────────┤
+│ [Model Card] [Model Card]      │
+│ [Model Card] [Model Card]      │
+└────────────────────────────────┘
+
+┌────────────────────────────────┐
+│ 20 GAUGE 30 MIL    5 models   │ ← Next product
+├────────────────────────────────┤
+│ [Model Card] [Model Card]      │
+└────────────────────────────────┘
+```
+
+This makes it easy to browse related models together. See [Product Management](./product-management.md#how-hierarchy-affects-what-users-see) for details on organizing your catalog.
 
 ### Step 3: Generate PDF Packets
 
@@ -91,14 +112,15 @@ Review Selection → Add Project Info → Generate PDF
 - Professional branded PDF packet
 - Cover page with your logo and colors
 - Table of contents with page numbers
-- Product summary table
-- Individual spec sheets
+- Summary table grouped by product
+- Individual model spec sheets
 - Instant download
 
 **PDF Features:**
-- Branded cover page
+- Branded cover page with your colors
+- Models organized by product (same as frontend)
 - Navigation bookmarks
-- Print-optimized
+- Print-optimized layout
 - Email-friendly file size
 - Temporary download links
 
@@ -253,9 +275,9 @@ The plugin supports dynamic field definitions for different industries. Use the 
 ### Catalog Builder
 
 **Key Features:**
-- **Product Tree** - Hierarchical view of categories, products, types, and models
+- **Product Tree** - Hierarchical view of categories, products, types, subtypes, and models
 - **Drag & Drop** - Reorder items by dragging
-- **Inspector Modal** - Edit node details (opens when clicking on items)
+- **Inspector Modal** - Edit item details (opens when clicking on items)
 - **⚙️ Manage Fields** - Customize specification field names for your industry
   - Quick presets for Steel, HVAC, Electrical, Plumbing
   - Add, remove, or rename fields
@@ -266,20 +288,22 @@ The plugin supports dynamic field definitions for different industries. Use the 
 2. **Add categories** - Use the "+ New" button to create top-level categories
 3. **Add products** - Click on a Category, open Inspector modal → Details tab → scroll to "Add Child" → click "+ Product"
 4. **Add types** - Click on a Product, open Inspector modal → Details tab → scroll to "Add Child" → click "+ Type"
-5. **Add models** - Click on a Type, open Inspector modal → Details tab → scroll to "Add Child" → click "+ Model"
-6. **Enter specifications** - Click on a Model → Fields tab → fill in specification values
+5. **Add subtypes (optional)** - Click on a Type, open Inspector modal → Details tab → scroll to "Add Child" → click "+ Subtype"
+6. **Add models** - Click on a Type or Subtype, open Inspector modal → Details tab → scroll to "Add Child" → click "+ Model"
+7. **Enter specifications** - Click on a Model → Fields tab → fill in specification values
 
-**Adding Children (Products, Types, Models):**
-When you click on any node (Category, Product, or Type), the Inspector modal opens. In the **Details tab**, scroll down to find the **"Add Child"** section. This section shows buttons to add the appropriate child type:
+**Adding Children (Products, Types, Subtypes, Models):**
+When you click on any item (Category, Product, Type, or Subtype), the Inspector modal opens. In the **Details tab**, scroll down to find the **"Add Child"** section. This section shows buttons to add the appropriate child type:
 - Category → "+ Product" button
 - Product → "+ Type" button
-- Type → "+ Model" button
+- Type → "+ Subtype" or "+ Model" button
+- Subtype → "+ Model" button
 - Models have no children
 
 **Alternative Methods:**
-- **Kebab Menu (⋮):** Hover over any node → click ⋮ menu → select "➕ Add [Child Type]" → type name inline
-- **Keyboard Shortcut:** Select a node → press **Shift+N** to add a child
-- **Top Toolbar:** Select a node → click "+ New" dropdown → choose child type
+- **Kebab Menu (⋮):** Hover over any item → click ⋮ menu → select "➕ Add [Child Type]" → type name inline
+- **Keyboard Shortcut:** Select an item → press **Shift+N** to add a child
+- **Top Toolbar:** Select an item → click "+ New" dropdown → choose child type
 
 ### Frontend Builder
 
