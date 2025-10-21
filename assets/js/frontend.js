@@ -538,12 +538,15 @@
         }
       }
 
-      // Build card head with new badge strategy: Type = chip, Category = crumb
+      // Build card head with new badge strategy: Type = chip, Product = chip, Category = crumb
       let cardHead = '';
-      if (product.type_label || product.category) {
+      if (product.type_label || product.product_label || product.category) {
         const badges = [];
         if (product.type_label) {
           badges.push(`<span class="badge--type">${escapeHtml(product.type_label)}</span>`);
+        }
+        if (product.product_label) {
+          badges.push(`<span class="badge--product">${escapeHtml(product.product_label)}</span>`);
         }
         if (product.category) {
           badges.push(`<span class="crumb--category">${escapeHtml(product.category)}</span>`);
