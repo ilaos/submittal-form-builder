@@ -6233,6 +6233,7 @@ final class SFB_Plugin {
       $category_slug = 'uncategorized';
       $product_label = '';
       $product_slug = '';
+      $product_id = 0; // Product node ID for tracking actual database position
       $product_position = 99999; // Default high value for uncategorized
       $type_label = '';
       $type_key = '';
@@ -6259,6 +6260,7 @@ final class SFB_Plugin {
               $product_node = $nodes_by_id[$type_node['parent_id']];
               $product_label = $product_node['title'];
               $product_slug = $product_node['slug'] ?: sanitize_title($product_label);
+              $product_id = (int) $product_node['id'];
               $product_position = isset($product_node['position']) ? (int) $product_node['position'] : 99999;
 
               if ($product_node['parent_id'] && isset($nodes_by_id[$product_node['parent_id']])) {
@@ -6278,6 +6280,7 @@ final class SFB_Plugin {
             $product_node = $nodes_by_id[$parent_node['parent_id']];
             $product_label = $product_node['title'];
             $product_slug = $product_node['slug'] ?: sanitize_title($product_label);
+            $product_id = (int) $product_node['id'];
             $product_position = isset($product_node['position']) ? (int) $product_node['position'] : 99999;
 
             if ($product_node['parent_id'] && isset($nodes_by_id[$product_node['parent_id']])) {
@@ -6327,6 +6330,7 @@ final class SFB_Plugin {
         'specs' => empty($specs) ? new stdClass() : $specs,
         'category' => $category,
         'product_label' => $product_label,
+        'product_id' => $product_id,
         'product_position' => $product_position,
         'type_key' => $type_key,
         'type_label' => $type_label,
