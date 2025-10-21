@@ -784,6 +784,34 @@
   gap: 0.5rem;
 }
 
+/* Subtype subgroups */
+.sfb-tray-subgroup {
+  margin-bottom: 1rem;
+}
+
+.sfb-tray-subgroup:last-child {
+  margin-bottom: 0;
+}
+
+.sfb-tray-subgroup__title {
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--sfb-gray-700);
+  padding: 6px 12px 4px;
+  margin-bottom: 0.4rem;
+  background: var(--sfb-gray-100);
+  border-left: 3px solid var(--sfb-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sfb-tray-subgroup__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 8px;
+}
+
 .sfb-tray-product-item {
   display: flex;
   align-items: center;

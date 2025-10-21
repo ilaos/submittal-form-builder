@@ -6228,23 +6228,61 @@ final class SFB_Plugin {
       $settings = !empty($node['settings_json']) ? json_decode($node['settings_json'], true) : [];
       $settings = is_array($settings) ? $settings : [];
 
-      // Resolve full lineage: model -> type -> category
+      // Resolve full lineage: model -> [subtype] -> type -> product -> category
       $category = 'Uncategorized';
       $category_slug = 'uncategorized';
+      $product_label = '';
+      $product_slug = '';
       $type_label = '';
       $type_key = '';
       $type_slug = '';
+      $subtype_label = '';
+      $subtype_slug = '';
 
       if ($node['parent_id'] && isset($nodes_by_id[$node['parent_id']])) {
-        $type_node = $nodes_by_id[$node['parent_id']];
-        $type_label = $type_node['title'];
-        $type_slug = $type_node['slug'] ?: sanitize_title($type_label);
-        $type_key = 'T' . $type_node['id']; // Stable type key
+        $parent_node = $nodes_by_id[$node['parent_id']];
 
-        if ($type_node['parent_id'] && isset($nodes_by_id[$type_node['parent_id']])) {
-          $category_node = $nodes_by_id[$type_node['parent_id']];
-          $category = $category_node['title'];
-          $category_slug = $category_node['slug'] ?: sanitize_title($category);
+        // Check if parent is a subtype or type
+        if ($parent_node['node_type'] === 'subtype') {
+          // Model -> Subtype -> Type -> Product -> Category
+          $subtype_label = $parent_node['title'];
+          $subtype_slug = $parent_node['slug'] ?: sanitize_title($subtype_label);
+
+          if ($parent_node['parent_id'] && isset($nodes_by_id[$parent_node['parent_id']])) {
+            $type_node = $nodes_by_id[$parent_node['parent_id']];
+            $type_label = $type_node['title'];
+            $type_slug = $type_node['slug'] ?: sanitize_title($type_label);
+            $type_key = 'T' . $type_node['id'];
+
+            if ($type_node['parent_id'] && isset($nodes_by_id[$type_node['parent_id']])) {
+              $product_node = $nodes_by_id[$type_node['parent_id']];
+              $product_label = $product_node['title'];
+              $product_slug = $product_node['slug'] ?: sanitize_title($product_label);
+
+              if ($product_node['parent_id'] && isset($nodes_by_id[$product_node['parent_id']])) {
+                $category_node = $nodes_by_id[$product_node['parent_id']];
+                $category = $category_node['title'];
+                $category_slug = $category_node['slug'] ?: sanitize_title($category);
+              }
+            }
+          }
+        } else if ($parent_node['node_type'] === 'type') {
+          // Model -> Type -> Product -> Category (no subtype)
+          $type_label = $parent_node['title'];
+          $type_slug = $parent_node['slug'] ?: sanitize_title($type_label);
+          $type_key = 'T' . $parent_node['id'];
+
+          if ($parent_node['parent_id'] && isset($nodes_by_id[$parent_node['parent_id']])) {
+            $product_node = $nodes_by_id[$parent_node['parent_id']];
+            $product_label = $product_node['title'];
+            $product_slug = $product_node['slug'] ?: sanitize_title($product_label);
+
+            if ($product_node['parent_id'] && isset($nodes_by_id[$product_node['parent_id']])) {
+              $category_node = $nodes_by_id[$product_node['parent_id']];
+              $category = $category_node['title'];
+              $category_slug = $category_node['slug'] ?: sanitize_title($category);
+            }
+          }
         }
       }
 
@@ -6260,10 +6298,12 @@ final class SFB_Plugin {
       // Build composite_key (lowercase kebab)
       $composite_key = sanitize_key($category_slug) . ':' . sanitize_key($type_slug) . ':' . sanitize_key($model_slug);
 
-      // Build search_tokens (model, type, category, spec values)
+      // Build search_tokens (model, subtype, type, product, category, spec values)
       $search_parts = [
         $node['title'],
+        $subtype_label,
         $type_label,
+        $product_label,
         $category,
       ];
 
@@ -6283,8 +6323,10 @@ final class SFB_Plugin {
         'model' => $node['title'],
         'specs' => empty($specs) ? new stdClass() : $specs,
         'category' => $category,
+        'product_label' => $product_label,
         'type_key' => $type_key,
         'type_label' => $type_label,
+        'subtype_label' => $subtype_label,
         'slug' => $model_slug,
         'composite_key' => $composite_key,
         'search_tokens' => $search_tokens,
