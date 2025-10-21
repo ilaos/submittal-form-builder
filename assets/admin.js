@@ -1015,11 +1015,22 @@
     const [loadingHistory, setLoadingHistory] = useState(false);
 
     const isModel = node.node_type === 'model';
+    const isTypeOrSubtype = node.node_type === 'type' || node.node_type === 'subtype';
     const fields = (node.settings && node.settings.fields) || {};
 
     const [title, setTitle] = useState(node.title);
     const [slug, setSlug] = useState(node.slug || '');
     const [note, setNote] = useState((node.settings && node.settings.note) || '');
+
+    // Field configurations for Type/Subtype nodes
+    const [fieldConfigs, setFieldConfigs] = useState(() => {
+      const configs = (node.settings && node.settings.field_configs) || [];
+      // If no configs exist, create default text configs from global fieldDefinitions
+      if (configs.length === 0 && isTypeOrSubtype && fieldDefinitions) {
+        return fieldDefinitions.map(name => ({ name, type: 'text' }));
+      }
+      return configs;
+    });
 
     // POC: Dynamic field state based on fieldDefinitions
     const [fieldValues, setFieldValues] = useState(() => {
@@ -1037,7 +1048,8 @@
       settings: {
         ...(node.settings || {}),
         note,
-        ...(isModel ? { fields: fieldValues } : {}) // POC: Use dynamic field values
+        ...(isModel ? { fields: fieldValues } : {}), // POC: Use dynamic field values
+        ...(isTypeOrSubtype ? { field_configs: fieldConfigs } : {}) // Field type configurations
       }
     };
     const validationErrors = allNodes ? validateNode(currentNodeState, allNodes) : [];
@@ -1054,6 +1066,15 @@
         setTitle(node.title);
         setSlug(node.slug || '');
         setNote((node.settings && node.settings.note) || '');
+
+        // Reset field configurations for Type/Subtype
+        const configs = (node.settings && node.settings.field_configs) || [];
+        if (configs.length === 0 && isTypeOrSubtype && fieldDefinitions) {
+          setFieldConfigs(fieldDefinitions.map(name => ({ name, type: 'text' })));
+        } else {
+          setFieldConfigs(configs);
+        }
+
         // POC: Reset dynamic field values only when switching to a different node
         const f = (node.settings && node.settings.fields) || {};
         const newFieldValues = {};
@@ -1108,7 +1129,8 @@
         settings: {
           ...(node.settings || {}),
           note,
-          ...(isModel ? { fields: fieldValues } : {}) // POC: Save dynamic field values
+          ...(isModel ? { fields: fieldValues } : {}), // POC: Save dynamic field values
+          ...(isTypeOrSubtype ? { field_configs: fieldConfigs } : {}) // Save field type configurations
         }
       };
 
@@ -1156,6 +1178,10 @@
           className: 'sfb-inspector-tab' + (activeTab === 'fields' ? ' active' : ''),
           onClick: () => setActiveTab('fields')
         }, 'Fields'),
+        isTypeOrSubtype && h('button', {
+          className: 'sfb-inspector-tab' + (activeTab === 'fieldtypes' ? ' active' : ''),
+          onClick: () => setActiveTab('fieldtypes')
+        }, 'Field Types'),
         h('button', {
           className: 'sfb-inspector-tab' + (activeTab === 'advanced' ? ' active' : ''),
           onClick: () => setActiveTab('advanced')
@@ -1259,6 +1285,94 @@
                 onChange: e => setFieldValues({...fieldValues, [fieldName]: e.target.value}),
                 onBlur: autoSave
               })
+            )
+          )
+        ),
+
+        // Field Types Tab (Type/Subtype only) - Configure field types for child models
+        activeTab === 'fieldtypes' && isTypeOrSubtype && h(Fragment, null,
+          h('div', {style:{marginBottom:'12px',padding:'12px',background:'#f8fafc',borderRadius:'8px',fontSize:'13px',color:'#64748b'}},
+            'Configure how fields appear when editing models under this ', node.node_type, '. Models will inherit these field type settings.'
+          ),
+          (fieldConfigs || []).map((fieldConfig, index) =>
+            h('div', {key: index, className:'sfb-field', style:{borderBottom:'1px solid #e5e7eb',paddingBottom:'16px',marginBottom:'16px'}},
+              h('label', {style:{fontWeight:'600',marginBottom:'8px',display:'block'}}, fieldConfig.name),
+              h('div', {style:{display:'flex',gap:'8px',alignItems:'center',marginBottom:'8px'}},
+                h('label', {style:{fontSize:'13px',display:'flex',alignItems:'center',gap:'4px'}},
+                  h('input', {
+                    type:'radio',
+                    name:`field-${index}-type`,
+                    value:'text',
+                    checked: fieldConfig.type === 'text',
+                    onChange: e => {
+                      const newConfigs = [...fieldConfigs];
+                      newConfigs[index] = {...fieldConfig, type: 'text'};
+                      delete newConfigs[index].options; // Remove options if switching to text
+                      setFieldConfigs(newConfigs);
+                    }
+                  }),
+                  'Text Input'
+                ),
+                h('label', {style:{fontSize:'13px',display:'flex',alignItems:'center',gap:'4px'}},
+                  h('input', {
+                    type:'radio',
+                    name:`field-${index}-type`,
+                    value:'select',
+                    checked: fieldConfig.type === 'select',
+                    onChange: e => {
+                      const newConfigs = [...fieldConfigs];
+                      newConfigs[index] = {...fieldConfig, type: 'select', options: fieldConfig.options || []};
+                      setFieldConfigs(newConfigs);
+                    }
+                  }),
+                  'Dropdown'
+                )
+              ),
+              // Show options editor if type is select
+              fieldConfig.type === 'select' && h('div', {style:{marginTop:'12px',paddingLeft:'12px',borderLeft:'3px solid #e5e7eb'}},
+                h('label', {style:{fontSize:'13px',fontWeight:'600',display:'block',marginBottom:'8px'}}, 'Dropdown Options:'),
+                (fieldConfig.options || []).map((option, optIndex) =>
+                  h('div', {key: optIndex, style:{display:'flex',gap:'6px',marginBottom:'6px'}},
+                    h('input', {
+                      type:'text',
+                      value: option,
+                      placeholder:'Option value',
+                      style:{flex:1},
+                      onChange: e => {
+                        const newConfigs = [...fieldConfigs];
+                        const newOptions = [...(newConfigs[index].options || [])];
+                        newOptions[optIndex] = e.target.value;
+                        newConfigs[index] = {...newConfigs[index], options: newOptions};
+                        setFieldConfigs(newConfigs);
+                      },
+                      onBlur: autoSave
+                    }),
+                    h('button', {
+                      type:'button',
+                      className:'button sfb-field-remove',
+                      onClick: () => {
+                        const newConfigs = [...fieldConfigs];
+                        const newOptions = (newConfigs[index].options || []).filter((_, i) => i !== optIndex);
+                        newConfigs[index] = {...newConfigs[index], options: newOptions};
+                        setFieldConfigs(newConfigs);
+                        autoSave();
+                      },
+                      title:'Remove option'
+                    }, '×')
+                  )
+                ),
+                h('button', {
+                  type:'button',
+                  className:'button',
+                  style:{fontSize:'12px',marginTop:'6px'},
+                  onClick: () => {
+                    const newConfigs = [...fieldConfigs];
+                    const newOptions = [...(newConfigs[index].options || []), ''];
+                    newConfigs[index] = {...newConfigs[index], options: newOptions};
+                    setFieldConfigs(newConfigs);
+                  }
+                }, '+ Add Option')
+              )
             )
           )
         ),
