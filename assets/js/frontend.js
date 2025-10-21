@@ -466,19 +466,27 @@
       elements.productsEmpty.style.display = 'none';
     }
 
-    // Group models by product_label (preserving order)
+    // Group models by product_label (preserving order by product_position)
     const groupedByProduct = {};
-    const productOrder = []; // Track order as products first appear
+    const productMeta = {}; // Track metadata for each product
     filtered.forEach(model => {
       const productKey = model.product_label || 'Uncategorized';
       if (!groupedByProduct[productKey]) {
         groupedByProduct[productKey] = [];
-        productOrder.push(productKey); // Track order from filtered array
+        // Store product position from first model (all models in same product have same product_position)
+        productMeta[productKey] = {
+          position: model.product_position || 99999
+        };
       }
       groupedByProduct[productKey].push(model);
     });
 
-    // Render product groups with headers (using productOrder to maintain database order)
+    // Sort products by their database position
+    const productOrder = Object.keys(groupedByProduct).sort((a, b) => {
+      return productMeta[a].position - productMeta[b].position;
+    });
+
+    // Render product groups with headers (sorted by product position)
     const html = productOrder.map(productLabel => {
       const models = groupedByProduct[productLabel];
       // Skip empty groups (shouldn't happen, but safety check)

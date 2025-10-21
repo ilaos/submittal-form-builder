@@ -6200,7 +6200,7 @@ final class SFB_Plugin {
 
     // Get all nodes for hierarchy resolution
     $all_nodes = $wpdb->get_results(
-      "SELECT id, title, slug, parent_id, node_type, settings_json FROM {$table} ORDER BY position ASC",
+      "SELECT id, title, slug, parent_id, node_type, settings_json, position FROM {$table} ORDER BY position ASC",
       ARRAY_A
     );
 
@@ -6233,6 +6233,7 @@ final class SFB_Plugin {
       $category_slug = 'uncategorized';
       $product_label = '';
       $product_slug = '';
+      $product_position = 99999; // Default high value for uncategorized
       $type_label = '';
       $type_key = '';
       $type_slug = '';
@@ -6258,6 +6259,7 @@ final class SFB_Plugin {
               $product_node = $nodes_by_id[$type_node['parent_id']];
               $product_label = $product_node['title'];
               $product_slug = $product_node['slug'] ?: sanitize_title($product_label);
+              $product_position = isset($product_node['position']) ? (int) $product_node['position'] : 99999;
 
               if ($product_node['parent_id'] && isset($nodes_by_id[$product_node['parent_id']])) {
                 $category_node = $nodes_by_id[$product_node['parent_id']];
@@ -6276,6 +6278,7 @@ final class SFB_Plugin {
             $product_node = $nodes_by_id[$parent_node['parent_id']];
             $product_label = $product_node['title'];
             $product_slug = $product_node['slug'] ?: sanitize_title($product_label);
+            $product_position = isset($product_node['position']) ? (int) $product_node['position'] : 99999;
 
             if ($product_node['parent_id'] && isset($nodes_by_id[$product_node['parent_id']])) {
               $category_node = $nodes_by_id[$product_node['parent_id']];
@@ -6324,6 +6327,7 @@ final class SFB_Plugin {
         'specs' => empty($specs) ? new stdClass() : $specs,
         'category' => $category,
         'product_label' => $product_label,
+        'product_position' => $product_position,
         'type_key' => $type_key,
         'type_label' => $type_label,
         'subtype_label' => $subtype_label,
