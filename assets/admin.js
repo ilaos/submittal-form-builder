@@ -521,9 +521,21 @@
 
     useEffect(()=> {
       if (showMenu) {
-        const handleClick = () => setShowMenu(false);
-        document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
+        const handleClick = (e) => {
+          // Don't close if clicking inside the menu or kebab button
+          if (e.target.closest('.sfb-kebab-menu') || e.target.closest('.sfb-kebab')) {
+            return;
+          }
+          setShowMenu(false);
+        };
+        // Use a slight delay to allow mouse to move from button to menu
+        const timer = setTimeout(() => {
+          document.addEventListener('click', handleClick);
+        }, 100);
+        return () => {
+          clearTimeout(timer);
+          document.removeEventListener('click', handleClick);
+        };
       }
     }, [showMenu]);
 
