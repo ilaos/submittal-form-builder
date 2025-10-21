@@ -449,9 +449,19 @@ final class SFB_Rest {
       }
 
       // Mock history entries
+      // Map node_type to human-readable labels
+      $type_labels = [
+        'category' => 'Category',
+        'product' => 'Product',
+        'type' => 'Type',
+        'subtype' => 'Subtype',
+        'model' => 'Model'
+      ];
+      $type_label = $type_labels[$node['node_type']] ?? 'Item';
+
       $history = [
         [
-          'action' => 'Node created',
+          'action' => $type_label . ' created',
           'user' => get_userdata(get_current_user_id())->display_name ?? 'System',
           'timestamp' => current_time('mysql')
         ]
@@ -493,7 +503,7 @@ final class SFB_Rest {
       $position  = intval($p['position'] ?? 0);
       $settings  = isset($p['settings']) && is_array($p['settings']) ? $p['settings'] : [];
 
-      if (!$form_id || !$title || !in_array($node_type, ['category','product','type','model'], true)) {
+      if (!$form_id || !$title || !in_array($node_type, ['category','product','type','subtype','model'], true)) {
         return new WP_Error('bad_request','Missing/invalid fields', ['status'=>400]);
       }
 
@@ -543,7 +553,7 @@ final class SFB_Rest {
       $parent_id = intval($p['parent_id'] ?? 0);
       $node_type = sanitize_key($p['node_type'] ?? 'category');
       $title     = sanitize_text_field($p['title'] ?? 'Untitled');
-      if (!$form_id || !in_array($node_type,['category','product','type','model'],true)) {
+      if (!$form_id || !in_array($node_type,['category','product','type','subtype','model'],true)) {
         return new WP_Error('bad_request','Invalid form_id or node_type', ['status'=>400]);
       }
 
@@ -566,6 +576,12 @@ final class SFB_Rest {
         'position'=>$next_pos,
         'settings_json'=> wp_json_encode($settings),
       ]);
+
+      if ($wpdb->last_error) {
+        error_log('SFB node create DB error: ' . $wpdb->last_error);
+        return new WP_Error('db_error', 'Database error: ' . $wpdb->last_error, ['status'=>500]);
+      }
+
       $id = $wpdb->insert_id;
 
       $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d", $id), ARRAY_A);

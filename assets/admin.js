@@ -2916,13 +2916,10 @@
       selected && h('div', {
         className: 'sfb-modal-overlay',
         onClick: (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setSelected(null);
-        },
-        onMouseDown: (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+          // Only close if clicking the overlay itself, not modal content
+          if (e.target === e.currentTarget) {
+            setSelected(null);
+          }
         },
         onKeyDown: (e) => {
           if (e.key === 'Escape') {
