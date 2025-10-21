@@ -63,7 +63,7 @@ if (!defined('ABSPATH')) exit;
             <span><?php esc_html_e('Submittal Builder', 'submittal-builder'); ?></span>
           </div>
           <a
-            href="https://webstuffguylabs.com/submittal-builder/"
+            href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/"
             target="_blank"
             rel="noopener noreferrer"
             class="sfb-free-branding__link"
