@@ -2066,7 +2066,9 @@
               });
             }
 
-            load();
+            // Use setTimeout to ensure setState has been processed before load()
+            // This prevents a race condition where load() captures old collapsed state
+            setTimeout(() => load(), 0);
 
             // Highlight the newly created node
             setHighlightedNodeId(newId);
