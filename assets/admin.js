@@ -2853,7 +2853,6 @@
         loading ? h('p',null,'Loading...') :
           (tree.length>0
             ? h('div', {
-                key: 'tree-' + Array.from(collapsed).sort((a,b)=>a-b).join(','),
                 className: 'sfb-tree-wrapper'
               },
               tree.map(n=>h(Row,{
