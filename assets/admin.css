@@ -239,7 +239,8 @@
   align-items:center;
 }
 .sfb-tree-row:hover .sfb-row-actions,
-.sfb-tree-row.selected .sfb-row-actions{
+.sfb-tree-row.selected .sfb-row-actions,
+.sfb-row-actions.sfb-menu-open{
   display:flex;
 }
 .sfb-kebab{
