@@ -362,10 +362,12 @@
         }
 
         // Track global product order as products first appear in API response
+        // Use category+product as unique key to handle duplicate product names across categories
         const productLabel = product.product_label || 'Uncategorized';
-        if (!state.productOrderMap.has(productLabel)) {
-          state.productOrderMap.set(productLabel, productOrderIndex);
-          console.log(`[SFB] Product order: ${productOrderIndex} = "${productLabel}" (first model: ${product.model})`);
+        const productKey = `${category}::${productLabel}`;
+        if (!state.productOrderMap.has(productKey)) {
+          state.productOrderMap.set(productKey, productOrderIndex);
+          console.log(`[SFB] Product order: ${productOrderIndex} = "${category} > ${productLabel}" (first model: ${product.model})`);
           productOrderIndex++;
         }
       }
@@ -480,14 +482,19 @@
       elements.productsEmpty.style.display = 'none';
     }
 
-    // Group models by product_label (preserving global order from API)
+    // Group models by category::product_label composite key (preserving global order from API)
     const groupedByProduct = {};
+    const productDisplayNames = {}; // Map composite key -> display name
     filtered.forEach(model => {
-      const productKey = model.product_label || 'Uncategorized';
-      if (!groupedByProduct[productKey]) {
-        groupedByProduct[productKey] = [];
+      const category = model.category || 'Uncategorized';
+      const productLabel = model.product_label || 'Uncategorized';
+      const compositeKey = `${category}::${productLabel}`;
+
+      if (!groupedByProduct[compositeKey]) {
+        groupedByProduct[compositeKey] = [];
+        productDisplayNames[compositeKey] = productLabel; // Store display name
       }
-      groupedByProduct[productKey].push(model);
+      groupedByProduct[compositeKey].push(model);
     });
 
     // Sort products by their global order (tracked when API response was first processed)
@@ -499,8 +506,9 @@
     });
 
     // Render product groups with headers (sorted by product position)
-    const html = productOrder.map(productLabel => {
-      const models = groupedByProduct[productLabel];
+    const html = productOrder.map(compositeKey => {
+      const models = groupedByProduct[compositeKey];
+      const productLabel = productDisplayNames[compositeKey];
       // Skip empty groups (shouldn't happen, but safety check)
       if (models.length === 0) return '';
 
