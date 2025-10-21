@@ -1817,9 +1817,11 @@
 
     function load(){
       setLoading(true);
+      console.log('[SFB Load] Current collapsed state before load:', Array.from(collapsed));
       wp.apiFetch({ path:'/sfb/v1/form/1' })
         .then(res=>{
           if (res?.ok) {
+            console.log('[SFB Load] Loaded nodes from API, collapsed state preserved:', Array.from(collapsed));
             setFlat(res.nodes);
             setTree(nest(res.nodes));
             // POC: Load field definitions from API response
@@ -2056,8 +2058,10 @@
             if (payload.parent_id) {
               setCollapsed(prev => {
                 const next = new Set(prev);
+                console.log('[SFB Create] Before expanding parent:', Array.from(prev));
                 next.delete(payload.parent_id);
                 saveCollapsedSet(next);
+                console.log('[SFB Create] After expanding parent:', Array.from(next));
                 return next;
               });
             }
