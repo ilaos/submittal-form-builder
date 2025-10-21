@@ -6376,6 +6376,7 @@ final class SFB_Plugin {
         $products = is_array($review['products'] ?? null) ? $review['products'] : [];
 
         error_log('[SFB] Using review payload format with ' . count($products) . ' products');
+        error_log('[SFB] Review payload structure: ' . print_r($review, true));
       } else {
         // Legacy format: direct products array
         $products_raw = isset($_POST['products']) ? wp_unslash($_POST['products']) : '[]';
