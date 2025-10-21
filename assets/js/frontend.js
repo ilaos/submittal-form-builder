@@ -364,7 +364,9 @@
         // Track global product order as products first appear in API response
         const productLabel = product.product_label || 'Uncategorized';
         if (!state.productOrderMap.has(productLabel)) {
-          state.productOrderMap.set(productLabel, productOrderIndex++);
+          state.productOrderMap.set(productLabel, productOrderIndex);
+          console.log(`[SFB] Product order: ${productOrderIndex} = "${productLabel}" (first model: ${product.model})`);
+          productOrderIndex++;
         }
       }
     });
@@ -492,6 +494,7 @@
     const productOrder = Object.keys(groupedByProduct).sort((a, b) => {
       const orderA = state.productOrderMap.get(a) ?? 99999;
       const orderB = state.productOrderMap.get(b) ?? 99999;
+      console.log(`[SFB Sort] "${a}" (order ${orderA}) vs "${b}" (order ${orderB}) = ${orderA - orderB}`);
       return orderA - orderB;
     });
 
