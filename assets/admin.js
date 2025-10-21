@@ -2057,6 +2057,7 @@
               setCollapsed(prev => {
                 const next = new Set(prev);
                 next.delete(payload.parent_id);
+                saveCollapsedSet(next);
                 return next;
               });
             }
@@ -2977,6 +2978,7 @@
                 setCollapsed(prev => {
                   const next = new Set(prev);
                   next.delete(parentNode.id);
+                  saveCollapsedSet(next);
                   return next;
                 });
               }
