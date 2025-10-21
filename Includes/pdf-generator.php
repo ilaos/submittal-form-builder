@@ -5,8 +5,8 @@
  * Generates branded, print-ready PDF packets with:
  * - Cover page
  * - Table of contents (with internal links)
- * - Summary page (grouped by category)
- * - Product specification pages
+ * - Summary page (grouped by product)
+ * - Model specification pages
  * - Professional headers/footers
  *
  * @package SubmittalBuilder
@@ -41,8 +41,8 @@ class SFB_PDF_Generator {
     // Get paper size preference
     $paper_size = $args['paper_size'];
 
-    // Group products by category
-    $grouped_products = self::group_products_by_category($args['products']);
+    // Group products by product (product_label)
+    $grouped_products = self::group_products_by_product($args['products']);
 
     // Start output buffer
     ob_start();
@@ -99,7 +99,24 @@ class SFB_PDF_Generator {
   }
 
   /**
-   * Group products by category
+   * Group products by product (product_label)
+   *
+   * @param array $products Product array
+   * @return array Products grouped by product_label
+   */
+  private static function group_products_by_product($products) {
+    $grouped = [];
+
+    foreach ($products as $product) {
+      $product_label = $product['product_label'] ?? $product['product'] ?? __('Uncategorized', 'submittal-builder');
+      $grouped[$product_label][] = $product;
+    }
+
+    return $grouped;
+  }
+
+  /**
+   * Group products by category (kept for backwards compatibility)
    *
    * @param array $products Product array
    * @return array Products grouped by category
@@ -697,7 +714,7 @@ class SFB_PDF_Generator {
   /**
    * Render table of contents
    *
-   * @param array $grouped_products Products grouped by category
+   * @param array $grouped_products Products grouped by product_label
    */
   private static function render_table_of_contents($grouped_products) {
     $page_num = 3; // Start after cover + TOC itself
@@ -720,22 +737,22 @@ class SFB_PDF_Generator {
   </div>
 
   <div class="toc-section">
-    <div class="toc-section-title"><?php esc_html_e('Product Specifications', 'submittal-builder'); ?></div>
+    <div class="toc-section-title"><?php esc_html_e('Model Specifications', 'submittal-builder'); ?></div>
     <ul>
       <?php
       $page_num++; // Summary page
-      foreach ($grouped_products as $category => $products):
-        foreach ($products as $product):
-          $product_name = $product['title'] ?? $product['name'] ?? __('Unnamed Product', 'submittal-builder');
+      foreach ($grouped_products as $product_label => $models):
+        foreach ($models as $model):
+          $model_name = $model['model'] ?? $model['title'] ?? $model['name'] ?? __('Unnamed Model', 'submittal-builder');
           // Use numeric ID if available, otherwise fallback to sanitized title
-          $raw_id = $product['id'] ?? $product['node_id'] ?? null;
-          $product_id = is_numeric($raw_id) ? intval($raw_id) : sanitize_title($product_name);
+          $raw_id = $model['id'] ?? $model['node_id'] ?? null;
+          $model_id = is_numeric($raw_id) ? intval($raw_id) : sanitize_title($model_name);
           $page_num++;
       ?>
       <li>
-        <a href="#sfb-prod-<?php echo esc_attr($product_id); ?>" class="sfb-toc-link">
-          <?php echo esc_html($product_name); ?>
-          <span class="text-muted" style="font-size: 8.5pt;"> — <?php echo esc_html($category); ?></span>
+        <a href="#sfb-prod-<?php echo esc_attr($model_id); ?>" class="sfb-toc-link">
+          <?php echo esc_html($model_name); ?>
+          <span class="text-muted" style="font-size: 8.5pt;"> — <?php echo esc_html($product_label); ?></span>
         </a>
         <span class="sfb-toc-dots">............</span>
         <span class="sfb-toc-page"><?php echo $page_num; ?></span>
@@ -781,7 +798,7 @@ class SFB_PDF_Generator {
   <p class="summary-intro">
     <?php
     printf(
-      esc_html__('This packet contains %1$d product(s) across %2$d categories.', 'submittal-builder'),
+      esc_html__('This packet contains %1$d model(s) across %2$d products.', 'submittal-builder'),
       $total_products,
       count($grouped_products)
     );
@@ -795,14 +812,14 @@ class SFB_PDF_Generator {
     </div>
   <?php endif; ?>
 
-  <?php foreach ($grouped_products as $category => $products):
-    $category_slug = sanitize_title($category);
+  <?php foreach ($grouped_products as $product_label => $models):
+    $product_slug = sanitize_title($product_label);
   ?>
     <div class="sfb-section sfb-avoid-break">
-      <div id="sfb-cat-<?php echo esc_attr($category_slug); ?>" class="sfb-section-title">
-        <?php echo esc_html($category); ?>
+      <div id="sfb-prod-<?php echo esc_attr($product_slug); ?>" class="sfb-section-title">
+        <?php echo esc_html($product_label); ?>
         <span class="text-muted" style="font-weight:400; font-size:10pt;">
-          (<?php echo count($products); ?> <?php echo _n('item', 'items', count($products), 'submittal-builder'); ?>)
+          (<?php echo count($models); ?> <?php echo _n('model', 'models', count($models), 'submittal-builder'); ?>)
         </span>
       </div>
 
@@ -810,17 +827,17 @@ class SFB_PDF_Generator {
         <thead>
           <tr>
             <th style="width: 8%;"><?php esc_html_e('Qty', 'submittal-builder'); ?></th>
-            <th style="width: 35%;"><?php esc_html_e('Product Name', 'submittal-builder'); ?></th>
+            <th style="width: 35%;"><?php esc_html_e('Model', 'submittal-builder'); ?></th>
             <th style="width: 27%;"><?php esc_html_e('Key Specifications', 'submittal-builder'); ?></th>
             <th style="width: 30%;"><?php esc_html_e('Notes', 'submittal-builder'); ?></th>
           </tr>
         </thead>
         <tbody>
-          <?php foreach ($products as $product):
-            $product_name = $product['title'] ?? $product['name'] ?? __('Unnamed Product', 'submittal-builder');
-            $specs = $product['specs'] ?? $product['specifications'] ?? [];
-            $note = $product['note'] ?? $product['description'] ?? '';
-            $quantity = $product['quantity'] ?? 1;
+          <?php foreach ($models as $model):
+            $model_name = $model['model'] ?? $model['title'] ?? $model['name'] ?? __('Unnamed Model', 'submittal-builder');
+            $specs = $model['specs'] ?? $model['specifications'] ?? [];
+            $note = $model['note'] ?? $model['description'] ?? '';
+            $quantity = $model['quantity'] ?? 1;
 
             // Get first 2-3 key specs for summary
             $key_specs = array_slice($specs, 0, 3, true);
@@ -832,7 +849,7 @@ class SFB_PDF_Generator {
           ?>
           <tr>
             <td style="text-align: center; font-weight: 600;"><?php echo esc_html($quantity); ?></td>
-            <td><strong><?php echo esc_html($product_name); ?></strong></td>
+            <td><strong><?php echo esc_html($model_name); ?></strong></td>
             <td style="font-size: 9pt;"><?php echo esc_html($spec_text); ?></td>
             <td style="font-size: 9pt; font-style: italic;"><?php echo esc_html(wp_trim_words($note, 10)); ?></td>
           </tr>
@@ -846,41 +863,54 @@ class SFB_PDF_Generator {
   }
 
   /**
-   * Render product specification pages
+   * Render model specification pages
    *
-   * @param array $grouped_products Products grouped by category
+   * @param array $grouped_products Products grouped by product_label
    * @param array $branding Branding settings
    * @param string $project_name Project name
    */
   private static function render_product_pages($grouped_products, $branding, $project_name = '') {
-    foreach ($grouped_products as $category => $products):
-      foreach ($products as $product):
-        self::render_product_page($product, $category, $branding, $project_name);
+    foreach ($grouped_products as $product_label => $models):
+      foreach ($models as $model):
+        self::render_product_page($model, $product_label, $branding, $project_name);
       endforeach;
     endforeach;
   }
 
   /**
-   * Render individual product page
+   * Render individual model specification page
    *
-   * @param array $product Product data
-   * @param string $category Category name
+   * @param array $model Model data
+   * @param string $product_label Product name/label
    * @param array $branding Branding settings
    * @param string $project_name Project name
    */
-  private static function render_product_page($product, $category, $branding, $project_name = '') {
-    $product_name = $product['title'] ?? $product['name'] ?? __('Unnamed Product', 'submittal-builder');
+  private static function render_product_page($model, $product_label, $branding, $project_name = '') {
+    $model_name = $model['model'] ?? $model['title'] ?? $model['name'] ?? __('Unnamed Model', 'submittal-builder');
     // Use numeric ID if available, otherwise fallback to sanitized title (must match TOC)
-    $raw_id = $product['id'] ?? $product['node_id'] ?? null;
-    $product_id = is_numeric($raw_id) ? intval($raw_id) : sanitize_title($product_name);
-    $specs = $product['specs'] ?? $product['specifications'] ?? [];
-    $description = $product['description'] ?? $product['note'] ?? '';
-    $image_url = $product['image'] ?? $product['image_url'] ?? '';
-    $subcategory = $product['path'][1] ?? '';
-    $quantity = $product['quantity'] ?? 1;
+    $raw_id = $model['id'] ?? $model['node_id'] ?? null;
+    $model_id = is_numeric($raw_id) ? intval($raw_id) : sanitize_title($model_name);
+    $specs = $model['specs'] ?? $model['specifications'] ?? [];
+    $description = $model['description'] ?? $model['note'] ?? '';
+    $image_url = $model['image'] ?? $model['image_url'] ?? '';
+
+    // Build breadcrumb showing Category and Product
+    $breadcrumb_parts = [];
+
+    // Add category if available
+    if (!empty($model['category'])) {
+      $breadcrumb_parts[] = $model['category'];
+    }
+
+    // Add product label
+    $breadcrumb_parts[] = $product_label;
+
+    $breadcrumb = implode(' / ', $breadcrumb_parts);
+
+    $quantity = $model['quantity'] ?? 1;
     ?>
 <div class="product-page">
-  <!-- Page Header (shown on all product pages) -->
+  <!-- Page Header (shown on all model pages) -->
   <div class="sfb-header">
     <div class="sfb-header-left"><?php echo esc_html($branding['company_name']); ?></div>
     <?php if (!empty($project_name)): ?>
@@ -890,13 +920,13 @@ class SFB_PDF_Generator {
 
   <div class="sfb-spacer-top"></div>
 
-  <!-- Product Header -->
+  <!-- Model Header -->
   <div class="product-header">
     <div class="product-category-badge">
-      <?php echo esc_html($category); ?><?php echo $subcategory ? ' / ' . esc_html($subcategory) : ''; ?>
+      <?php echo esc_html($breadcrumb); ?>
     </div>
-    <h2 id="sfb-prod-<?php echo esc_attr($product_id); ?>" class="product-title">
-      <?php echo esc_html($product_name); ?>
+    <h2 id="sfb-prod-<?php echo esc_attr($model_id); ?>" class="product-title">
+      <?php echo esc_html($model_name); ?>
     </h2>
     <?php if ($quantity > 1): ?>
       <div class="product-subtitle">

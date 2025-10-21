@@ -7568,8 +7568,41 @@ final class SFB_Plugin {
     wp_register_style('sfb-frontend', plugins_url('assets/css/frontend.css', __FILE__), [], file_exists($frontend_css_path) ? filemtime($frontend_css_path) : self::VERSION);
     wp_register_script('sfb-frontend', plugins_url('assets/js/frontend.js', __FILE__), [], file_exists($frontend_js_path) ? filemtime($frontend_js_path) : self::VERSION, true);
 
+    // Inject user's primary color as CSS variable for frontend
+    $branding = get_option('sfb_branding', []);
+    $primary_color = $branding['primary_color'] ?? '#111827';
+
+    $custom_css = "
+.sfb-builder-wrapper {
+  --sfb-primary: " . esc_attr($primary_color) . ";
+  --sfb-primary-dark: " . esc_attr($this->adjust_color_brightness($primary_color, -20)) . ";
+  --sfb-primary-light: " . esc_attr($this->adjust_color_brightness($primary_color, 20)) . ";
+}
+";
+    wp_add_inline_style('sfb-frontend', $custom_css);
+
     // Register lead capture script (Pro feature - loaded when modal is present)
     wp_register_script('sfb-lead-capture', plugins_url('assets/js/lead-capture.js', __FILE__), ['sfb-frontend'], self::VERSION, true);
+  }
+
+  /**
+   * Adjust color brightness for hover states
+   * @param string $hex Hex color (e.g., '#111827')
+   * @param int $percent Percentage to adjust (-100 to 100)
+   * @return string Adjusted hex color
+   */
+  private function adjust_color_brightness($hex, $percent) {
+    $hex = ltrim($hex, '#');
+
+    $r = hexdec(substr($hex, 0, 2));
+    $g = hexdec(substr($hex, 2, 2));
+    $b = hexdec(substr($hex, 4, 2));
+
+    $r = max(0, min(255, $r + ($r * $percent / 100)));
+    $g = max(0, min(255, $g + ($g * $percent / 100)));
+    $b = max(0, min(255, $b + ($b * $percent / 100)));
+
+    return sprintf('#%02x%02x%02x', $r, $g, $b);
   }
 
   /** Shortcode: [submittal_builder id="1"] */
