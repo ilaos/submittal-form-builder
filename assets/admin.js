@@ -1215,9 +1215,9 @@
           h('div', {className:'sfb-field'},
             h('label', null, 'Actions'),
             h('div', {style:{display:'flex',gap:'6px',flexWrap:'wrap'}},
-              h('button', {className:'button', onClick: () => onReorder(node,'up')}, '↑ Up'),
-              h('button', {className:'button', onClick: () => onReorder(node,'down')}, '↓ Down'),
-              h('button', {className:'button button-link-delete', onClick: () => onDelete(node.id)}, '🗑️ Delete')
+              h('button', {type:'button', className:'button', onClick: () => onReorder(node,'up')}, '↑ Up'),
+              h('button', {type:'button', className:'button', onClick: () => onReorder(node,'down')}, '↓ Down'),
+              h('button', {type:'button', className:'button button-link-delete', onClick: () => onDelete(node.id)}, '🗑️ Delete')
             )
           ),
           allowedChildren.length > 0 && h('div', {className:'sfb-field'},
@@ -1226,6 +1226,7 @@
               allowedChildren.map(t =>
                 h('button', {
                   key: t,
+                  type: 'button',
                   className: 'button',
                   onClick: () => {
                     // Trigger inline creation mode instead of immediate creation
