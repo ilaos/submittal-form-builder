@@ -17,6 +17,7 @@
     byCategory: new Map(), // Map<category, composite_key[]> - category index
     categoryOrder: [], // Array to preserve category order as they appear in products
     byTypeWithinCategory: new Map(), // Map<'category:type', composite_key[]> - type index
+    productOrderMap: new Map(), // Map<product_label, order_index> - tracks global product order from API
     selected: new Set(), // Set of composite_keys for selected products (localStorage persistence)
     selectedProducts: new Map(), // Map<composite_key, product> - selected using composite keys (for compatibility)
     activeCategory: null,
@@ -326,6 +327,9 @@
     state.byCategory.clear();
     state.categoryOrder = [];
     state.byTypeWithinCategory.clear();
+    state.productOrderMap.clear();
+
+    let productOrderIndex = 0;
 
     rawProducts.forEach(product => {
       const key = product.composite_key;
@@ -355,6 +359,12 @@
             state.byTypeWithinCategory.set(typeKey, []);
           }
           state.byTypeWithinCategory.get(typeKey).push(key);
+        }
+
+        // Track global product order as products first appear in API response
+        const productLabel = product.product_label || 'Uncategorized';
+        if (!state.productOrderMap.has(productLabel)) {
+          state.productOrderMap.set(productLabel, productOrderIndex++);
         }
       }
     });
@@ -468,27 +478,21 @@
       elements.productsEmpty.style.display = 'none';
     }
 
-    // Group models by product_label (preserving order by product_position)
+    // Group models by product_label (preserving global order from API)
     const groupedByProduct = {};
-    const productMeta = {}; // Track metadata for each product
     filtered.forEach(model => {
       const productKey = model.product_label || 'Uncategorized';
       if (!groupedByProduct[productKey]) {
         groupedByProduct[productKey] = [];
-        // Store product position from first model (all models in same product have same product_position)
-        productMeta[productKey] = {
-          position: model.product_position || 99999
-        };
-        console.log(`[SFB Group] Product "${productKey}" first seen with position: ${model.product_position} (model: ${model.model})`);
       }
       groupedByProduct[productKey].push(model);
     });
 
-    // Sort products by their database position
+    // Sort products by their global order (tracked when API response was first processed)
     const productOrder = Object.keys(groupedByProduct).sort((a, b) => {
-      const result = productMeta[a].position - productMeta[b].position;
-      console.log(`[SFB Sort] "${a}" (pos ${productMeta[a].position}) vs "${b}" (pos ${productMeta[b].position}) = ${result}`);
-      return result;
+      const orderA = state.productOrderMap.get(a) ?? 99999;
+      const orderB = state.productOrderMap.get(b) ?? 99999;
+      return orderA - orderB;
     });
 
     // Render product groups with headers (sorted by product position)
