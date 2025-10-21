@@ -340,8 +340,8 @@
   flex-shrink:0;
 }
 .sfb-arrow:hover, .sfb-tree-arrow:hover{ color:#374151 }
-.sfb-tree-arrow.collapsed::before{ content:'▶' }
-.sfb-tree-arrow.expanded::before{ content:'▼' }
+.sfb-tree-arrow.collapsed::before{ content:'▶' !important; }
+.sfb-tree-arrow.expanded::before{ content:'▼' !important; }
 .sfb-tree-arrow.leaf{ opacity:0; pointer-events:none }
 
 /* Debug badge (temporary - shows when collapsed) */
