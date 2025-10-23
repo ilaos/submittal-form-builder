@@ -8782,6 +8782,119 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
     }
   }
 
+  /** Bulk clear fields/images/notes or delete all models/types */
+  function api_bulk_clear($req){
+    try {
+      $this->ensure_tables();
+      global $wpdb;
+
+      $p = $req->get_json_params();
+      $form_id = intval($p['form_id'] ?? 1);
+      $action = sanitize_key($p['action'] ?? '');
+
+      if (!$action) {
+        return new WP_Error('bad_request', 'Missing action parameter', ['status' => 400]);
+      }
+
+      $nodes_table = $this->table_nodes();
+
+      switch ($action) {
+        case 'clear-fields':
+          // Clear 'fields' from settings_json for all model nodes
+          $models = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, settings_json FROM {$nodes_table} WHERE form_id=%d AND node_type='model'",
+            $form_id
+          ), ARRAY_A);
+
+          $updated = 0;
+          foreach ($models as $model) {
+            $settings = !empty($model['settings_json']) ? json_decode($model['settings_json'], true) : [];
+            if (is_array($settings) && isset($settings['fields'])) {
+              unset($settings['fields']);
+              $wpdb->update(
+                $nodes_table,
+                ['settings_json' => wp_json_encode($settings)],
+                ['id' => $model['id']]
+              );
+              $updated++;
+            }
+          }
+
+          return ['ok' => true, 'action' => 'clear-fields', 'updated' => $updated];
+
+        case 'clear-images':
+          // Clear image_url from all nodes
+          $updated = $wpdb->query($wpdb->prepare(
+            "UPDATE {$nodes_table} SET image_url='' WHERE form_id=%d AND image_url IS NOT NULL AND image_url != ''",
+            $form_id
+          ));
+
+          return ['ok' => true, 'action' => 'clear-images', 'updated' => $updated];
+
+        case 'clear-notes':
+          // Clear notes/description from all nodes
+          $nodes = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, settings_json FROM {$nodes_table} WHERE form_id=%d",
+            $form_id
+          ), ARRAY_A);
+
+          $updated = 0;
+          foreach ($nodes as $node) {
+            $settings = !empty($node['settings_json']) ? json_decode($node['settings_json'], true) : [];
+            if (is_array($settings) && (isset($settings['notes']) || isset($settings['description']))) {
+              unset($settings['notes']);
+              unset($settings['description']);
+              $wpdb->update(
+                $nodes_table,
+                ['settings_json' => wp_json_encode($settings)],
+                ['id' => $node['id']]
+              );
+              $updated++;
+            }
+          }
+
+          return ['ok' => true, 'action' => 'clear-notes', 'updated' => $updated];
+
+        case 'delete-models':
+          // Delete all model nodes (cascading handled by delete_node_recursive)
+          $models = $wpdb->get_results($wpdb->prepare(
+            "SELECT id FROM {$nodes_table} WHERE form_id=%d AND node_type='model'",
+            $form_id
+          ), ARRAY_A);
+
+          $deleted_count = 0;
+          foreach ($models as $model) {
+            $this->delete_node_recursive($form_id, intval($model['id']));
+            $deleted_count++;
+          }
+
+          return ['ok' => true, 'action' => 'delete-models', 'deleted' => $deleted_count];
+
+        case 'delete-types':
+          // Delete all type nodes (cascading to models handled by delete_node_recursive)
+          $types = $wpdb->get_results($wpdb->prepare(
+            "SELECT id FROM {$nodes_table} WHERE form_id=%d AND node_type='type'",
+            $form_id
+          ), ARRAY_A);
+
+          $deleted_count = 0;
+          foreach ($types as $type) {
+            $this->delete_node_recursive($form_id, intval($type['id']));
+            $deleted_count++;
+          }
+
+          return ['ok' => true, 'action' => 'delete-types', 'deleted' => $deleted_count];
+
+        default:
+          return new WP_Error('bad_request', 'Invalid action: ' . $action, ['status' => 400]);
+      }
+
+    } catch (\Throwable $e) {
+      error_log('SFB api_bulk_clear error: ' . $e->getMessage());
+      return new WP_Error('server_error', $e->getMessage(), ['status' => 500]);
+    }
+  }
+
   /** Bulk move nodes to a new parent */
   function api_bulk_move($req){
     try {

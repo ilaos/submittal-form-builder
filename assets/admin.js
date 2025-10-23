@@ -1356,8 +1356,27 @@
                       newConfigs[index] = {...fieldConfig, type: 'text'};
                       delete newConfigs[index].options; // Remove options if switching to text
                       setFieldConfigs(newConfigs);
-                      // Trigger save after state update
-                      setTimeout(() => autoSave(), 0);
+
+                      // Save with new configs immediately (don't wait for state update)
+                      const payload = {
+                        id: node.id,
+                        form_id: node.form_id || 1,
+                        parent_id: node.parent_id || 0,
+                        node_type: node.node_type,
+                        title,
+                        slug,
+                        position: node.position || 0,
+                        settings: {
+                          ...(node.settings || {}),
+                          note,
+                          field_configs: newConfigs
+                        }
+                      };
+                      setSaveStatus('saving');
+                      onSave(payload, () => {
+                        setSaveStatus('saved');
+                        setTimeout(() => setSaveStatus(null), 2000);
+                      });
                     }
                   }),
                   'Text Input'
@@ -1372,8 +1391,27 @@
                       const newConfigs = [...fieldConfigs];
                       newConfigs[index] = {...fieldConfig, type: 'select', options: fieldConfig.options || []};
                       setFieldConfigs(newConfigs);
-                      // Trigger save after state update
-                      setTimeout(() => autoSave(), 0);
+
+                      // Save with new configs immediately (don't wait for state update)
+                      const payload = {
+                        id: node.id,
+                        form_id: node.form_id || 1,
+                        parent_id: node.parent_id || 0,
+                        node_type: node.node_type,
+                        title,
+                        slug,
+                        position: node.position || 0,
+                        settings: {
+                          ...(node.settings || {}),
+                          note,
+                          field_configs: newConfigs
+                        }
+                      };
+                      setSaveStatus('saving');
+                      onSave(payload, () => {
+                        setSaveStatus('saved');
+                        setTimeout(() => setSaveStatus(null), 2000);
+                      });
                     }
                   }),
                   'Dropdown'
@@ -1812,6 +1850,12 @@
     // Field Management modal state
     const [fieldManagementModal, setFieldManagementModal] = useState(false);
 
+    // Bulk Delete dropdown and modal state
+    const [showBulkDeleteDropdown, setShowBulkDeleteDropdown] = useState(false);
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [bulkDeleteAction, setBulkDeleteAction] = useState(null);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+
     // Wipe/Delete All modal state
     const [showWipeModal, setShowWipeModal] = useState(false);
     const [wipeBranding, setWipeBranding] = useState(false);
@@ -1955,16 +1999,13 @@
       }
 
       // Call REST endpoint
-      console.log('[SFB] Calling move API:', { id: sourceId, parent_id: newParentId, position: newPosition });
       wp.apiFetch({
         path: '/sfb/v1/node/move',
         method: 'POST',
         data: { id: sourceId, parent_id: newParentId, position: newPosition }
       })
       .then(res => {
-        console.log('[SFB] move response:', res);
         if (res?.ok) {
-          console.log('[SFB] Move successful, calling load()');
           load();
         } else {
           console.error('[SFB] Move failed, response:', res);
@@ -1993,11 +2034,9 @@
 
     function load(){
       setLoading(true);
-      console.log('[SFB Load] Current collapsed state before load:', Array.from(collapsed));
       wp.apiFetch({ path:'/sfb/v1/form/1' })
         .then(res=>{
           if (res?.ok) {
-            console.log('[SFB Load] Loaded nodes from API, collapsed state preserved:', Array.from(collapsed));
             setFlat(res.nodes);
             setTree(nest(res.nodes));
             // POC: Load field definitions from API response
@@ -2150,6 +2189,44 @@
       }
     }
 
+    async function runBulkDelete() {
+      if (!bulkDeleteAction) return;
+
+      try {
+        setBulkDeleting(true);
+
+        const actionLabels = {
+          'clear-fields': 'Clear All Fields',
+          'clear-images': 'Clear All Images',
+          'clear-notes': 'Clear All Notes',
+          'delete-models': 'Delete All Models',
+          'delete-types': 'Delete All Types'
+        };
+
+        const res = await wp.apiFetch({
+          path: '/sfb/v1/bulk/clear',
+          method: 'POST',
+          data: {
+            form_id: 1,
+            action: bulkDeleteAction
+          }
+        });
+
+        setShowBulkDeleteModal(false);
+        setBulkDeleteAction(null);
+        await load();
+
+        const label = actionLabels[bulkDeleteAction] || 'Operation';
+        const count = res.updated || res.deleted || 0;
+        alert(`${label} completed successfully!\n\n${res.updated ? 'Updated' : 'Deleted'}: ${count} nodes`);
+      } catch (err) {
+        console.error('Bulk delete error:', err);
+        alert('Failed to complete operation: ' + (err?.message || err));
+      } finally {
+        setBulkDeleting(false);
+      }
+    }
+
     function save(payload, onSuccess){
       wp.apiFetch({ path:'/sfb/v1/node/save', method:'POST', data: payload })
         .then(res=> {
@@ -2234,10 +2311,8 @@
             if (payload.parent_id) {
               setCollapsed(prev => {
                 const next = new Set(prev);
-                console.log('[SFB Create] Before expanding parent:', Array.from(prev));
                 next.delete(payload.parent_id);
                 saveCollapsedSet(next);
-                console.log('[SFB Create] After expanding parent:', Array.from(next));
                 return next;
               });
             }
@@ -2270,7 +2345,6 @@
     }
 
     function addChildInline(parentNode, childType, title){
-      console.log('[SFB addChildInline] Creating child:', childType, 'under parent:', parentNode.id, 'collapsed state:', Array.from(collapsed));
       skipReselectionRef.current = true; // Prevent re-selecting parent after inline creation
       createNode({
         form_id: parentNode.form_id || 1,
@@ -2939,6 +3013,34 @@
             onClick:() => setFieldManagementModal(true),
             title:'Customize field names for your models'
           },'⚙️ Manage Fields'),
+          h('div', {className: 'sfb-bulk-delete-wrapper', style: {position: 'relative', display: 'inline-block'}},
+            h('button', {
+              className: 'button',
+              onClick: () => setShowBulkDeleteDropdown(!showBulkDeleteDropdown),
+              title: 'Bulk delete operations'
+            }, '🗑️ Delete...'),
+            showBulkDeleteDropdown && h('div', {
+              className: 'sfb-bulk-delete-dropdown',
+              style: {
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                zIndex: 1000,
+                minWidth: '220px',
+                marginTop: '4px'
+              }
+            },
+              h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('clear-fields'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '🧹 Clear All Fields'),
+              h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('clear-images'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '🖼️ Clear All Images'),
+              h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('clear-notes'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '📝 Clear All Notes'),
+              h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('delete-models'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '🔧 Delete All Models'),
+              h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('delete-types'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer'}}, '🏷️ Delete All Types')
+            )
+          ),
           h('button', {
             className: 'button button-link-delete',
             onClick: () => setShowWipeModal(true),
@@ -3540,6 +3642,46 @@
                 }
               }
             }, 'Save Changes')
+          )
+        )
+      ),
+
+      // Bulk Delete Confirmation Modal
+      showBulkDeleteModal && h('div', {className: 'sfb-modal-backdrop', onClick: (e) => {if (e.target === e.currentTarget) setShowBulkDeleteModal(false);}},
+        h('div', {className: 'sfb-modal-card'},
+          h('h2', null, (() => {
+            const titles = {
+              'clear-fields': '🧹 Clear All Fields',
+              'clear-images': '🖼️ Clear All Images',
+              'clear-notes': '📝 Clear All Notes',
+              'delete-models': '🔧 Delete All Models',
+              'delete-types': '🏷️ Delete All Types'
+            };
+            return titles[bulkDeleteAction] || 'Bulk Delete';
+          })()),
+          h('p', null, (() => {
+            const descriptions = {
+              'clear-fields': 'This will remove all custom field data (Size, Thickness, KSI, etc.) from every model. The models themselves will remain, but their fields will be empty.',
+              'clear-images': 'This will remove all images from every node in the tree. Useful for clearing sample data.',
+              'clear-notes': 'This will remove all notes/descriptions from every model.',
+              'delete-models': 'This will permanently delete all Model nodes. Types, Products, and Categories will remain.',
+              'delete-types': 'This will permanently delete all Type nodes AND their child Models. Products and Categories will remain.'
+            };
+            return descriptions[bulkDeleteAction] || 'This operation cannot be undone.';
+          })()),
+          h('p', {style: {fontWeight: 'bold', color: '#dc2626'}}, '⚠️ This operation cannot be undone!'),
+          h('div', {className: 'sfb-modal-actions'},
+            h('button', {
+              className: 'button',
+              onClick: () => {setShowBulkDeleteModal(false); setBulkDeleteAction(null);},
+              disabled: bulkDeleting
+            }, 'Cancel'),
+            h('button', {
+              className: 'button button-primary',
+              style: {background: '#dc2626', borderColor: '#dc2626'},
+              onClick: runBulkDelete,
+              disabled: bulkDeleting
+            }, bulkDeleting ? 'Processing...' : 'Confirm Delete')
           )
         )
       ),

@@ -2532,3 +2532,37 @@
 .sfb-welcome-modern .notice {
   margin: 0 0 20px 0;
 }
+
+/* Bulk Delete Dropdown */
+.sfb-bulk-delete-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.sfb-bulk-delete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 1000;
+  min-width: 220px;
+  margin-top: 4px;
+}
+
+.sfb-dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
+}
+
+.sfb-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.sfb-dropdown-item:hover {
+  background: #f3f4f6;
+}

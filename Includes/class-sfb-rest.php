@@ -138,6 +138,12 @@ final class SFB_Rest {
       'callback' => [$sfb_plugin, 'api_bulk_delete']
     ]);
 
+    register_rest_route('sfb/v1', '/bulk/clear', [
+      'methods' => 'POST',
+      'permission_callback' => function() { return current_user_can('edit_sfb_catalog'); },
+      'callback' => [$sfb_plugin, 'api_bulk_clear']
+    ]);
+
     register_rest_route('sfb/v1', '/bulk/move', [
       'methods' => 'POST',
       'permission_callback' => function() { return current_user_can('edit_sfb_catalog'); },
@@ -154,6 +160,23 @@ final class SFB_Rest {
       'methods' => 'POST',
       'permission_callback' => function() { return current_user_can('edit_sfb_catalog'); },
       'callback' => [$sfb_plugin, 'api_bulk_export']
+    ]);
+
+    // Catalog Import (Pro/Agency - CSV bulk import)
+    register_rest_route('sfb/v1', '/catalog/import-preview', [
+      'methods' => 'POST',
+      'permission_callback' => function() {
+        return current_user_can('manage_options') && (sfb_is_pro_active() || sfb_is_agency_license());
+      },
+      'callback' => [$sfb_plugin, 'api_import_preview']
+    ]);
+
+    register_rest_route('sfb/v1', '/catalog/import', [
+      'methods' => 'POST',
+      'permission_callback' => function() {
+        return current_user_can('manage_options') && (sfb_is_pro_active() || sfb_is_agency_license());
+      },
+      'callback' => [$sfb_plugin, 'api_import_catalog']
     ]);
 
     // PDF Generation (Public - Phase 6: route through SFB_Pdf facade)
