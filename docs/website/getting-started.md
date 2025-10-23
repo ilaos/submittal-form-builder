@@ -2,7 +2,7 @@
 
 [← Back to Documentation](./index.md)
 
-**Quick Start Guide** | **Version 1.0.2**
+**Quick Start Guide** | **Version 1.2.3**
 
 ---
 
@@ -76,7 +76,8 @@ Frontend Page → [submittal_builder] shortcode
 - Keyboard navigation support
 
 **User Experience:**
-- Product-grouped layout (models organized by product)
+- Product-grouped layout (models organized by product and type)
+- Collapsible product groups with expand/collapse all button
 - Live search across all data
 - Category filters in sidebar
 - Selected products tray
@@ -84,20 +85,23 @@ Frontend Page → [submittal_builder] shortcode
 
 **How Products Are Organized:**
 
-Models are grouped by **Product** with colored header sections:
+Models are grouped by **Product** with colored header sections, and further organized by **Type** with blue sub-sections:
 
 ```
 ┌────────────────────────────────┐
-│ 25 GAUGE 18 MIL    7 models   │ ← Product header
+│ ▸ 25 GAUGE 18 MIL   7 models  │ ← Product header (collapsible)
 ├────────────────────────────────┤
+│ ▸ 2-1/2" Flange    4 models   │ ← Type subheading (blue)
 │ [Model Card] [Model Card]      │
+│ [Model Card] [Model Card]      │
+├────────────────────────────────┤
+│ ▸ Slotted Tracks   3 models   │ ← Next type (blue)
 │ [Model Card] [Model Card]      │
 └────────────────────────────────┘
 
 ┌────────────────────────────────┐
-│ 20 GAUGE 30 MIL    5 models   │ ← Next product
-├────────────────────────────────┤
-│ [Model Card] [Model Card]      │
+│ ▸ 20 GAUGE 30 MIL   5 models  │ ← Next product (collapsed by default)
+└────────────────────────────────┘
 └────────────────────────────────┘
 ```
 
