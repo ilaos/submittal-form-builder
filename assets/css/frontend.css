@@ -1786,6 +1786,37 @@ a.sfb-btn-primary:hover {
   color: white;
   border-radius: 8px 8px 0 0;
   margin-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.sfb-product-header:hover {
+  background: #163152;
+}
+
+.sfb-product-header:focus {
+  outline: 2px solid #60A5FA;
+  outline-offset: 2px;
+}
+
+.sfb-product-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sfb-product-header__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+.sfb-product-group--collapsed .sfb-product-header__toggle {
+  transform: rotate(-90deg);
 }
 
 .sfb-product-header__title {
@@ -1800,6 +1831,24 @@ a.sfb-btn-primary:hover {
   font-size: 13px;
   font-weight: 600;
   opacity: 0.9;
+}
+
+/* Product Group Content - collapsible */
+.sfb-product-group__content {
+  max-height: 5000px;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.sfb-product-group--collapsed .sfb-product-group__content {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* When collapsed, round all corners of header */
+.sfb-product-group--collapsed .sfb-product-header {
+  border-radius: 8px;
 }
 
 /* Type Subheading - sits between product header and models */
