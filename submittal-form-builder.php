@@ -8822,15 +8822,6 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
 
           return ['ok' => true, 'action' => 'clear-fields', 'updated' => $updated];
 
-        case 'clear-images':
-          // Clear image_url from all nodes
-          $updated = $wpdb->query($wpdb->prepare(
-            "UPDATE {$nodes_table} SET image_url='' WHERE form_id=%d AND image_url IS NOT NULL AND image_url != ''",
-            $form_id
-          ));
-
-          return ['ok' => true, 'action' => 'clear-images', 'updated' => $updated];
-
         case 'clear-notes':
           // Clear notes/description from all nodes
           $nodes = $wpdb->get_results($wpdb->prepare(

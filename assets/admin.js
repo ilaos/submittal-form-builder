@@ -2197,7 +2197,6 @@
 
         const actionLabels = {
           'clear-fields': 'Clear All Fields',
-          'clear-images': 'Clear All Images',
           'clear-notes': 'Clear All Notes',
           'delete-models': 'Delete All Models',
           'delete-types': 'Delete All Types'
@@ -3035,7 +3034,6 @@
               }
             },
               h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('clear-fields'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '🧹 Clear All Fields'),
-              h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('clear-images'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '🖼️ Clear All Images'),
               h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('clear-notes'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '📝 Clear All Notes'),
               h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('delete-models'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #eee'}}, '🔧 Delete All Models'),
               h('div', {className: 'sfb-dropdown-item', onClick: () => {setShowBulkDeleteDropdown(false); setBulkDeleteAction('delete-types'); setShowBulkDeleteModal(true);}, style: {padding: '10px 12px', cursor: 'pointer'}}, '🏷️ Delete All Types')
@@ -3652,7 +3650,6 @@
           h('h2', null, (() => {
             const titles = {
               'clear-fields': '🧹 Clear All Fields',
-              'clear-images': '🖼️ Clear All Images',
               'clear-notes': '📝 Clear All Notes',
               'delete-models': '🔧 Delete All Models',
               'delete-types': '🏷️ Delete All Types'
@@ -3662,7 +3659,6 @@
           h('p', null, (() => {
             const descriptions = {
               'clear-fields': 'This will remove all custom field data (Size, Thickness, KSI, etc.) from every model. The models themselves will remain, but their fields will be empty.',
-              'clear-images': 'This will remove all images from every node in the tree. Useful for clearing sample data.',
               'clear-notes': 'This will remove all notes/descriptions from every model.',
               'delete-models': 'This will permanently delete all Model nodes. Types, Products, and Categories will remain.',
               'delete-types': 'This will permanently delete all Type nodes AND their child Models. Products and Categories will remain.'
