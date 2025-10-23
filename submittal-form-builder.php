@@ -9423,6 +9423,19 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
 
       global $wpdb;
       $nodes = $wpdb->prefix . 'sfb_nodes';
+      $forms = $wpdb->prefix . 'sfb_forms';
+
+      // Get form data (includes field definitions)
+      $form = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $forms WHERE id=%d", $form_id
+      ), ARRAY_A);
+
+      if (!$form) {
+        return new WP_Error('not_found', 'Form not found', ['status'=>404]);
+      }
+
+      // Parse form settings (includes field_definitions)
+      $form_settings = !empty($form['settings_json']) ? json_decode($form['settings_json'], true) : [];
 
       // Get all nodes for this form
       $all_nodes = $wpdb->get_results($wpdb->prepare(
@@ -9437,7 +9450,11 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
 
       return [
         'ok' => true,
-        'form' => ['id' => $form_id, 'title' => 'Submittal Form ' . $form_id],
+        'form' => [
+          'id' => $form_id,
+          'title' => $form['title'] ?? 'Submittal Form ' . $form_id,
+          'settings' => $form_settings
+        ],
         'nodes' => $all_nodes
       ];
     } catch (\Throwable $e) {
@@ -9454,6 +9471,7 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
       $form_id = intval($p['form_id'] ?? 1);
       $mode = sanitize_text_field($p['mode'] ?? 'append'); // 'append' or 'replace'
       $nodes = $p['nodes'] ?? [];
+      $form_data = $p['form'] ?? null;
 
       if (!is_array($nodes) || empty($nodes)) {
         return new WP_Error('bad_request','No nodes provided', ['status'=>400]);
@@ -9461,6 +9479,29 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
 
       global $wpdb;
       $table = $wpdb->prefix . 'sfb_nodes';
+      $forms_table = $wpdb->prefix . 'sfb_forms';
+
+      // If form settings are provided (includes field_definitions), restore them
+      if ($form_data && isset($form_data['settings']) && is_array($form_data['settings'])) {
+        $current_form = $wpdb->get_row($wpdb->prepare(
+          "SELECT settings_json FROM $forms_table WHERE id=%d", $form_id
+        ), ARRAY_A);
+
+        if ($current_form) {
+          $current_settings = !empty($current_form['settings_json']) ? json_decode($current_form['settings_json'], true) : [];
+
+          // Merge or replace field_definitions
+          if (isset($form_data['settings']['field_definitions'])) {
+            $current_settings['field_definitions'] = $form_data['settings']['field_definitions'];
+
+            $wpdb->update(
+              $forms_table,
+              ['settings_json' => wp_json_encode($current_settings)],
+              ['id' => $form_id]
+            );
+          }
+        }
+      }
 
       // Replace mode: delete existing nodes
       if ($mode === 'replace') {

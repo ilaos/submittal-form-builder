@@ -2573,7 +2573,7 @@
             wp.apiFetch({
               path:'/sfb/v1/form/import',
               method:'POST',
-              data:{ form_id:1, mode, nodes: data.nodes || [] }
+              data:{ form_id:1, mode, nodes: data.nodes || [], form: data.form || null }
             })
             .then(res=> {
               if (res?.ok){
