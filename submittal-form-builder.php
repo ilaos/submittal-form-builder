@@ -7011,12 +7011,21 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
         // Get product path/category from parent hierarchy
         $path = $this->get_node_breadcrumb($product['id']);
 
+        // Extract breadcrumb components (Category / Product / Type)
+        // Path array contains: [0] => Category, [1] => Product, [2] => Type (if 4-level hierarchy)
+        $category = isset($path[0]) ? $path[0] : __('Uncategorized', 'submittal-builder');
+        $product_label = isset($path[1]) ? $path[1] : '';
+        $type_label = isset($path[2]) ? $path[2] : '';
+
         $formatted_products[] = [
           'id' => $product_id,
           'node_id' => $product_id,
+          'model' => isset($product['title']) ? $product['title'] : __('Unnamed Product', 'submittal-builder'),
           'name' => isset($product['title']) ? $product['title'] : __('Unnamed Product', 'submittal-builder'),
           'title' => isset($product['title']) ? $product['title'] : __('Unnamed Product', 'submittal-builder'),
-          'category' => isset($path[0]) ? $path[0] : __('Uncategorized', 'submittal-builder'),
+          'category' => $category,
+          'product_label' => $product_label,
+          'type_label' => $type_label,
           'path' => $path,
           'specs' => $specs,
           'specifications' => $specs, // Alias for compatibility
