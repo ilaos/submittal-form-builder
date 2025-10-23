@@ -82,8 +82,9 @@ $nonce = wp_create_nonce('sfb_frontend_builder');
 wp_enqueue_style('sfb-frontend');
 wp_enqueue_script('sfb-frontend');
 
-// Register and enqueue review.js
-wp_register_script('sfb-review', plugins_url('assets/js/review.js', dirname(dirname(__FILE__))), ['sfb-frontend'], '1.0.2', true);
+// Register and enqueue review.js with filemtime cache busting
+$review_js_path = plugin_dir_path(dirname(dirname(__FILE__))) . 'assets/js/review.js';
+wp_register_script('sfb-review', plugins_url('assets/js/review.js', dirname(dirname(__FILE__))), ['sfb-frontend'], file_exists($review_js_path) ? filemtime($review_js_path) : '1.0.2', true);
 wp_enqueue_script('sfb-review');
 
 // Enqueue lead capture script if enabled (Pro feature)

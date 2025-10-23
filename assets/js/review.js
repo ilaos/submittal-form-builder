@@ -3,7 +3,7 @@
  * Quantity/Note management + Project Fields (no branding UI)
  *
  * @package SubmittalBuilder
- * @version 1.0.2
+ * @version 1.0.3
  */
 
 (() => {
@@ -13,9 +13,13 @@
   const selectedKeys = new Set(JSON.parse(localStorage.getItem('sfb-selected') || '[]'));
   const selectedMap = new Map(JSON.parse(sessionStorage.getItem('sfb-selected-map') || '[]'));
 
-  // Default any missing entries
+  // BUGFIX: Ensure selectedMap is populated from selectedKeys if empty
+  // This handles the case where user navigates from Step 1 → Step 2
+  // and selectedMap wasn't persisted yet
   selectedKeys.forEach(k => {
-    if (!selectedMap.has(k)) selectedMap.set(k, { quantity: 1, note: '' });
+    if (!selectedMap.has(k)) {
+      selectedMap.set(k, { quantity: 1, note: '' });
+    }
   });
 
   // ---- DOM Refs ----
@@ -115,7 +119,9 @@
     }
 
     rootSel.innerHTML = '';
-    const groups = groupByType([...selectedMap.keys()]);
+    // BUGFIX: Use selectedKeys (from localStorage) as source of truth
+    // selectedMap might not be populated on first render from Step 1 → Step 2
+    const groups = groupByType([...selectedKeys]);
 
     const reviewEmpty = document.getElementById('sfb-review-empty');
 
@@ -288,6 +294,12 @@
   };
 
   // ---- Initialize ----
+  // BUGFIX: Persist the populated selectedMap to sessionStorage on first load
+  // This ensures it's available for subsequent renders and PDF generation
+  if (selectedKeys.size > 0 && sessionStorage.getItem('sfb-selected-map') === null) {
+    persistSelection();
+  }
+
   renderSelected();
   persistSelection(); // Sets CTA disabled state if needed
 
