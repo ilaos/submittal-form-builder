@@ -567,6 +567,9 @@
       // Skip empty groups (shouldn't happen, but safety check)
       if (models.length === 0) return '';
 
+      // Extract category from the first model (all models in group share same category)
+      const category = models[0]?.category || 'Uncategorized';
+
       // NEW: Group models by type_label within this product
       const groupedByType = {};
       models.forEach(model => {
