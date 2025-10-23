@@ -28,7 +28,8 @@
     searchQuery: '',
     projectName: '',
     projectNotes: '',
-    pdfUrl: null
+    pdfUrl: null,
+    collapsedGroups: new Set() // Set of product group keys that are collapsed (localStorage persistence)
   };
 
   // ========== DOM Elements ==========
@@ -186,17 +187,8 @@
       elements.trayHeader.addEventListener('click', toggleTray);
     }
 
-    // Click outside tray to close (like a photo gallery)
-    document.addEventListener('click', (e) => {
-      if (elements.tray &&
-          !elements.tray.classList.contains('sfb-tray--collapsed') &&
-          elements.tray.classList.contains('sfb-tray-visible')) {
-        // Check if click is outside the tray
-        if (!elements.tray.contains(e.target)) {
-          toggleTray();
-        }
-      }
-    });
+    // Note: Removed auto-close on outside click - users should manually toggle tray
+    // This prevents annoying auto-collapse when selecting multiple products
 
     // Step 2 buttons
     if (elements.backToProductsBtn) {
@@ -379,7 +371,6 @@
         // Map composite key to product_id for later lookup
         if (!state.productOrderMap.has(productKey) && product.product_id) {
           state.productOrderMap.set(productKey, product.product_id);
-          console.log(`[SFB] Product mapping: "${category} > ${productLabel}" = ID ${product.product_id} (position ${product.product_position})`);
         }
       }
     });
@@ -474,12 +465,10 @@
 
   // ========== Render Products ==========
   function renderProducts() {
-    console.log('[SFB] renderProducts() called');
     if (!elements.productsGrid) return;
 
     // Get filtered composite keys
     let filteredKeys = [];
-    console.log('[SFB] Active category:', state.activeCategory);
 
     // Start with all products or category filter
     if (state.activeCategory) {
@@ -561,7 +550,6 @@
       const productIdB = state.productOrderMap.get(b) || 0;
       const positionA = state.productPositionMap.get(productIdA) ?? 99999;
       const positionB = state.productPositionMap.get(productIdB) ?? 99999;
-      console.log(`[SFB Sort] "${a}" (ID ${productIdA}, pos ${positionA}) vs "${b}" (ID ${productIdB}, pos ${positionB}) = ${positionA - positionB}`);
       return positionA - positionB;
     });
 
@@ -572,116 +560,145 @@
       // Skip empty groups (shouldn't happen, but safety check)
       if (models.length === 0) return '';
 
-      const modelsHtml = models.map(product => {
-        const isSelected = state.selected.has(product.composite_key);
-
-        // Format specs inline - 2 lines max with labels
-        let specsHtml = '';
-
-        // Handle both array and object specs formats
-        let specs = product.specs;
-        let hasSpecs = false;
-
-        if (specs) {
-          if (Array.isArray(specs)) {
-            hasSpecs = specs.length > 0;
-          } else if (typeof specs === 'object') {
-            hasSpecs = Object.keys(specs).length > 0;
-          }
+      // NEW: Group models by type_label within this product
+      const groupedByType = {};
+      models.forEach(model => {
+        const typeLabel = model.type_label || 'Other';
+        if (!groupedByType[typeLabel]) {
+          groupedByType[typeLabel] = [];
         }
+        groupedByType[typeLabel].push(model);
+      });
 
-        if (hasSpecs) {
-          const lines = [];
+      // Render type groups within this product
+      const typeGroupsHtml = Object.entries(groupedByType).map(([typeLabel, typeModels]) => {
+        const typeModelsHtml = typeModels.map(product => {
+          const isSelected = state.selected.has(product.composite_key);
 
-          // If specs is an object (expected format)
-          if (!Array.isArray(specs)) {
-            // Line 1: Size and Thickness/Gauge (if available)
-            const line1Parts = [];
-            if (specs.Size || specs.size) {
-              const size = specs.Size || specs.size;
-              line1Parts.push(`Size: ${escapeHtml(size)}`);
-            }
-            if (specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge) {
-              const thickness = specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge;
-              line1Parts.push(`Thick: ${escapeHtml(thickness)}`);
-            }
-            if (line1Parts.length > 0) {
-              lines.push(line1Parts.join(' · '));
-            }
+          // Format specs inline - 2 lines max with labels
+          let specsHtml = '';
 
-            // Line 2: KSI and/or Flange (if available)
-            const line2Parts = [];
-            if (specs.KSI || specs.ksi) {
-              const ksi = specs.KSI || specs.ksi;
-              line2Parts.push(`KSI: ${escapeHtml(ksi)}`);
-            }
-            if (specs.Flange || specs.flange) {
-              const flange = specs.Flange || specs.flange;
-              line2Parts.push(`Flange: ${escapeHtml(flange)}`);
-            }
-            if (line2Parts.length > 0) {
-              lines.push(line2Parts.join(' · '));
-            }
+          // Handle both array and object specs formats
+          let specs = product.specs;
+          let hasSpecs = false;
 
-            // Fallback: if no specific fields found, show first 2-3 specs
-            if (lines.length === 0) {
-              const specEntries = Object.entries(specs).slice(0, 3);
-              const line1 = specEntries.slice(0, 2).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(' · ');
-              const line2 = specEntries.length > 2 ? `${escapeHtml(specEntries[2][0])}: ${escapeHtml(specEntries[2][1])}` : '';
-              if (line1) lines.push(line1);
-              if (line2) lines.push(line2);
+          if (specs) {
+            if (Array.isArray(specs)) {
+              hasSpecs = specs.length > 0;
+            } else if (typeof specs === 'object') {
+              hasSpecs = Object.keys(specs).length > 0;
             }
           }
 
-          if (lines.length > 0) {
-            specsHtml = `
-              <div class="sfb-card-specs">
-                ${lines.map(line => `<div>${line}</div>`).join('')}
-              </div>
-            `;
-          }
-        }
+          if (hasSpecs) {
+            const lines = [];
 
-        // Build card head with new badge strategy: Type = chip, Category = crumb (Product removed)
-        let cardHead = '';
-        if (product.type_label || product.category) {
-          const badges = [];
-          if (product.type_label) {
-            badges.push(`<span class="badge--type">${escapeHtml(product.type_label)}</span>`);
+            // If specs is an object (expected format)
+            if (!Array.isArray(specs)) {
+              // Line 1: Size and Thickness/Gauge (if available)
+              const line1Parts = [];
+              if (specs.Size || specs.size) {
+                const size = specs.Size || specs.size;
+                line1Parts.push(`Size: ${escapeHtml(size)}`);
+              }
+              if (specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge) {
+                const thickness = specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge;
+                line1Parts.push(`Thick: ${escapeHtml(thickness)}`);
+              }
+              if (line1Parts.length > 0) {
+                lines.push(line1Parts.join(' · '));
+              }
+
+              // Line 2: KSI and/or Flange (if available)
+              const line2Parts = [];
+              if (specs.KSI || specs.ksi) {
+                const ksi = specs.KSI || specs.ksi;
+                line2Parts.push(`KSI: ${escapeHtml(ksi)}`);
+              }
+              if (specs.Flange || specs.flange) {
+                const flange = specs.Flange || specs.flange;
+                line2Parts.push(`Flange: ${escapeHtml(flange)}`);
+              }
+              if (line2Parts.length > 0) {
+                lines.push(line2Parts.join(' · '));
+              }
+
+              // Fallback: if no specific fields found, show first 2-3 specs
+              if (lines.length === 0) {
+                const specEntries = Object.entries(specs).slice(0, 3);
+                const line1 = specEntries.slice(0, 2).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(' · ');
+                const line2 = specEntries.length > 2 ? `${escapeHtml(specEntries[2][0])}: ${escapeHtml(specEntries[2][1])}` : '';
+                if (line1) lines.push(line1);
+                if (line2) lines.push(line2);
+              }
+            }
+
+            if (lines.length > 0) {
+              specsHtml = `
+                <div class="sfb-card-specs">
+                  ${lines.map(line => `<div>${line}</div>`).join('')}
+                </div>
+              `;
+            }
           }
+
+          // Build card head - REMOVED TYPE BADGE, keep only category crumb
+          let cardHead = '';
           if (product.category) {
-            badges.push(`<span class="crumb--category">${escapeHtml(product.category)}</span>`);
+            cardHead = `<div class="sfb-card__head"><span class="crumb--category">${escapeHtml(product.category)}</span></div>`;
           }
-          cardHead = `<div class="sfb-card__head">${badges.join('')}</div>`;
-        }
 
+          return `
+            <div class="sfb-product-card ${isSelected ? 'sfb-product-card-selected' : ''}"
+                 data-composite-key="${escapeHtml(product.composite_key)}"
+                 role="button"
+                 tabindex="0"
+                 aria-pressed="${isSelected ? 'true' : 'false'}"
+                 aria-label="${escapeHtml(product.model)} - ${isSelected ? 'Selected' : 'Not selected'}. ${product.category ? 'Category: ' + escapeHtml(product.category) + '.' : ''} Press Enter or Space to ${isSelected ? 'remove' : 'add'}.">
+              <button class="sfb-sr-only sfb-card__toggle" aria-pressed="${isSelected ? 'true' : 'false'}">
+                Toggle selection for ${escapeHtml(product.model)}
+              </button>
+              <div class="sfb-card__selected-indicator" aria-hidden="true">✓ ADDED</div>
+              ${cardHead}
+              <h4 class="sfb-product-name">${escapeHtml(product.model)}</h4>
+              ${specsHtml}
+              ${buildConfigurableFields(product)}
+            </div>
+          `;
+        }).join('');
+
+        // Return type group with subheading
         return `
-          <div class="sfb-product-card ${isSelected ? 'sfb-product-card-selected' : ''}"
-               data-composite-key="${escapeHtml(product.composite_key)}"
-               role="button"
-               tabindex="0"
-               aria-pressed="${isSelected ? 'true' : 'false'}"
-               aria-label="${escapeHtml(product.model)} - ${isSelected ? 'Selected' : 'Not selected'}. ${product.category ? 'Category: ' + escapeHtml(product.category) + '.' : ''} Press Enter or Space to ${isSelected ? 'remove' : 'add'}.">
-            <button class="sfb-sr-only sfb-card__toggle" aria-pressed="${isSelected ? 'true' : 'false'}">
-              Toggle selection for ${escapeHtml(product.model)}
-            </button>
-            <div class="sfb-card__selected-indicator" aria-hidden="true">✓ ADDED</div>
-            ${cardHead}
-            <h4 class="sfb-product-name">${escapeHtml(product.model)}</h4>
-            ${specsHtml}
-            ${buildConfigurableFields(product)}
+          <div class="sfb-type-group">
+            <div class="sfb-type-subheading">
+              <span class="sfb-type-subheading__label">${escapeHtml(typeLabel)}</span>
+              <span class="sfb-type-subheading__count">${typeModels.length} model${typeModels.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="sfb-type-models-grid">
+              ${typeModelsHtml}
+            </div>
           </div>
         `;
       }).join('');
 
+      const groupKey = `${category}::${productLabel}`;
+      const isCollapsed = state.collapsedGroups.has(groupKey);
+
       return `
-        <div class="sfb-product-group">
-          <div class="sfb-product-header">
-            <h3 class="sfb-product-header__title">${escapeHtml(productLabel)}</h3>
+        <div class="sfb-product-group ${isCollapsed ? 'sfb-product-group--collapsed' : ''}" data-group-key="${escapeHtml(groupKey)}">
+          <div class="sfb-product-header" role="button" tabindex="0" aria-expanded="${!isCollapsed}">
+            <div class="sfb-product-header__left">
+              <span class="sfb-product-header__toggle" aria-label="${isCollapsed ? 'Expand' : 'Collapse'} section">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <h3 class="sfb-product-header__title">${escapeHtml(productLabel)}</h3>
+            </div>
             <span class="sfb-product-header__count">${models.length} model${models.length !== 1 ? 's' : ''}</span>
           </div>
-          <div class="sfb-product-models-grid">
-            ${modelsHtml}
+          <div class="sfb-product-group__content">
+            ${typeGroupsHtml}
           </div>
         </div>
       `;
@@ -694,6 +711,9 @@
 
     // Attach dropdown change handlers
     attachDropdownHandlers();
+
+    // Attach collapse/expand handlers
+    attachCollapseHandlers();
   }
 
   /**
@@ -738,14 +758,64 @@
         currentValues[fieldName] = selectedValue;
         state.selectedFieldValues.set(compositeKey, currentValues);
 
-        console.log(`[SFB] Field "${fieldName}" set to "${selectedValue}" for product ${compositeKey}`);
-
         // Auto-select the product if a dropdown value is chosen
         if (selectedValue && !state.selected.has(compositeKey)) {
           toggleByCard(compositeKey);
         }
       });
     });
+  }
+
+  /**
+   * Attach click and keyboard handlers to product group headers for collapse/expand
+   */
+  function attachCollapseHandlers() {
+    const headers = elements.productsGrid.querySelectorAll('.sfb-product-header');
+
+    headers.forEach(header => {
+      // Click handler
+      header.addEventListener('click', (e) => {
+        // Don't collapse if clicking inside the content area (cards, dropdowns, etc.)
+        e.stopPropagation();
+        const group = header.closest('.sfb-product-group');
+        toggleProductGroup(group);
+      });
+
+      // Keyboard handler (Enter or Space)
+      header.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const group = header.closest('.sfb-product-group');
+          toggleProductGroup(group);
+        }
+      });
+    });
+  }
+
+  /**
+   * Toggle collapse/expand state of a product group
+   * @param {HTMLElement} group - The product group element
+   */
+  function toggleProductGroup(group) {
+    if (!group) return;
+
+    const groupKey = group.dataset.groupKey;
+    const isCurrentlyCollapsed = state.collapsedGroups.has(groupKey);
+
+    if (isCurrentlyCollapsed) {
+      // Expand
+      state.collapsedGroups.delete(groupKey);
+      group.classList.remove('sfb-product-group--collapsed');
+      group.querySelector('.sfb-product-header').setAttribute('aria-expanded', 'true');
+    } else {
+      // Collapse
+      state.collapsedGroups.add(groupKey);
+      group.classList.add('sfb-product-group--collapsed');
+      group.querySelector('.sfb-product-header').setAttribute('aria-expanded', 'false');
+    }
+
+    // Persist to localStorage
+    saveCollapseState();
   }
 
   /**
@@ -1121,16 +1191,7 @@
     // Check if lead capture is enabled (Pro feature)
     const leadCaptureEnabled = elements.app?.dataset.leadCapture === '1';
 
-    // Debug logging
-    console.log('[SFB] Lead capture check:', {
-      leadCaptureEnabled,
-      skipLeadCapture,
-      hasLeadCaptureScript: typeof window.SFB_LeadCapture !== 'undefined',
-      dataAttribute: elements.app?.dataset.leadCapture
-    });
-
     if (leadCaptureEnabled && !skipLeadCapture && typeof window.SFB_LeadCapture !== 'undefined') {
-      console.log('[SFB] Opening lead capture modal');
       // Prepare PDF data to pass to modal
       const pdfData = {
         projectName: state.projectName || '',
@@ -1140,8 +1201,6 @@
       // Open lead capture modal
       window.SFB_LeadCapture.openModal(pdfData);
       return; // Stop here - will continue after lead submission
-    } else {
-      console.log('[SFB] Skipping lead capture - proceeding directly to PDF generation');
     }
 
     // Show loading overlay
@@ -1455,8 +1514,27 @@
       if (trayCollapsed === '1' && elements.tray) {
         elements.tray.classList.add('sfb-tray--collapsed');
       }
+
+      // Restore collapsed product groups from localStorage
+      const collapsedGroups = localStorage.getItem('sfb_collapsed_groups');
+      if (collapsedGroups) {
+        const groups = JSON.parse(collapsedGroups);
+        state.collapsedGroups = new Set(groups);
+      }
     } catch (e) {
       console.warn('Failed to restore state from localStorage/sessionStorage:', e);
+    }
+  }
+
+  /**
+   * Save collapsed groups state to localStorage
+   */
+  function saveCollapseState() {
+    try {
+      const groups = Array.from(state.collapsedGroups);
+      localStorage.setItem('sfb_collapsed_groups', JSON.stringify(groups));
+    } catch (e) {
+      console.warn('Failed to save collapse state to localStorage:', e);
     }
   }
 
