@@ -999,12 +999,13 @@ class SFB_PDF_Generator {
    * @param bool $pro_active Whether Pro license is active
    */
   private static function render_page_numbers($branding, $pro_active = false) {
-    // Get footer text - centralized via helper function
+    // Get footer text
     $footerText = '';
-    if ($pro_active && !empty($branding['footer_text'])) {
-      $footerText = $branding['footer_text'];
+    if ($pro_active) {
+      // For Pro users: use custom footer_text if provided, otherwise empty (no branding required)
+      $footerText = $branding['footer_text'] ?? '';
     } else {
-      // Use centralized brand credit helper (plain-text for PDF)
+      // For Free users: always show plugin branding
       $footerText = sfb_brand_credit_plain('pdf');
     }
 
@@ -1044,8 +1045,8 @@ if (isset($pdf)) {
     ?>
 <div class="sfb-footer">
   <div class="sfb-footer-text">
-    <?php if ($pro_active && !empty($branding['footer_text'])): ?>
-      <?php echo esc_html($branding['footer_text']); ?>
+    <?php if ($pro_active): ?>
+      <?php echo esc_html($branding['footer_text'] ?? ''); ?>
     <?php else: ?>
       <?php esc_html_e('Generated with Submittal & Spec Sheet Builder for WordPress', 'submittal-builder'); ?>
     <?php endif; ?>
