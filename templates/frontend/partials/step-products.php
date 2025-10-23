@@ -87,6 +87,14 @@ if (!defined('ABSPATH')) exit;
           <span id="sfb-results-count"><?php esc_html_e('Loading products...', 'submittal-builder'); ?></span>
         </div>
 
+        <!-- Expand/Collapse All Button -->
+        <button type="button" id="sfb-toggle-all-groups" class="sfb-toggle-all-btn" title="<?php esc_attr_e('Expand all product groups', 'submittal-builder'); ?>">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span id="sfb-toggle-all-text"><?php esc_html_e('Expand All', 'submittal-builder'); ?></span>
+        </button>
+
         <!-- Sticky Selection Counter -->
         <div id="sfb-selection-counter" class="sfb-selection-counter" style="display: none;">
           <span class="sfb-selection-count-text">

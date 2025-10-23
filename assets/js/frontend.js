@@ -81,6 +81,8 @@
       productsEmpty: document.getElementById('sfb-products-empty'),
       resultsCount: document.getElementById('sfb-results-count'),
       clearFilters: document.getElementById('sfb-clear-filters'),
+      toggleAllGroupsBtn: document.getElementById('sfb-toggle-all-groups'),
+      toggleAllText: document.getElementById('sfb-toggle-all-text'),
       selectionCounter: document.getElementById('sfb-selection-counter'),
       selectionCountNumber: document.getElementById('sfb-selection-count-number'),
       selectionViewBtn: document.getElementById('sfb-selection-view-btn'),
@@ -126,6 +128,11 @@
     // Clear filters
     if (elements.clearFilters) {
       elements.clearFilters.addEventListener('click', clearFilters);
+    }
+
+    // Toggle all groups expand/collapse
+    if (elements.toggleAllGroupsBtn) {
+      elements.toggleAllGroupsBtn.addEventListener('click', toggleAllGroups);
     }
 
     // Selection counter "View" button
@@ -682,6 +689,12 @@
       }).join('');
 
       const groupKey = `${category}::${productLabel}`;
+
+      // If first load with no saved state, collapse all groups by default
+      if (state.defaultCollapsed && !state.collapsedGroups.has(groupKey)) {
+        state.collapsedGroups.add(groupKey);
+      }
+
       const isCollapsed = state.collapsedGroups.has(groupKey);
 
       return `
@@ -705,6 +718,12 @@
     }).join('');
 
     elements.productsGrid.innerHTML = html;
+
+    // If we just set default collapsed state, save it and clear the flag
+    if (state.defaultCollapsed) {
+      saveCollapseState();
+      state.defaultCollapsed = false;
+    }
 
     // Attach product card handlers (click-anywhere)
     attachCardHandlers();
@@ -812,6 +831,51 @@
       state.collapsedGroups.add(groupKey);
       group.classList.add('sfb-product-group--collapsed');
       group.querySelector('.sfb-product-header').setAttribute('aria-expanded', 'false');
+    }
+
+    // Persist to localStorage
+    saveCollapseState();
+  }
+
+  /**
+   * Toggle all product groups expand/collapse
+   */
+  function toggleAllGroups() {
+    const allGroups = elements.productsGrid.querySelectorAll('.sfb-product-group');
+    if (allGroups.length === 0) return;
+
+    // Determine if we should expand or collapse all
+    // If any group is collapsed, expand all. If all are expanded, collapse all.
+    const anyCollapsed = Array.from(allGroups).some(group =>
+      group.classList.contains('sfb-product-group--collapsed')
+    );
+
+    const shouldExpand = anyCollapsed;
+
+    allGroups.forEach(group => {
+      const groupKey = group.dataset.groupKey;
+      const header = group.querySelector('.sfb-product-header');
+
+      if (shouldExpand) {
+        // Expand this group
+        state.collapsedGroups.delete(groupKey);
+        group.classList.remove('sfb-product-group--collapsed');
+        if (header) header.setAttribute('aria-expanded', 'true');
+      } else {
+        // Collapse this group
+        state.collapsedGroups.add(groupKey);
+        group.classList.add('sfb-product-group--collapsed');
+        if (header) header.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Update button text and title
+    if (elements.toggleAllText) {
+      elements.toggleAllText.textContent = shouldExpand ? 'Collapse All' : 'Expand All';
+    }
+    if (elements.toggleAllGroupsBtn) {
+      elements.toggleAllGroupsBtn.title = shouldExpand ? 'Collapse all product groups' : 'Expand all product groups';
+      elements.toggleAllGroupsBtn.classList.toggle('sfb-toggle-all-btn--expanded', shouldExpand);
     }
 
     // Persist to localStorage
@@ -1520,6 +1584,9 @@
       if (collapsedGroups) {
         const groups = JSON.parse(collapsedGroups);
         state.collapsedGroups = new Set(groups);
+      } else {
+        // Default: all groups start collapsed (will be populated after products load)
+        state.defaultCollapsed = true;
       }
     } catch (e) {
       console.warn('Failed to restore state from localStorage/sessionStorage:', e);

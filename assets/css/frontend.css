@@ -2150,7 +2150,7 @@ a:focus-visible {
 /* Toolbar alignment */
 .sfb-products-toolbar {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   gap: 10px;
   align-items: center;
 }
@@ -2163,6 +2163,42 @@ a:focus-visible {
   margin-left: 8px;
   color: #111827;
   font-size: 14px;
+}
+
+/* Toggle All Button */
+.sfb-toggle-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sfb-toggle-all-btn:hover {
+  background: #F9FAFB;
+  border-color: #9CA3AF;
+  color: #1F2937;
+}
+
+.sfb-toggle-all-btn:active {
+  background: #F3F4F6;
+}
+
+.sfb-toggle-all-btn svg {
+  transition: transform 0.3s ease;
+  transform: rotate(90deg);
+}
+
+.sfb-toggle-all-btn--expanded svg {
+  transform: rotate(-90deg);
 }
 
 /* Selected pill compact */
