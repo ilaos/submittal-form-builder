@@ -2906,22 +2906,50 @@ final class SFB_Plugin {
             </div>
           </div>
 
-          <!-- BCC Admin Email -->
+          <!-- Lead Notification Email (Pro) -->
+          <?php if (sfb_is_pro_license()): ?>
           <div class="sfb-setting-row">
-            <div class="sfb-setting-icon">📬</div>
+            <div class="sfb-setting-icon">📧</div>
             <div class="sfb-setting-content">
-              <label class="sfb-checkbox-label">
-                <input type="checkbox"
-                       name="sfb_lead_bcc_admin"
-                       value="1"
-                       <?php checked(get_option('sfb_lead_bcc_admin', false)); ?>>
-                <span class="sfb-setting-title"><?php esc_html_e('BCC admin on lead emails', 'submittal-builder'); ?></span>
+              <label class="sfb-setting-title" for="sfb-lead-notification-email">
+                <?php esc_html_e('Lead notification email', 'submittal-builder'); ?>
+                <span class="sfb-pro-badge"><?php esc_html_e('PRO', 'submittal-builder'); ?></span>
               </label>
-              <p class="sfb-setting-desc">
-                <?php printf(esc_html__('When enabled, all lead notification emails will BCC %s', 'submittal-builder'), '<code>' . esc_html(get_option('admin_email')) . '</code>'); ?>
+              <p class="sfb-setting-desc" style="margin-top: 4px; margin-bottom: 12px;">
+                <?php esc_html_e('Email address to receive lead notifications. When someone fills out the lead form, a notification will be sent to this address with their contact details. Leave blank to use site admin email.', 'submittal-builder'); ?>
+              </p>
+              <input type="email"
+                     id="sfb-lead-notification-email"
+                     name="sfb_lead_notification_email"
+                     value="<?php echo esc_attr(get_option('sfb_lead_notification_email', '')); ?>"
+                     class="sfb-text-input"
+                     placeholder="<?php echo esc_attr(get_option('admin_email')); ?>"
+                     style="max-width: 400px;">
+              <p class="sfb-setting-desc" style="margin-top: 8px; font-size: 12px; color: #6b7280;">
+                <?php printf(
+                  esc_html__('Default: %s (site admin email)', 'submittal-builder'),
+                  '<code>' . esc_html(get_option('admin_email')) . '</code>'
+                ); ?>
               </p>
             </div>
           </div>
+          <?php else: ?>
+          <div class="sfb-setting-row sfb-setting-locked">
+            <div class="sfb-setting-icon">📧</div>
+            <div class="sfb-setting-content">
+              <label class="sfb-setting-title">
+                <?php esc_html_e('Lead notification email', 'submittal-builder'); ?>
+                <span class="sfb-pro-badge"><?php esc_html_e('PRO', 'submittal-builder'); ?></span>
+              </label>
+              <p class="sfb-setting-desc">
+                <?php esc_html_e('Customize where lead notifications are sent. Upgrade to Pro to unlock this feature.', 'submittal-builder'); ?>
+              </p>
+              <a href="<?php echo esc_url(admin_url('admin.php?page=submittal-builder-upgrade')); ?>" class="sfb-button sfb-button-primary">
+                <?php esc_html_e('Upgrade to Pro', 'submittal-builder'); ?>
+              </a>
+            </div>
+          </div>
+          <?php endif; ?>
         </div>
 
         <!-- Weekly Lead Export Card (Agency) -->
@@ -3537,7 +3565,27 @@ final class SFB_Plugin {
       'sfb_section_lead_capture'
     );
 
-    // BCC admin email toggle
+    // Lead notification email (Pro feature)
+    register_setting('sfb_settings_group', 'sfb_lead_notification_email', [
+      'sanitize_callback' => function($value) {
+        // Allow empty (will fallback to admin email), or validate as email
+        if (empty($value)) {
+          return '';
+        }
+        return is_email($value) ? sanitize_email($value) : '';
+      },
+      'default' => ''
+    ]);
+
+    add_settings_field(
+      'sfb_lead_notification_email',
+      __('Lead Notification Email', 'submittal-builder'),
+      [$this, 'render_lead_notification_email_field'],
+      'sfb_settings_page',
+      'sfb_section_lead_capture'
+    );
+
+    // BCC admin email toggle (deprecated - keeping for backwards compatibility)
     register_setting('sfb_settings_group', 'sfb_lead_bcc_admin', [
       'sanitize_callback' => function($value) {
         return !empty($value);
@@ -3818,6 +3866,32 @@ final class SFB_Plugin {
       <?php esc_html_e('Show lead capture modal before PDF generation', 'submittal-builder'); ?>
     </label>
     <span class="sfb-field-desc"><?php esc_html_e('When enabled, users must enter their email (and optionally phone) before downloading PDFs. Leads are stored in the database.', 'submittal-builder'); ?></span>
+    <?php
+  }
+
+  /** Lead Notification Email Field (Pro) */
+  function render_lead_notification_email_field() {
+    $email = get_option('sfb_lead_notification_email', '');
+    $placeholder = get_option('admin_email');
+    ?>
+    <input type="email"
+           name="sfb_lead_notification_email"
+           value="<?php echo esc_attr($email); ?>"
+           placeholder="<?php echo esc_attr($placeholder); ?>"
+           class="regular-text"
+           <?php echo !sfb_is_pro_license() ? 'disabled' : ''; ?>>
+    <p class="description">
+      <?php esc_html_e('Email address to receive lead notifications. Leave blank to use site admin email.', 'submittal-builder'); ?>
+      <?php if (!empty($placeholder)): ?>
+        <br>
+        <?php printf(esc_html__('Default: %s', 'submittal-builder'), '<code>' . esc_html($placeholder) . '</code>'); ?>
+      <?php endif; ?>
+    </p>
+    <?php if (!sfb_is_pro_license()): ?>
+      <p class="description" style="color: #d97706;">
+        <?php esc_html_e('⚠️ This is a Pro feature. Upgrade to customize the notification email address.', 'submittal-builder'); ?>
+      </p>
+    <?php endif; ?>
     <?php
   }
 
@@ -4893,6 +4967,360 @@ final class SFB_Plugin {
       'leads' => $leads ?: [],
       'total' => $total,
     ];
+  }
+
+  /** Import Catalog Page Renderer (Pro/Agency) */
+  function render_import_page() {
+    // Security check
+    if (!current_user_can('manage_options')) {
+      wp_die(__('You do not have sufficient permissions to access this page.'));
+    }
+
+    // Pro check
+    if (!sfb_is_pro_active() && !sfb_is_agency_license()) {
+      wp_die(__('This feature requires a Pro or Agency license.'));
+    }
+
+    ?>
+    <div class="wrap sfb-admin-page">
+      <h1><?php esc_html_e('Import Catalog', 'submittal-builder'); ?></h1>
+      <p class="description">
+        <?php esc_html_e('Import products from a CSV file. The importer will automatically detect your hierarchy structure and create categories, products, types, and models.', 'submittal-builder'); ?>
+      </p>
+
+      <div class="sfb-import-container">
+        <!-- Upload Form -->
+        <div class="sfb-import-card">
+          <h2><?php esc_html_e('1. Upload CSV File', 'submittal-builder'); ?></h2>
+          <form id="sfb-import-form" enctype="multipart/form-data">
+            <input type="file" id="sfb-import-file" name="csv_file" accept=".csv" required>
+            <p class="description">
+              <?php esc_html_e('CSV files only (.csv). Maximum file size: 5MB', 'submittal-builder'); ?>
+            </p>
+            <button type="submit" class="button button-primary">
+              <?php esc_html_e('Upload & Preview', 'submittal-builder'); ?>
+            </button>
+          </form>
+        </div>
+
+        <!-- Preview Section (hidden initially) -->
+        <div id="sfb-import-preview" class="sfb-import-card" style="display:none;">
+          <h2><?php esc_html_e('2. Preview Import', 'submittal-builder'); ?></h2>
+          <div id="sfb-preview-content"></div>
+
+          <!-- Import Mode Selection -->
+          <div class="sfb-import-mode" style="margin: 20px 0; padding: 15px; background: #f6f7f7; border-radius: 4px;">
+            <h4 style="margin-top: 0;"><?php esc_html_e('Import Mode', 'submittal-builder'); ?></h4>
+            <label style="display: block; margin-bottom: 10px;">
+              <input type="radio" name="sfb_import_mode" value="merge" checked>
+              <strong><?php esc_html_e('Merge - Keep Existing', 'submittal-builder'); ?></strong>
+              <p class="description" style="margin: 5px 0 0 24px;">
+                <?php esc_html_e('Add imported items to your current catalog. Existing items will be preserved.', 'submittal-builder'); ?>
+              </p>
+            </label>
+            <label style="display: block;">
+              <input type="radio" name="sfb_import_mode" value="replace">
+              <strong><?php esc_html_e('Replace Existing', 'submittal-builder'); ?></strong>
+              <p class="description" style="margin: 5px 0 0 24px;">
+                <?php esc_html_e('Delete all existing catalog items and replace with imported data.', 'submittal-builder'); ?>
+              </p>
+            </label>
+          </div>
+
+          <div class="sfb-import-actions">
+            <button id="sfb-import-confirm" class="button button-primary">
+              <?php esc_html_e('Import Now', 'submittal-builder'); ?>
+            </button>
+            <button id="sfb-import-cancel" class="button">
+              <?php esc_html_e('Cancel', 'submittal-builder'); ?>
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Section (hidden initially) -->
+        <div id="sfb-import-results" class="sfb-import-card" style="display:none;">
+          <h2><?php esc_html_e('Import Results', 'submittal-builder'); ?></h2>
+          <div id="sfb-results-content"></div>
+        </div>
+
+        <!-- Guide Card -->
+        <div class="sfb-import-guide sfb-import-card">
+          <h3><?php esc_html_e('CSV Format Guide', 'submittal-builder'); ?></h3>
+          <p><?php esc_html_e('Your CSV file should have headers in the first row. The importer supports flexible hierarchy:', 'submittal-builder'); ?></p>
+
+          <h4><?php esc_html_e('Simple Structure (Category → Product)', 'submittal-builder'); ?></h4>
+          <pre>Category,Product,Size,Weight
+Framing,C-Stud 20GA,3-5/8",2.5 lb</pre>
+
+          <h4><?php esc_html_e('Complex Structure (Category → Product → Type → Model)', 'submittal-builder'); ?></h4>
+          <pre>Category,Product,Type,Model,Size,Flange,KSI
+Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
+
+          <p class="description">
+            <strong><?php esc_html_e('Column Detection:', 'submittal-builder'); ?></strong>
+            <?php esc_html_e('Category, Product, Type, Model columns create hierarchy. All other columns become product specifications.', 'submittal-builder'); ?>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .sfb-import-container {
+        max-width: 1200px;
+        margin-top: 20px;
+      }
+      .sfb-import-card {
+        background: #fff;
+        border: 1px solid #ccd0d4;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+      }
+      .sfb-import-card h2 {
+        margin-top: 0;
+        border-bottom: 1px solid #e5e5e5;
+        padding-bottom: 10px;
+      }
+      #sfb-import-file {
+        margin: 10px 0;
+      }
+      .sfb-import-actions {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e5e5;
+      }
+      .sfb-import-guide pre {
+        background: #f6f7f7;
+        padding: 10px;
+        border-left: 4px solid #2271b1;
+        overflow-x: auto;
+      }
+      .sfb-import-progress {
+        margin: 15px 0;
+      }
+      .sfb-import-progress-bar {
+        height: 24px;
+        background: #f0f0f1;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .sfb-import-progress-fill {
+        height: 100%;
+        background: #2271b1;
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 600;
+      }
+      .sfb-results-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+      .sfb-result-stat {
+        padding: 15px;
+        background: #f6f7f7;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .sfb-result-stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      .sfb-result-stat-label {
+        font-size: 14px;
+        color: #646970;
+      }
+    </style>
+
+    <script>
+    jQuery(document).ready(function($) {
+      const $form = $('#sfb-import-form');
+      const $preview = $('#sfb-import-preview');
+      const $results = $('#sfb-import-results');
+      const $previewContent = $('#sfb-preview-content');
+      const $resultsContent = $('#sfb-results-content');
+
+      let parsedData = null;
+
+      // Handle file upload and preview
+      $form.on('submit', function(e) {
+        e.preventDefault();
+
+        const fileInput = document.getElementById('sfb-import-file');
+        const file = fileInput.files[0];
+
+        if (!file) {
+          alert('<?php esc_html_e('Please select a CSV file', 'submittal-builder'); ?>');
+          return;
+        }
+
+        // Read and parse CSV
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const csvText = e.target.result;
+
+          // Send to server for validation and preview
+          $.ajax({
+            url: '<?php echo esc_url(rest_url('sfb/v1/catalog/import-preview')); ?>',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: {
+              'X-WP-Nonce': '<?php echo wp_create_nonce('wp_rest'); ?>'
+            },
+            data: JSON.stringify({ csv_content: csvText }),
+            success: function(response) {
+              if (response.ok) {
+                parsedData = response.data;
+                showPreview(response.data);
+              } else {
+                alert('Error: ' + (response.message || 'Failed to parse CSV'));
+              }
+            },
+            error: function(xhr) {
+              alert('Upload failed: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            }
+          });
+        };
+        reader.readAsText(file);
+      });
+
+      // Show preview
+      function showPreview(data) {
+        let html = '<div class="sfb-preview-summary">';
+        html += '<p><strong>' + data.total_rows + '</strong> rows found</p>';
+        html += '<p><strong>Hierarchy:</strong> ' + data.hierarchy_type + '</p>';
+        html += '<p><strong>Spec columns:</strong> ' + data.spec_columns.join(', ') + '</p>';
+        html += '</div>';
+
+        html += '<h4>Preview (first 5 rows):</h4>';
+        html += '<table class="wp-list-table widefat fixed striped">';
+        html += '<thead><tr>';
+        data.headers.forEach(h => html += '<th>' + h + '</th>');
+        html += '</tr></thead><tbody>';
+
+        data.preview_rows.slice(0, 5).forEach(row => {
+          html += '<tr>';
+          row.forEach(cell => html += '<td>' + (cell || '<em>empty</em>') + '</td>');
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+
+        $previewContent.html(html);
+        $preview.show();
+        $results.hide();
+      }
+
+      // Handle import confirmation
+      $('#sfb-import-confirm').on('click', function() {
+        if (!parsedData) return;
+
+        // Get selected import mode
+        const importMode = $('input[name="sfb_import_mode"]:checked').val();
+
+        // Confirm if replacing
+        if (importMode === 'replace') {
+          if (!confirm('<?php esc_html_e('Are you sure you want to delete all existing catalog items and replace them with the imported data? This action cannot be undone.', 'submittal-builder'); ?>')) {
+            return;
+          }
+        }
+
+        $(this).prop('disabled', true).text('<?php esc_html_e('Importing...', 'submittal-builder'); ?>');
+
+        $.ajax({
+          url: '<?php echo esc_url(rest_url('sfb/v1/catalog/import')); ?>',
+          method: 'POST',
+          contentType: 'application/json',
+          headers: {
+            'X-WP-Nonce': '<?php echo wp_create_nonce('wp_rest'); ?>'
+          },
+          data: JSON.stringify({
+            data: parsedData,
+            mode: importMode
+          }),
+          success: function(response) {
+            if (response.ok) {
+              showResults(response.data);
+            } else {
+              alert('Import failed: ' + (response.message || 'Unknown error'));
+            }
+            $('#sfb-import-confirm').prop('disabled', false).text('<?php esc_html_e('Import Now', 'submittal-builder'); ?>');
+          },
+          error: function(xhr) {
+            alert('Import failed: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            $('#sfb-import-confirm').prop('disabled', false).text('<?php esc_html_e('Import Now', 'submittal-builder'); ?>');
+          }
+        });
+      });
+
+      // Show results
+      function showResults(data) {
+        let html = '';
+
+        // Big success banner
+        if (data.errors === 0) {
+          html += '<div class="notice notice-success inline" style="margin: 0 0 20px 0; padding: 15px; border-left: 4px solid #46b450;">';
+          html += '<p style="margin: 0; font-size: 16px;"><span class="dashicons dashicons-yes-alt" style="color: #46b450; font-size: 20px; margin-right: 8px;"></span>';
+          html += '<strong>Import Complete!</strong> Successfully imported ' + data.created + ' item' + (data.created !== 1 ? 's' : '') + ' to your catalog.</p>';
+          html += '</div>';
+        } else {
+          html += '<div class="notice notice-warning inline" style="margin: 0 0 20px 0; padding: 15px; border-left: 4px solid #dba617;">';
+          html += '<p style="margin: 0; font-size: 16px;"><span class="dashicons dashicons-warning" style="color: #dba617; font-size: 20px; margin-right: 8px;"></span>';
+          html += '<strong>Import Complete with Warnings</strong> Created ' + data.created + ' items, but encountered ' + data.errors + ' error' + (data.errors !== 1 ? 's' : '') + '.</p>';
+          html += '</div>';
+        }
+
+        // Show mode message
+        if (data.mode === 'replace' && data.deleted > 0) {
+          html += '<div class="notice notice-info inline" style="margin: 0 0 15px 0;"><p><strong>Replace Mode:</strong> Deleted ' + data.deleted + ' existing items before import.</p></div>';
+        }
+
+        html += '<div class="sfb-results-summary">';
+        html += '<div class="sfb-result-stat"><div class="sfb-result-stat-number" style="color:#2271b1;">' + data.created + '</div><div class="sfb-result-stat-label">Created</div></div>';
+        html += '<div class="sfb-result-stat"><div class="sfb-result-stat-number" style="color:#dba617;">' + data.skipped + '</div><div class="sfb-result-stat-label">Skipped</div></div>';
+        html += '<div class="sfb-result-stat"><div class="sfb-result-stat-number" style="color:#d63638;">' + data.errors + '</div><div class="sfb-result-stat-label">Errors</div></div>';
+        html += '</div>';
+
+        if (data.error_messages && data.error_messages.length > 0) {
+          html += '<h4>Errors:</h4><ul>';
+          data.error_messages.forEach(msg => html += '<li>' + msg + '</li>');
+          html += '</ul>';
+        }
+
+        html += '<div style="margin-top: 20px; text-align: center;">';
+        html += '<a href="<?php echo admin_url('admin.php?page=sfb'); ?>" class="button button-primary button-hero">View Catalog</a> ';
+        html += '<button id="sfb-import-another" class="button button-hero" style="margin-left: 10px;">Import Another File</button>';
+        html += '</div>';
+
+        $resultsContent.html(html);
+        $preview.hide();
+        $results.show();
+
+        // Scroll to results
+        $results[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Handle "Import Another" button
+        $('#sfb-import-another').on('click', function() {
+          $results.hide();
+          $form[0].reset();
+          parsedData = null;
+          $('html, body').animate({ scrollTop: 0 }, 300);
+        });
+      }
+
+      // Handle cancel
+      $('#sfb-import-cancel').on('click', function() {
+        $preview.hide();
+        $form[0].reset();
+        parsedData = null;
+      });
+    });
+    </script>
+    <?php
   }
 
   /** Demo Tools Page Renderer */
@@ -6217,12 +6645,30 @@ final class SFB_Plugin {
       $nodes_by_id[$node['id']] = $node;
     }
 
-    // Process only model nodes with full lineage
+    // BUGFIX: Support flexible hierarchy - process both 'model' and 'product' nodes
+    // This allows simpler structures like Category→Product (without Type→Model)
+    // as well as complex structures like Category→Product→Type→Model
     $formatted = [];
     $ordering = 0;
 
     foreach ($all_nodes as $node) {
-      if ($node['node_type'] !== 'model') continue;
+      // Skip if not a model or product node
+      if (!in_array($node['node_type'], ['model', 'product'], true)) continue;
+
+      // If it's a product node, check if it has children (Type/Model nodes)
+      // If yes, skip it (we'll process its models instead)
+      // If no, treat it as a leaf item to display
+      if ($node['node_type'] === 'product') {
+        $has_children = false;
+        foreach ($all_nodes as $potential_child) {
+          if ($potential_child['parent_id'] == $node['id']) {
+            $has_children = true;
+            break;
+          }
+        }
+        // Skip products that have children - we only want leaf nodes
+        if ($has_children) continue;
+      }
 
       $ordering++;
       $settings = !empty($node['settings_json']) ? json_decode($node['settings_json'], true) : [];
@@ -6246,8 +6692,23 @@ final class SFB_Plugin {
       if ($node['parent_id'] && isset($nodes_by_id[$node['parent_id']])) {
         $parent_node = $nodes_by_id[$node['parent_id']];
 
-        // Check if parent is a subtype or type
-        if ($parent_node['node_type'] === 'subtype') {
+        // Handle different hierarchy levels based on what type of node this is and its parent
+        if ($node['node_type'] === 'product') {
+          // Simple hierarchy: Product -> Category
+          // The product IS the item, parent is category
+          $product_label = $node['title']; // Use the node itself as product label
+          $product_slug = $node['slug'] ?: sanitize_title($product_label);
+          $product_id = (int) $node['id'];
+          $product_position = isset($node['position']) ? (int) $node['position'] : 99999;
+
+          // Parent should be category
+          if ($parent_node['node_type'] === 'category') {
+            $category = $parent_node['title'];
+            $category_slug = $parent_node['slug'] ?: sanitize_title($category);
+            $category_id = (int) $parent_node['id'];
+            $category_position = isset($parent_node['position']) ? (int) $parent_node['position'] : 99999;
+          }
+        } else if ($parent_node['node_type'] === 'subtype') {
           // Model -> Subtype -> Type -> Product -> Category
           $subtype_label = $parent_node['title'];
           $subtype_slug = $parent_node['slug'] ?: sanitize_title($subtype_label);
@@ -6323,11 +6784,18 @@ final class SFB_Plugin {
         }
       }
 
-      // Build model slug
+      // Build model slug (or product slug for simple hierarchy)
       $model_slug = $node['slug'] ?: sanitize_title($node['title']);
 
       // Build composite_key (lowercase kebab)
-      $composite_key = sanitize_key($category_slug) . ':' . sanitize_key($type_slug) . ':' . sanitize_key($model_slug);
+      // For simple hierarchy (Category→Product), type_slug will be empty, so key becomes "category::product"
+      if (empty($type_slug)) {
+        // Simple hierarchy without type
+        $composite_key = sanitize_key($category_slug) . '::' . sanitize_key($model_slug);
+      } else {
+        // Complex hierarchy with type
+        $composite_key = sanitize_key($category_slug) . ':' . sanitize_key($type_slug) . ':' . sanitize_key($model_slug);
+      }
 
       // Build search_tokens (model, subtype, type, product, category, spec values)
       $search_parts = [
@@ -7321,8 +7789,20 @@ final class SFB_Plugin {
     $custom_links = [
       '<a href="' . esc_url(add_query_arg('page', 'sfb', admin_url('admin.php'))) . '">Builder</a>',
       '<a href="' . esc_url(add_query_arg('page', 'sfb-branding', admin_url('admin.php'))) . '">Settings</a>',
-      '<a href="' . esc_url(add_query_arg('page', 'sfb-upgrade', admin_url('admin.php'))) . '" style="color:#7c3aed;font-weight:600;">⭐ Upgrade to Pro</a>',
     ];
+
+    // Show appropriate link based on license status
+    if (sfb_is_agency_license()) {
+      // Agency license - show Agency settings
+      $custom_links[] = '<a href="' . esc_url(add_query_arg('page', 'sfb-agency', admin_url('admin.php'))) . '" style="color:#7c3aed;font-weight:600;">💼 Agency</a>';
+    } elseif (sfb_is_pro_active()) {
+      // Pro license - show license management
+      $custom_links[] = '<a href="' . esc_url(add_query_arg('page', 'sfb-license-management', admin_url('admin.php'))) . '" style="color:#10b981;font-weight:600;">✓ Pro Active</a>';
+    } else {
+      // Free version - show upgrade link
+      $custom_links[] = '<a href="' . esc_url(add_query_arg('page', 'sfb-upgrade', admin_url('admin.php'))) . '" style="color:#7c3aed;font-weight:600;">⭐ Upgrade to Pro</a>';
+    }
+
     return array_merge($custom_links, $links);
   }
 
@@ -7973,7 +8453,12 @@ final class SFB_Plugin {
           }
           $product_count++;
 
-          $product_slug = sanitize_title($product_data['title']);
+          // Use the JSON type title for the Product node
+          // Since JSON doesn't have 4 levels, we extract Product from category and use type for both Product and Type
+          $product_title = $cat_data['title']; // e.g., "Steel Beams", "Fasteners"
+          $type_title = $product_data['title']; // e.g., "W-Beams", "Hex Bolts"
+
+          $product_slug = sanitize_title($product_title);
 
           // In merge mode, check if product already exists
           $product_id = null;
@@ -7991,17 +8476,18 @@ final class SFB_Plugin {
               'form_id' => $form_id,
               'parent_id' => $cat_id,
               'node_type' => 'product',
-              'title' => $product_data['title'],
+              'title' => $product_title,
               'slug' => $product_slug,
-              'position' => $product_pos++,
+              'position' => $product_pos,
               'settings_json' => json_encode(['_demo_seed' => 1, '_demo_pack' => $industry_pack])
             ]);
             $product_id = $wpdb->insert_id;
             $stats['products']++;
+            $product_pos++; // Increment only when creating new product
           }
 
-          // Create a default Type under this Product
-          $type_slug = sanitize_title($product_data['title'] . '-standard');
+          // Create Type under this Product using the JSON type title
+          $type_slug = sanitize_title($type_title);
           $type_id = null;
           if ($mode === 'merge') {
             $type_id = $wpdb->get_var($wpdb->prepare(
@@ -8017,9 +8503,9 @@ final class SFB_Plugin {
               'form_id' => $form_id,
               'parent_id' => $product_id,
               'node_type' => 'type',
-              'title' => 'Standard',
+              'title' => $type_title,
               'slug' => $type_slug,
-              'position' => 0,
+              'position' => $product_count - 1, // Maintain order based on JSON array position
               'settings_json' => json_encode(['_demo_seed' => 1, '_demo_pack' => $industry_pack])
             ]);
             $type_id = $wpdb->insert_id;
@@ -8452,6 +8938,284 @@ final class SFB_Plugin {
       error_log('SFB api_bulk_export error: ' . $e->getMessage());
       return new WP_Error('server_error', $e->getMessage(), ['status' => 500]);
     }
+  }
+
+  /** CSV Import - Preview (Pro/Agency) */
+  function api_import_preview($req) {
+    try {
+      $p = $req->get_json_params();
+      $csv_content = $p['csv_content'] ?? '';
+
+      if (empty($csv_content)) {
+        return new WP_Error('bad_request', 'No CSV content provided', ['status' => 400]);
+      }
+
+      // Remove BOM if present
+      $csv_content = str_replace("\xEF\xBB\xBF", '', $csv_content);
+
+      // Parse CSV into array
+      $lines = array_map('str_getcsv', explode("\n", $csv_content));
+      $lines = array_filter($lines, function($line) {
+        return !empty(array_filter($line, function($cell) { return trim($cell) !== ''; }));
+      });
+
+      if (count($lines) < 2) {
+        return new WP_Error('bad_request', 'CSV must have at least a header row and one data row', ['status' => 400]);
+      }
+
+      // Extract headers
+      $headers = array_map('trim', array_shift($lines));
+
+      // Detect hierarchy columns
+      $hierarchy_cols = ['Category' => null, 'Product' => null, 'Type' => null, 'Model' => null, 'Subtype' => null];
+      foreach ($headers as $idx => $header) {
+        $header_lower = strtolower($header);
+        if ($header_lower === 'category') $hierarchy_cols['Category'] = $idx;
+        if ($header_lower === 'product') $hierarchy_cols['Product'] = $idx;
+        if ($header_lower === 'type') $hierarchy_cols['Type'] = $idx;
+        if ($header_lower === 'model') $hierarchy_cols['Model'] = $idx;
+        if ($header_lower === 'subtype') $hierarchy_cols['Subtype'] = $idx;
+      }
+
+      // Determine hierarchy type
+      $has_category = $hierarchy_cols['Category'] !== null;
+      $has_product = $hierarchy_cols['Product'] !== null;
+      $has_type = $hierarchy_cols['Type'] !== null;
+      $has_model = $hierarchy_cols['Model'] !== null;
+
+      if (!$has_category) {
+        return new WP_Error('bad_request', 'CSV must have a "Category" column', ['status' => 400]);
+      }
+
+      $hierarchy_type = 'Unknown';
+      if ($has_category && $has_product && $has_type && $has_model) {
+        $hierarchy_type = 'Complex (Category → Product → Type → Model)';
+      } elseif ($has_category && $has_product && !$has_type && !$has_model) {
+        $hierarchy_type = 'Simple (Category → Product)';
+      } elseif ($has_category && $has_model) {
+        $hierarchy_type = 'Medium (Category → ... → Model)';
+      }
+
+      // Identify spec columns (all non-hierarchy columns)
+      $spec_cols = [];
+      foreach ($headers as $idx => $header) {
+        $header_lower = strtolower($header);
+        if (!in_array($header_lower, ['category', 'product', 'type', 'model', 'subtype'])) {
+          $spec_cols[] = $header;
+        }
+      }
+
+      // Parse all rows
+      $rows = [];
+      foreach ($lines as $line) {
+        $rows[] = $line;
+      }
+
+      return [
+        'ok' => true,
+        'data' => [
+          'headers' => $headers,
+          'hierarchy_columns' => $hierarchy_cols,
+          'hierarchy_type' => $hierarchy_type,
+          'spec_columns' => $spec_cols,
+          'total_rows' => count($rows),
+          'preview_rows' => array_slice($rows, 0, 5),
+          'all_rows' => $rows, // Include all rows for import
+        ]
+      ];
+    } catch (\Throwable $e) {
+      error_log('SFB api_import_preview error: ' . $e->getMessage());
+      return new WP_Error('server_error', $e->getMessage(), ['status' => 500]);
+    }
+  }
+
+  /** CSV Import - Execute Import (Pro/Agency) */
+  function api_import_catalog($req) {
+    try {
+      $this->ensure_tables();
+      global $wpdb;
+      $table = $wpdb->prefix . 'sfb_nodes';
+
+      $p = $req->get_json_params();
+      $headers = $p['data']['headers'] ?? [];
+      $hierarchy_cols = $p['data']['hierarchy_columns'] ?? [];
+      $spec_cols = $p['data']['spec_columns'] ?? [];
+      $rows = $p['data']['all_rows'] ?? [];
+      $mode = $p['mode'] ?? 'merge'; // 'merge' or 'replace'
+
+      if (empty($rows)) {
+        return new WP_Error('bad_request', 'No rows to import', ['status' => 400]);
+      }
+
+      $created = 0;
+      $skipped = 0;
+      $errors = 0;
+      $error_messages = [];
+      $deleted = 0;
+
+      // Track created nodes to avoid duplicates
+      $node_cache = [
+        'category' => [],
+        'product' => [],
+        'type' => [],
+        'subtype' => [],
+        'model' => [],
+      ];
+
+      // Start transaction
+      $wpdb->query('START TRANSACTION');
+
+      // Handle replace mode - delete all existing nodes
+      if ($mode === 'replace') {
+        $delete_result = $wpdb->query("DELETE FROM $table WHERE form_id = 1");
+        $deleted = $delete_result !== false ? $delete_result : 0;
+      }
+
+      foreach ($rows as $row_num => $row) {
+        try {
+          // Skip empty rows
+          if (empty(array_filter($row))) continue;
+
+          // Extract hierarchy values
+          $category = isset($hierarchy_cols['Category']) && isset($row[$hierarchy_cols['Category']])
+            ? trim($row[$hierarchy_cols['Category']]) : '';
+          $product = isset($hierarchy_cols['Product']) && isset($row[$hierarchy_cols['Product']])
+            ? trim($row[$hierarchy_cols['Product']]) : '';
+          $type = isset($hierarchy_cols['Type']) && isset($row[$hierarchy_cols['Type']])
+            ? trim($row[$hierarchy_cols['Type']]) : '';
+          $model = isset($hierarchy_cols['Model']) && isset($row[$hierarchy_cols['Model']])
+            ? trim($row[$hierarchy_cols['Model']]) : '';
+          $subtype = isset($hierarchy_cols['Subtype']) && isset($row[$hierarchy_cols['Subtype']])
+            ? trim($row[$hierarchy_cols['Subtype']]) : '';
+
+          if (empty($category)) {
+            $errors++;
+            $error_messages[] = "Row " . ($row_num + 1) . ": Missing category";
+            continue;
+          }
+
+          // Extract specs
+          $specs = [];
+          foreach ($spec_cols as $spec_name) {
+            $idx = array_search($spec_name, $headers);
+            if ($idx !== false && isset($row[$idx])) {
+              $value = trim($row[$idx]);
+              if ($value !== '') {
+                $specs[$spec_name] = $value;
+              }
+            }
+          }
+
+          // Create/get category
+          $category_id = $this->get_or_create_node($node_cache, 'category', $category, 0, $specs);
+
+          // Determine what to create based on available columns
+          $leaf_id = null;
+
+          if (!empty($model)) {
+            // Complex hierarchy: Create Product → Type → Model
+            $product_id = !empty($product)
+              ? $this->get_or_create_node($node_cache, 'product', $product, $category_id, [])
+              : $category_id;
+
+            $type_id = !empty($type)
+              ? $this->get_or_create_node($node_cache, 'type', $type, $product_id, [])
+              : $product_id;
+
+            $subtype_id = !empty($subtype)
+              ? $this->get_or_create_node($node_cache, 'subtype', $subtype, $type_id, [])
+              : $type_id;
+
+            $leaf_id = $this->get_or_create_node($node_cache, 'model', $model, $subtype_id, $specs);
+          } elseif (!empty($product)) {
+            // Simple hierarchy: Just Product under Category
+            $leaf_id = $this->get_or_create_node($node_cache, 'product', $product, $category_id, $specs);
+          }
+
+          if ($leaf_id) {
+            $created++;
+          }
+
+        } catch (\Throwable $e) {
+          $errors++;
+          $error_messages[] = "Row " . ($row_num + 1) . ": " . $e->getMessage();
+        }
+      }
+
+      // Commit transaction
+      $wpdb->query('COMMIT');
+
+      return [
+        'ok' => true,
+        'data' => [
+          'created' => $created,
+          'skipped' => $skipped,
+          'errors' => $errors,
+          'deleted' => $deleted,
+          'mode' => $mode,
+          'error_messages' => $error_messages,
+        ]
+      ];
+
+    } catch (\Throwable $e) {
+      $wpdb->query('ROLLBACK');
+      error_log('SFB api_import_catalog error: ' . $e->getMessage());
+      return new WP_Error('server_error', $e->getMessage(), ['status' => 500]);
+    }
+  }
+
+  /** Helper: Get or create node */
+  private function get_or_create_node(&$cache, $type, $title, $parent_id, $specs) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'sfb_nodes';
+
+    // Create cache key
+    $cache_key = $parent_id . '|' . $title;
+
+    // Check cache first
+    if (isset($cache[$type][$cache_key])) {
+      return $cache[$type][$cache_key];
+    }
+
+    // Check if node exists
+    $existing = $wpdb->get_var($wpdb->prepare(
+      "SELECT id FROM $table WHERE parent_id=%d AND title=%s AND node_type=%s LIMIT 1",
+      $parent_id, $title, $type
+    ));
+
+    if ($existing) {
+      $cache[$type][$cache_key] = (int)$existing;
+      return (int)$existing;
+    }
+
+    // Get next position
+    $max_position = $wpdb->get_var($wpdb->prepare(
+      "SELECT MAX(position) FROM $table WHERE parent_id=%d",
+      $parent_id
+    ));
+    $position = ($max_position !== null) ? (float)$max_position + 1 : 0;
+
+    // Build settings
+    $settings = [];
+    if (!empty($specs)) {
+      $settings['fields'] = $specs;
+    }
+
+    // Insert node
+    $wpdb->insert($table, [
+      'form_id' => 1,
+      'parent_id' => $parent_id,
+      'node_type' => $type,
+      'title' => $title,
+      'slug' => sanitize_title($title),
+      'position' => $position,
+      'settings_json' => json_encode($settings),
+    ]);
+
+    $new_id = (int)$wpdb->insert_id;
+    $cache[$type][$cache_key] = $new_id;
+
+    return $new_id;
   }
 
   /** Agency feature: Save current catalog as reusable Pack */
