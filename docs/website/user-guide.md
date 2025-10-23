@@ -30,36 +30,53 @@ The product selection interface allows users to browse your catalog and select i
 
 **Top Bar:**
 - Search box (searches all product data)
-- Category filters
-- View toggle (gallery/list)
+- Results count
+- Expand All / Collapse All button
 - Selection counter
 
 **Main Area:**
-- Product cards (gallery view)
-- Product rows (list view)
+- Collapsible product group sections (dark blue headers)
+- Type subsections (bright blue bars) within each product
+- Product cards organized by type
 - Real-time filtering
 
 **Bottom:**
-- "Continue" or "VIEW →" button
-- Selected product count
+- Selected products tray (sticky)
+- "Continue to Review" button
 
 ### Browsing Products
 
+#### Product Organization
+
+Products are organized in a 4-level hierarchy for easy navigation:
+
+**Hierarchy:**
+1. **Category** (sidebar filters) - e.g., "Framing - Drywall"
+2. **Product** (dark blue collapsible headers) - e.g., "25 GAUGE 18 MIL"
+3. **Type** (bright blue subsections) - e.g., "2-1/2" Flange", "Slotted Tracks"
+4. **Models** (individual product cards) - e.g., "400T300-18", "362SLT250-18"
+
+**Collapsible Groups:**
+- Click any dark blue product header to expand/collapse that section
+- Use the "Expand All" / "Collapse All" button to toggle all sections at once
+- Product groups start collapsed by default to reduce visual clutter
+- Your collapse/expand preferences are saved and remembered
+
 #### Gallery View (Default)
 
-Product cards displayed in a grid layout:
+Product cards displayed in a grid layout, grouped by type:
 
 **Each Card Shows:**
-- Product name/model number
-- Category and type badges
+- Model name/number
+- Category breadcrumb (at top)
 - Key specifications (Size, Thickness, KSI, etc.)
+- Configurable dropdown fields (if applicable)
 - Visual thumbnail (if available)
-- Select button
 
 **To Select a Product:**
-1. Click on any card
-2. Card highlights with checkmark
-3. Counter updates
+1. Click anywhere on the card
+2. Card highlights with "✓ ADDED" indicator
+3. Counter updates in real-time
 4. Click again to deselect
 
 #### List View
@@ -328,15 +345,17 @@ Your generated PDF includes:
 - Quick navigation
 
 **3. Summary Table**
-- All selected products in table format
-- Key specifications
-- Quick reference overview
+- All selected products organized by product group
+- Columns: Qty, Type, Model, Key Specifications, Notes
+- Type column with prominent blue styling for easy scanning
+- Quick reference overview of entire packet
 
 **4. Individual Spec Sheets**
-- One page per product
+- One page per product model
+- Full breadcrumb navigation (Category / Product / Type)
 - Complete specifications
-- Product details
-- Formatted for compliance
+- Product images and details
+- Formatted for compliance and code requirements
 
 **5. Footer**
 - Page numbers
