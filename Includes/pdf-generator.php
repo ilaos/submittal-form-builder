@@ -439,6 +439,15 @@ class SFB_PDF_Generator {
       background: white;
     }
 
+    /* Type cell styling - make it stand out */
+    table.sfb-table td.sfb-type-cell {
+      font-weight: 700;
+      color: #2563EB;
+      font-size: 9pt;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(96, 165, 250, 0.08) 100%) !important;
+      border-left: 3px solid #3B82F6 !important;
+    }
+
     /* Product page body copy */
     .product-body p,
     .product-description p {
@@ -827,14 +836,16 @@ class SFB_PDF_Generator {
         <thead>
           <tr>
             <th style="width: 8%;"><?php esc_html_e('Qty', 'submittal-builder'); ?></th>
-            <th style="width: 35%;"><?php esc_html_e('Model', 'submittal-builder'); ?></th>
-            <th style="width: 27%;"><?php esc_html_e('Key Specifications', 'submittal-builder'); ?></th>
-            <th style="width: 30%;"><?php esc_html_e('Notes', 'submittal-builder'); ?></th>
+            <th style="width: 18%;"><?php esc_html_e('Type', 'submittal-builder'); ?></th>
+            <th style="width: 27%;"><?php esc_html_e('Model', 'submittal-builder'); ?></th>
+            <th style="width: 22%;"><?php esc_html_e('Key Specifications', 'submittal-builder'); ?></th>
+            <th style="width: 25%;"><?php esc_html_e('Notes', 'submittal-builder'); ?></th>
           </tr>
         </thead>
         <tbody>
           <?php foreach ($models as $model):
             $model_name = $model['model'] ?? $model['title'] ?? $model['name'] ?? __('Unnamed Model', 'submittal-builder');
+            $type_label = $model['type_label'] ?? '';
             $specs = $model['specs'] ?? $model['specifications'] ?? [];
             $note = $model['note'] ?? $model['description'] ?? '';
             $quantity = $model['quantity'] ?? 1;
@@ -849,6 +860,7 @@ class SFB_PDF_Generator {
           ?>
           <tr>
             <td style="text-align: center; font-weight: 600;"><?php echo esc_html($quantity); ?></td>
+            <td class="sfb-type-cell"><?php echo !empty($type_label) ? esc_html($type_label) : '—'; ?></td>
             <td><strong><?php echo esc_html($model_name); ?></strong></td>
             <td style="font-size: 9pt;"><?php echo esc_html($spec_text); ?></td>
             <td style="font-size: 9pt; font-style: italic;"><?php echo esc_html(wp_trim_words($note, 10)); ?></td>
@@ -894,7 +906,7 @@ class SFB_PDF_Generator {
     $description = $model['description'] ?? $model['note'] ?? '';
     $image_url = $model['image'] ?? $model['image_url'] ?? '';
 
-    // Build breadcrumb showing Category and Product
+    // Build breadcrumb showing Category > Product > Type
     $breadcrumb_parts = [];
 
     // Add category if available
@@ -903,9 +915,17 @@ class SFB_PDF_Generator {
     }
 
     // Add product label
-    $breadcrumb_parts[] = $product_label;
+    if (!empty($product_label) && $product_label !== 'UNCATEGORIZED') {
+      $breadcrumb_parts[] = $product_label;
+    }
 
-    $breadcrumb = implode(' / ', $breadcrumb_parts);
+    // Add type label if available
+    $type_label = $model['type_label'] ?? '';
+    if (!empty($type_label)) {
+      $breadcrumb_parts[] = $type_label;
+    }
+
+    $breadcrumb = !empty($breadcrumb_parts) ? implode(' / ', $breadcrumb_parts) : $product_label;
 
     $quantity = $model['quantity'] ?? 1;
     ?>
