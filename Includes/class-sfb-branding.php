@@ -40,8 +40,22 @@ final class SFB_Branding {
       // Sanitize using helper function
       $sanitized = sfb_sanitize_brand_settings($data);
 
-      // Save to database
+      // Save to database (new format)
       $saved = update_option('sfb_brand_settings', $sanitized, false);
+
+      // ALSO save to old format for backwards compatibility with PHP template form
+      $old_format = [
+        'logo_url'        => $sanitized['company']['logo_url'] ?? '',
+        'company_name'    => $sanitized['company']['name'] ?? '',
+        'company_address' => $sanitized['company']['address'] ?? '',
+        'company_phone'   => $sanitized['company']['phone'] ?? '',
+        'company_website' => $sanitized['company']['website'] ?? '',
+        'primary_color'   => $sanitized['visual']['primary_color'] ?? '#111827',
+        'cover_default'   => !empty($sanitized['visual']['include_cover']),
+        'footer_text'     => $sanitized['visual']['footer_text'] ?? '',
+        'brand_preset'    => $sanitized['visual']['preset_key'] ?? 'custom',
+      ];
+      update_option('sfb_branding', $old_format, false);
 
       // Save "use default preset" toggle (Agency feature - Phase B)
       if (isset($data['use_default_preset'])) {

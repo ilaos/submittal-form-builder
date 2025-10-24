@@ -973,6 +973,23 @@ final class SFB_Plugin {
               <!-- White-Label Settings (shown when enabled) -->
               <div id="sfb-white-label-settings" style="display: <?php echo !empty($white_label_settings['enabled']) ? 'block' : 'none'; ?>; padding-left: 24px; margin-top: 16px; border-left: 3px solid #7c3aed;">
 
+                <!-- Custom PDF Footer Text -->
+                <div class="sfb-field-group">
+                  <label class="sfb-field-label" for="sfb-white-label-footer">
+                    <?php esc_html_e('Custom PDF Footer Text', 'submittal-builder'); ?>
+                    <span class="sfb-field-optional">(<?php esc_html_e('optional', 'submittal-builder'); ?>)</span>
+                  </label>
+                  <p class="sfb-field-hint">
+                    <?php esc_html_e('Replace the default footer with your own text. Leave blank to remove footer text entirely.', 'submittal-builder'); ?>
+                  </p>
+                  <input type="text"
+                         id="sfb-white-label-footer"
+                         name="<?php echo esc_attr($this->option_key()); ?>[white_label][custom_footer]"
+                         value="<?php echo esc_attr($white_label_settings['custom_footer']); ?>"
+                         class="sfb-text-input"
+                         placeholder="<?php esc_attr_e('e.g., Prepared by Your Company', 'submittal-builder'); ?>">
+                </div>
+
                 <!-- Email From Name -->
                 <div class="sfb-field-group">
                   <label class="sfb-field-label" for="sfb-white-label-email-name">
