@@ -54,6 +54,7 @@ final class SFB_Branding {
         'cover_default'   => !empty($sanitized['visual']['include_cover']),
         'footer_text'     => $sanitized['visual']['footer_text'] ?? '',
         'brand_preset'    => $sanitized['visual']['preset_key'] ?? 'custom',
+        'white_label'     => $sanitized['white_label'] ?? [], // Include white-label settings
       ];
       update_option('sfb_branding', $old_format, false);
 

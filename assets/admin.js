@@ -4066,7 +4066,8 @@
     const Brand = {
       state: {
         company: { ...window.SFB.brand.company },
-        visual: { ...window.SFB.brand.visual }
+        visual: { ...window.SFB.brand.visual },
+        white_label: { ...window.SFB.brand.white_label }
       },
       autosaveTimer: null,
       saving: false
@@ -4093,6 +4094,12 @@
 
       // Agency features (Phase B)
       useDefaultPreset: document.getElementById('sfb-use-default-preset'),
+
+      // White-Label Mode fields (Pro)
+      whiteLabelEnabled: document.getElementById('sfb-white-label-enabled'),
+      whiteLabelFooter: document.getElementById('sfb-white-label-footer'),
+      whiteLabelEmailName: document.getElementById('sfb-white-label-email-name'),
+      whiteLabelEmailAddress: document.getElementById('sfb-white-label-email-address'),
 
       // Live Preview elements
       previewHeader: document.getElementById('sfb-preview-header'),
@@ -4347,6 +4354,35 @@
         } else {
           whiteLabelSettings.style.display = 'none';
         }
+      });
+    }
+
+    // White-Label Mode field listeners
+    if (elements.whiteLabelEnabled) {
+      elements.whiteLabelEnabled.addEventListener('change', (e) => {
+        Brand.state.white_label.enabled = e.target.checked;
+        scheduleAutosave();
+      });
+    }
+
+    if (elements.whiteLabelFooter) {
+      elements.whiteLabelFooter.addEventListener('input', (e) => {
+        Brand.state.white_label.custom_footer = e.target.value;
+        scheduleAutosave();
+      });
+    }
+
+    if (elements.whiteLabelEmailName) {
+      elements.whiteLabelEmailName.addEventListener('input', (e) => {
+        Brand.state.white_label.email_from_name = e.target.value;
+        scheduleAutosave();
+      });
+    }
+
+    if (elements.whiteLabelEmailAddress) {
+      elements.whiteLabelEmailAddress.addEventListener('input', (e) => {
+        Brand.state.white_label.email_from_address = e.target.value;
+        scheduleAutosave();
       });
     }
 
