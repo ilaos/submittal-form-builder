@@ -129,6 +129,20 @@ final class SFB_Admin {
     // Configuration Section (Setup)
     // ========================================
 
+    // 4.5. Import Catalog (Pro/Agency - Bulk import from CSV)
+    $show_import = ($license_status === 'active' || (defined('SFB_PRO_DEV') && SFB_PRO_DEV) || (function_exists('sfb_is_pro_active') && sfb_is_pro_active()));
+    if ($show_import) {
+      add_submenu_page(
+        'sfb',
+        __('Import Catalog', 'submittal-builder'),
+        __('Import Catalog', 'submittal-builder'),
+        'manage_options',
+        'sfb-import',
+        [$sfb_plugin, 'render_import_page'],
+        4.5
+      );
+    }
+
     // 5. Branding (Logo, colors, company info)
     add_submenu_page(
       'sfb',

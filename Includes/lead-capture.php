@@ -105,8 +105,8 @@ class SFB_Lead_Capture {
       ]);
     }
 
-    // Send email to user (will be triggered after PDF generation)
-    $email_sent = self::send_lead_email($email, $project_name, $num_items);
+    // Send lead notification email to admin
+    $email_sent = self::send_lead_notification_email($email, $phone, $project_name, $num_items, $top_category);
 
     // Log action
     do_action('sfb_lead_captured', $lead_id, $email, [
@@ -125,10 +125,18 @@ class SFB_Lead_Capture {
   }
 
   /**
-   * Send email to user with PDF link
+   * Send lead notification email to admin (not to customer)
    */
-  public static function send_lead_email(string $email, string $project_name = '', int $num_items = 0): bool {
-    if (!is_email($email)) {
+  public static function send_lead_notification_email(string $customer_email, string $phone = '', string $project_name = '', int $num_items = 0, string $top_category = ''): bool {
+    if (!is_email($customer_email)) {
+      return false;
+    }
+
+    // Get notification email from settings (fallback to admin email)
+    $notification_email = get_option('sfb_lead_notification_email', get_option('admin_email'));
+
+    if (!is_email($notification_email)) {
+      error_log('SFB Lead Capture: Invalid notification email address');
       return false;
     }
 
@@ -136,77 +144,76 @@ class SFB_Lead_Capture {
     $settings = get_option('sfb_settings', []);
     $company_name = $settings['company_name'] ?? get_bloginfo('name');
 
-    // Apply white-label email settings if enabled
-    $brand_settings = sfb_get_brand_settings();
-    if (sfb_is_white_label_enabled()) {
-      // Override From name/address using filters
-      add_filter('wp_mail_from_name', function($from_name) use ($brand_settings) {
-        $custom_from_name = $brand_settings['white_label']['email_from_name'] ?? '';
-        return !empty($custom_from_name) ? $custom_from_name : $from_name;
-      }, 999);
-
-      add_filter('wp_mail_from', function($from_email) use ($brand_settings) {
-        $custom_from_address = $brand_settings['white_label']['email_from_address'] ?? '';
-        return !empty($custom_from_address) && is_email($custom_from_address) ? $custom_from_address : $from_email;
-      }, 999);
-    }
-
-    // Email subject
+    // Email subject - Clear and actionable for admin
     $subject = sprintf(
-      __('Your %s Submittal Packet', 'submittal-builder'),
-      $company_name
+      __('🔔 New Lead: %s', 'submittal-builder'),
+      !empty($project_name) ? $project_name : __('Submittal Request', 'submittal-builder')
     );
 
-    // Build email body
-    $project_info = $project_name ? sprintf(__('Project: %s', 'submittal-builder'), $project_name) : '';
-    $items_info = $num_items > 0 ? sprintf(__('%d products selected', 'submittal-builder'), $num_items) : '';
+    // Build lead details
+    $lead_details = [];
+    $lead_details[] = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+    $lead_details[] = __('CONTACT INFORMATION:', 'submittal-builder');
+    $lead_details[] = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+    $lead_details[] = sprintf(__('Email: %s', 'submittal-builder'), $customer_email);
 
+    if (!empty($phone)) {
+      $lead_details[] = sprintf(__('Phone: %s', 'submittal-builder'), $phone);
+    }
+
+    $lead_details[] = '';
+    $lead_details[] = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+    $lead_details[] = __('REQUEST DETAILS:', 'submittal-builder');
+    $lead_details[] = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+    if (!empty($project_name)) {
+      $lead_details[] = sprintf(__('Project Name: %s', 'submittal-builder'), $project_name);
+    }
+
+    if ($num_items > 0) {
+      $lead_details[] = sprintf(__('Products Selected: %d', 'submittal-builder'), $num_items);
+    }
+
+    if (!empty($top_category)) {
+      $lead_details[] = sprintf(__('Primary Category: %s', 'submittal-builder'), $top_category);
+    }
+
+    $lead_details[] = sprintf(__('Submitted: %s', 'submittal-builder'), current_time('F j, Y g:i a'));
+
+    $lead_details[] = '';
+    $lead_details[] = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+    // Build complete message
     $message = sprintf(
-      __('Thank you for using our submittal builder!
+      __('You\'ve received a new lead from your submittal builder!
 
 %s
-%s
 
-Your PDF has been generated and should download automatically. If it doesn\'t, please contact us.
-
-We\'ll follow up with you soon about this project.
+NEXT STEPS:
+→ Reply to this lead at: %s
+→ View all leads in your dashboard: %s
 
 ---
-%s
 %s', 'submittal-builder'),
-      $project_info,
-      $items_info,
-      $company_name,
-      current_time('F j, Y g:i a')
+      implode("\n", $lead_details),
+      $customer_email,
+      admin_url('admin.php?page=submittal-builder-leads'),
+      $company_name
     );
-
-    // Add subtle branding credit for Free tier (respects white-label)
-    if (!sfb_is_white_label_enabled()) {
-      $message .= "\n\n" . sfb_brand_credit_plain('email');
-    } else {
-      // Add custom footer or subtle credit if configured
-      $credit = sfb_brand_credit_plain('email');
-      if (!empty($credit)) {
-        $message .= "\n\n" . $credit;
-      }
-    }
 
     // Set headers
     $headers = ['Content-Type: text/plain; charset=UTF-8'];
 
-    // BCC admin if enabled
-    if (get_option('sfb_lead_bcc_admin', false)) {
-      $admin_email = get_option('admin_email');
-      if ($admin_email) {
-        $headers[] = 'Bcc: ' . $admin_email;
-      }
-    }
+    // Set Reply-To as the customer's email for easy response
+    $headers[] = 'Reply-To: ' . $customer_email;
 
-    // Send email
-    $sent = wp_mail($email, $subject, $message, $headers);
+    // Send email to admin/notification address
+    $sent = wp_mail($notification_email, $subject, $message, $headers);
 
     if (!$sent) {
-      error_log('SFB Lead Capture: Failed to send email to ' . $email);
+      error_log('SFB Lead Capture: Failed to send notification email to ' . $notification_email);
+    } else {
+      error_log('SFB Lead Capture: Lead notification sent to ' . $notification_email . ' for customer: ' . $customer_email);
     }
 
     return $sent;
