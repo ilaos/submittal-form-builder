@@ -696,15 +696,8 @@ class SFB_PDF_Generator {
 
   <div class="cover-footer">
     <?php
-    // Pro users with white-label can customize, otherwise show attribution with link
-    if (sfb_is_white_label_enabled()) {
-      // White-label mode: show custom footer or nothing
-      $brand = sfb_get_brand_settings();
-      $custom_footer = trim($brand['white_label']['custom_footer'] ?? '');
-      if ($custom_footer) {
-        echo esc_html($custom_footer);
-      }
-    } else {
+    // White-label mode: show nothing on cover page (custom footer appears only on page footer)
+    if (!sfb_is_white_label_enabled()) {
       // Free or Pro without white-label: show attribution with link
       ?>
       <?php esc_html_e('Generated using', 'submittal-builder'); ?>
@@ -714,6 +707,7 @@ class SFB_PDF_Generator {
       <?php esc_html_e('for WordPress', 'submittal-builder'); ?>
       <?php
     }
+    // else: white-label enabled - show nothing on cover page
     ?>
   </div>
 </div>
