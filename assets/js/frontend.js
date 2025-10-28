@@ -1411,7 +1411,8 @@
       };
 
       // Generate PDF via REST API (NEW!)
-      const restUrl = elements.restUrl + '/sfb/v1/generate';
+      // restUrl already includes '/wp-json/sfb/v1/' so just append 'generate'
+      const restUrl = elements.restUrl + 'generate';
       const response = await fetch(restUrl, {
         method: 'POST',
         headers: {
