@@ -79,17 +79,34 @@ Tier-specific marketing bullets derived from actual implemented functionality.
 **What's inside:**
 - Free/Pro/Agency feature bullets
 - Comparison tables
-- Use case examples
+- Use case examples (construction, distributors, equipment suppliers)
 - Pricing recommendations
 - Competitive advantages
 - Objection handling
 - CTA templates
 - Social proof ideas
-- SEO keywords
+- SEO keywords (dual-market: construction + catalog)
 - What's safe to market vs. what to exclude
 
 **Format:** Marketing copy with structure
 **Audience:** Marketing, sales, product managers
+
+---
+
+### 6. **industry-use-cases.md** - Target Markets & Applications
+Comprehensive guide to industries that benefit from the plugin (both construction and non-obvious markets).
+
+**What's inside:**
+- 20+ industry verticals with specific pain points
+- Non-obvious use cases (landscape supplies, industrial distributors, equipment suppliers)
+- Dual-market positioning strategy (construction submittals + complex catalogs)
+- Industry-specific marketing angles
+- ROI metrics by industry type
+- Feature mapping to industry needs
+- Questions for identifying good-fit industries
+
+**Format:** Industry profiles and marketing guidance
+**Audience:** Marketing, sales, business development
 
 ---
 

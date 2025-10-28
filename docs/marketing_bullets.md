@@ -16,7 +16,9 @@ Feature-based marketing bullets derived from actual implemented functionality.
 - **Database Utilities** - Optimize performance with built-in database cleanup and maintenance tools
 
 **Perfect for:**
-- Small businesses creating occasional submittal packets
+- Small contractors creating occasional submittal packets
+- Distributors with product catalogs (landscape/hardscape, industrial supplies, flooring)
+- Equipment suppliers providing spec sheets to customers
 - Freelancers managing product catalogs
 - Anyone testing the plugin before upgrading
 
@@ -43,9 +45,19 @@ Feature-based marketing bullets derived from actual implemented functionality.
 ### Distribution
 - **Advanced Email Controls** - Send packets with tracking links and monitor engagement
 
+### Productivity
+- **CSV Catalog Import** - Bulk import products from manufacturer spreadsheets with automatic hierarchy detection
+  - Supports flexible structures (simple or complex hierarchies)
+  - Merge or replace existing catalog
+  - Preview before importing
+  - Automatic duplicate detection
+  - Row-by-row error reporting
+
 **Perfect for:**
 - Growing businesses generating multiple packets per month
 - Sales teams that need to track engagement
+- Product distributors capturing leads from website traffic (fasteners, bearings, kitchen/bath supplies)
+- Equipment suppliers with self-service catalogs (HVAC, restaurant equipment, lab supplies)
 - Companies capturing leads from downloadable content
 
 ---
@@ -118,6 +130,8 @@ Feature-based marketing bullets derived from actual implemented functionality.
 | Auto-Email Packets               | ❌   | ✅  | ✅     |
 | Auto-Archive                     | ❌   | ✅  | ✅     |
 | Draft Cleanup Cron               | ❌   | ✅  | ✅     |
+| **Productivity**                 |      |     |        |
+| CSV Catalog Import               | ❌   | ✅  | ✅     |
 | **White-Label**                  |      |     |        |
 | Remove Plugin Credit             | ❌   | ❌  | ✅     |
 | Custom Email Sender              | ❌   | ❌  | ✅     |
@@ -169,6 +183,51 @@ Feature-based marketing bullets derived from actual implemented functionality.
 - Webhook integration with HubSpot
 - Agency analytics for client reporting
 - Client handoff mode for turnkey delivery
+
+---
+
+### Free Tier: Landscape Supply Company
+*"We have thousands of pavers, stones, and hardscape products. Our website can't show everything. Now customers browse our full catalog, select materials for their project, and download spec sheets with dimensions and installation details. No more 'what do you have in stock?' calls."*
+
+**What they use:**
+- Product catalog with categories (Pavers, Stone, Gravel, Edging)
+- Drag-drop organization by material and size
+- PDF generation with company branding
+- Email delivery to contractors and homeowners
+
+---
+
+### Pro Tier: Industrial Fastener Distributor
+*"We stock 50,000+ fastener SKUs. Contractors and engineers need exact specs (material, grade, size, coating). We imported our catalog via CSV, and now customers build their own hardware schedules. Lead capture tells us who's working on what projects before they call."*
+
+**What they use:**
+- CSV catalog import (bulk import thousands of SKUs)
+- Lead capture with UTM tracking (know which products interest which customers)
+- Tracking links (see when purchasing agents view specs)
+- Auto-email packets to customer's team
+
+---
+
+### Pro Tier: Restaurant Equipment Supplier
+*"Architects and kitchen designers need equipment specs for health department approval. They can now browse our commercial ovens, refrigeration, and prep equipment, then download spec sheets with electrical requirements, dimensions, and NSF certifications. Saves our sales team 20+ hours per week."*
+
+**What they use:**
+- Professional PDF generation with technical specifications
+- Shareable draft links (designers collaborate with health inspectors)
+- Lead capture (know which facilities are planning buildouts)
+- Tracking links (see when plans examiners review specs)
+
+---
+
+### Agency Tier: Multi-Brand Equipment Distributor
+*"We distribute 15 manufacturer brands (HVAC, electrical, plumbing). Each brand needs its own catalog and branding. Agency tier lets us manage all brands in one installation, route leads to regional sales reps, and track which products are trending across all territories."*
+
+**What they use:**
+- Brand presets library (15 manufacturer brands)
+- White-label removal for manufacturer-facing PDFs
+- Lead routing by territory (route to correct sales rep by state/region)
+- Webhook integration with Salesforce
+- Agency analytics (see which products are popular across all brands)
 
 ---
 
@@ -298,7 +357,16 @@ Agency tier includes:
 
 ## Email/Landing Page Copy Templates
 
-### Free Tier Hero
+### Free Tier Hero (Dual-Market Positioning)
+**"Submittal & Spec Sheet Builder for WordPress - Perfect for Construction & Complex Product Catalogs"**
+
+Create branded PDF submittal packets and spec sheets in minutes. Whether you're a contractor creating submittals or a distributor with thousands of SKUs, give your customers a professional self-service catalog. Drag-and-drop organization, automatic table of contents, and professional formatting. No credit card required.
+
+[Get Started Free →]
+
+---
+
+### Free Tier Hero (Construction Focus)
 **"Professional Submittal Packets & Spec Sheets for WordPress"**
 
 Create branded PDF submittal packets in minutes. Drag-and-drop catalog management, automatic table of contents, and professional formatting. No credit card required.
@@ -307,17 +375,54 @@ Create branded PDF submittal packets in minutes. Drag-and-drop catalog managemen
 
 ---
 
-### Pro Tier Hero
-**"Track, Share, and Capture Leads from Your Submittal Packets"**
+### Free Tier Hero (Catalog Focus)
+**"Turn Your Massive Product Catalog Into Self-Service Spec Sheets"**
 
-Everything in Free, plus shareable draft links, public tracking URLs, and built-in lead capture forms. Know exactly when clients view your packets and never miss a qualified lead.
+Too many products to list on your website? Let customers browse your full catalog and build their own spec sheets. Perfect for landscape supplies, industrial distributors, equipment suppliers, and any B2B business with hundreds of SKUs.
+
+[Get Started Free →]
+
+---
+
+### Pro Tier Hero (Dual-Market)
+**"Track, Share, and Capture Leads from Your Submittal Packets & Spec Sheets"**
+
+Everything in Free, plus shareable draft links, public tracking URLs, and built-in lead capture forms. Know exactly when clients view your packets and never miss a qualified lead. Perfect for sales teams, distributors, and equipment suppliers.
 
 [Start Free Trial →] (if offering trials)
 [Upgrade to Pro →]
 
 ---
 
-### Agency Tier Hero
+### Pro Tier Hero (Construction Focus)
+**"Track, Share, and Capture Leads from Your Submittal Packets"**
+
+Everything in Free, plus shareable draft links, public tracking URLs, and built-in lead capture forms. Know exactly when clients view your packets and never miss a qualified lead.
+
+[Upgrade to Pro →]
+
+---
+
+### Pro Tier Hero (Catalog Focus)
+**"Capture Leads from Your Self-Service Product Catalog"**
+
+Let customers browse your catalog 24/7 and download spec sheets - while you capture their contact info. Track who's viewing what products and follow up with qualified leads. Reduce "what do you have?" phone calls by 80%.
+
+[Upgrade to Pro →]
+
+---
+
+### Agency Tier Hero (Dual-Market)
+**"White-Label PDF Generator for Agencies, Distributors & Multi-Brand Organizations"**
+
+Manage unlimited client brands with complete white-label control. Intelligent lead routing, webhook integration, and privacy-first analytics. Perfect for agencies managing manufacturers, distributors with multiple brand lines, and multi-territory sales organizations.
+
+[See Agency Features →]
+[Schedule Demo →] (for enterprise sales)
+
+---
+
+### Agency Tier Hero (Agency Focus)
 **"White-Label PDF Generator for Agencies & Multi-Brand Organizations"**
 
 Manage unlimited client brands with complete white-label control. Intelligent lead routing, webhook integration, and privacy-first analytics. Perfect for agencies managing 10+ clients.
@@ -348,26 +453,57 @@ Manage unlimited client brands with complete white-label control. Intelligent le
 
 ## SEO Keywords by Tier
 
-### Free Tier
+### Free Tier - Primary (Construction)
 - WordPress submittal builder
 - PDF spec sheet generator WordPress
 - Construction submittal template WordPress
 - Product catalog PDF WordPress
 - Free submittal builder plugin
 
-### Pro Tier
+### Free Tier - Secondary (Catalog)
+- Product catalog WordPress plugin
+- B2B product catalog PDF generator
+- Self-service product catalog
+- Industrial supply catalog WordPress
+- Equipment spec sheet generator
+
+### Pro Tier - Primary (Construction)
 - Lead capture PDF WordPress
 - Track PDF views WordPress
 - Shareable draft links WordPress
 - PDF download tracking WordPress
 - Construction lead generation
 
-### Agency Tier
+### Pro Tier - Secondary (Catalog)
+- Product catalog lead capture
+- Track spec sheet downloads
+- B2B catalog lead generation
+- Equipment catalog tracking WordPress
+- Industrial product catalog
+
+### Agency Tier - Primary (Construction)
 - White-label PDF generator WordPress
 - Multi-brand WordPress plugin
 - Agency lead routing WordPress
 - WordPress CRM integration
 - White-label construction software
+
+### Agency Tier - Secondary (Catalog)
+- Multi-brand product catalog
+- Distributor catalog management
+- White-label equipment catalog
+- B2B catalog CRM integration
+- Product catalog webhook integration
+
+### Industry-Specific Keywords
+- Landscape supply catalog WordPress
+- Fastener catalog spec sheet
+- Restaurant equipment spec generator
+- Industrial catalog WordPress plugin
+- HVAC equipment submittal builder
+- Electrical supply catalog PDF
+- Flooring product catalog generator
+- Lab equipment spec sheet builder
 
 ---
 

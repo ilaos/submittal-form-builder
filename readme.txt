@@ -8,19 +8,22 @@ Stable tag: 1.2.2-subtype
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create professional submittal packets and spec sheets directly from your WordPress site. Build branded PDFs from your product catalog, capture leads, and simplify documentation workflows for contractors and manufacturers.
+Create professional submittal packets and spec sheets directly from your WordPress site. Build branded PDFs from your product catalog, capture leads, and simplify documentation workflows. Perfect for construction submittals and complex product catalogs - serve contractors, manufacturers, distributors, and equipment suppliers.
 
 == Description ==
 
-**Submittal & Spec Sheet Builder** helps manufacturers, suppliers, and contractors create professional submittal packets in minutes — right inside WordPress.
+**Submittal & Spec Sheet Builder** helps manufacturers, suppliers, contractors, and distributors create professional submittal packets and product spec sheets in minutes — right inside WordPress.
+
+Whether you're creating construction submittals or managing a complex product catalog with thousands of SKUs (landscape supplies, industrial fasteners, equipment, flooring, etc.), this plugin lets customers browse your catalog and build their own spec sheets.
 
 Forget clunky spreadsheets and manual formatting. With this plugin you can:
 
-- Organize products into categories, types, and models.
-- Let visitors select items and instantly **generate polished PDF packets**.
-- Add your company logo, brand colors, and contact info automatically.
-- Collect project details or contact info before download for **lead capture**.
-- Manage and export leads directly from the admin panel.
+- Organize products into categories, types, and models (handle hundreds or thousands of SKUs)
+- Let visitors select items and instantly **generate polished PDF packets**
+- Add your company logo, brand colors, and contact info automatically
+- Collect project details or contact info before download for **lead capture**
+- Manage and export leads directly from the admin panel
+- Track who views your PDFs and follow up with qualified leads
 
 ### Key Features
 
@@ -31,7 +34,7 @@ Forget clunky spreadsheets and manual formatting. With this plugin you can:
 - 📦 **Product Catalog Manager:** Manage all product data inside WordPress — no developer needed.
 - ⚙️ **Agency Tools (optional):** White-label branding, analytics, preset themes, and team handoff features.
 
-> Fast, flexible, and built for the real world — ideal for manufacturers, distributors, and construction professionals who need clean submittals without the extra work.
+> Fast, flexible, and built for the real world — ideal for construction professionals creating submittals, distributors with complex catalogs (landscape supplies, industrial parts, equipment), and any B2B business with hundreds of products that need professional spec sheets.
 
 == Privacy ==
 

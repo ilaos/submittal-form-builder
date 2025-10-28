@@ -48,6 +48,7 @@ Complete feature inventory by tier with implementation status.
 | PDF Watermark                | ❌   | ❌      | ✅  | ✅     | Implemented | Fixed-position overlay on all PDF pages        |
 | Approval Signature Block     | ❌   | ❌      | ✅  | ✅     | Implemented | 3-column signature table on model sheets       |
 | White-Label Branding         | ❌   | ❌      | ✅  | ✅     | Implemented | Remove plugin credit, custom email sender      |
+| CSV Catalog Import           | ❌   | ❌      | ✅  | ✅     | Implemented | Bulk import from CSV with flexible hierarchy   |
 | **Agency Features**          |      |         |     |        |             |                                                |
 | Brand Presets Library        | ❌   | ❌      | ❌  | ✅     | Implemented | Save/load/apply brand configurations           |
 | Default Preset Auto-Apply    | ❌   | ❌      | ❌  | ✅     | Implemented | Auto-apply brand preset to PDFs                |
@@ -140,6 +141,15 @@ Complete feature inventory by tier with implementation status.
   - PDF integration: pdf-generator.php:674, 750
   - Email integration: lead-capture.php:141, 184
   - Status: ✅ Complete with footer/email customization
+
+- **CSV Catalog Import**
+  - Backend: submittal-form-builder.php:8870-9136
+  - REST API: class-sfb-rest.php:159-174
+  - Admin UI: submittal-form-builder.php:4973-5257
+  - Features: Flexible hierarchy detection, merge/replace modes, duplicate prevention
+  - Parser: Native PHP CSV parsing with BOM removal
+  - Validation: Row-by-row error reporting with line numbers
+  - Status: ✅ Complete with preview, confirmation, and success feedback
 
 #### Agency Features
 
@@ -241,6 +251,7 @@ None. All 35 features are now fully implemented.
 | Leads CRM                  | `sfb-leads`            | Pro+      | submittal-form-builder.php     |
 | Branding Settings          | `sfb-branding`         | All       | submittal-form-builder.php     |
 | General Settings           | `sfb-settings`         | All       | submittal-form-builder.php     |
+| CSV Import Catalog         | `sfb-import`           | Pro+      | submittal-form-builder.php     |
 | Agency Library             | `sfb-agency`           | Agency    | submittal-form-builder.php     |
 | Agency Analytics           | `sfb-agency-analytics` | Agency    | submittal-form-builder.php     |
 | Utilities & Tools          | `sfb-tools`            | All       | submittal-form-builder.php     |
@@ -611,14 +622,14 @@ Shows:
 ### Core (All Tiers) - 16 features
 All basic functionality: catalog, PDF, branding, frontend builder, admin editor, utilities
 
-### Pro (Pro + Agency) - 9 features
-Server drafts, tracking, lead capture, auto-email, auto-archive, watermark, themes, signature block, white-label
+### Pro (Pro + Agency) - 10 features
+Server drafts, tracking, lead capture, auto-email, auto-archive, watermark, themes, signature block, white-label, CSV import
 
 ### Agency (Agency Only) - 10 features
 Brand presets, default preset auto-apply, preset switcher, lead routing, weekly export, analytics, agency library, client handoff, operator role, agency pages
 
-### Total Features: 35
-- Fully Implemented: 35 (100%)
+### Total Features: 36
+- Fully Implemented: 36 (100%)
 - Partially Implemented: 0 (0%)
 - Not Implemented: 0 (0%)
 

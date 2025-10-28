@@ -657,30 +657,152 @@ Composite keys are generated automatically from item names:
 
 ## Importing Products
 
-### Bulk Import (Coming Soon)
+### CSV Catalog Import (Pro Feature)
 
-Import products from CSV or JSON files.
+Bulk import products from manufacturer CSV files with automatic hierarchy detection.
 
-**Supported Formats:**
-- CSV with headers
-- JSON structured data
-- Excel spreadsheets (.xlsx)
+**Access Import:**
+```
+WordPress Admin → Submittal Builder → Import Catalog
+```
+
+**Requirements:**
+- Pro or Agency license
+- CSV file with headers
+- Category column (required)
+
+**Supported Structures:**
+
+**Simple Hierarchy (Category → Product):**
+```csv
+Category,Product,Size,Weight
+Framing,C-Stud 20GA,3-5/8",2.5 lb
+Framing,Track 20GA,3-5/8",1.8 lb
+```
+
+**Complex Hierarchy (Category → Product → Type → Model):**
+```csv
+Category,Product,Type,Model,Size,Flange,KSI
+Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33
+Framing,C-Studs,20 Gauge,600S162-20,6",1-5/8",33
+Framing,Track,20 Gauge,362T125-20,3-5/8",1-1/4",33
+```
 
 **Import Process:**
-1. Prepare import file with correct structure
-2. Click "Import" button in toolbar
-3. Upload file
-4. Map columns to fields
-5. Preview import
-6. Confirm and import
 
-**CSV Structure Example:**
+**Step 1: Upload CSV File**
+1. Click "Choose File" button
+2. Select your CSV file (max 5MB)
+3. Click "Upload & Preview"
+
+**Step 2: Preview Import**
+- Review detected hierarchy type
+- See spec columns identified
+- Preview first 5 rows
+- Choose import mode:
+  - **Merge - Keep Existing** (default) - Adds to current catalog
+  - **Replace Existing** - Deletes all existing items first
+
+**Step 3: Import**
+1. Click "Import Now" button
+2. Confirm if using Replace mode
+3. Wait for completion
+4. View results:
+   - Created count
+   - Skipped count (duplicates)
+   - Errors (if any)
+
+**Features:**
+
+**Flexible Hierarchy Detection:**
+- Automatically detects simple or complex structures
+- No manual column mapping needed
+- Supports Category, Product, Type, Model, Subtype columns
+
+**Automatic Spec Mapping:**
+- All non-hierarchy columns become product specifications
+- Example: Size, Flange, Thickness, KSI columns → model specs
+
+**Duplicate Prevention:**
+- Checks for existing nodes by title and parent
+- Skips duplicates automatically
+- Reuses existing categories/products to avoid duplicates
+
+**Error Handling:**
+- Row-by-row validation
+- Error messages with line numbers
+- Transaction rollback on critical errors
+- Empty rows automatically skipped
+
+**Import Modes:**
+
+**Merge Mode (Recommended):**
+- Adds imported items to existing catalog
+- Preserves all current products
+- Safe for incremental imports
+- Prevents duplicate creation
+
+**Replace Mode (Use With Caution):**
+- Deletes ALL existing catalog items
+- Then imports new data
+- Requires confirmation
+- Cannot be undone
+
+**Best Practices:**
+
+✅ **Do:**
+- Start with Merge mode for safety
+- Test with small CSV file first
+- Use manufacturer CSV files directly
+- Include all relevant spec columns
+- Preview before importing
+
+❌ **Don't:**
+- Use Replace mode unless you're sure
+- Import without previewing
+- Skip required Category column
+- Import files larger than 5MB
+- Import without backing up first
+
+**CSV Format Tips:**
+
+**Column Headers:**
+- First row must contain header names
+- Case-insensitive (Category = category = CATEGORY)
+- Hierarchy columns: Category, Product, Type, Model, Subtype
+- All other columns become specs
+
+**Data Formatting:**
+- Use quotes for values containing commas
+- Example: "3-5/8""" or '3-5/8"'
+- Empty cells are skipped
+- Special characters handled automatically
+
+**Example CSV:**
 ```csv
-Category,Product,Type,Model,Size,Thickness,KSI
-C-Studs,Steel Studs,20 Gauge,362S162-20,3.625",20 GA,33
-C-Studs,Steel Studs,20 Gauge,600S162-20,6",20 GA,33
-Track,Track (C1P1),20 Gauge,250T125-20,2.5",20 GA,33
+Category,Product,Type,Model,Size,Flange,Thickness,KSI
+Framing,C-Studs,20 Gauge,362S162-20,"3-5/8""","1-5/8""",20 GA,33
+Framing,C-Studs,20 Gauge,600S162-20,"6""","1-5/8""",20 GA,33
+Framing,Track,20 Gauge,362T125-20,"3-5/8""","1-1/4""",20 GA,33
 ```
+
+**Troubleshooting:**
+
+**"No rows to import" error:**
+- Ensure CSV has at least one data row
+- Check that headers are in first row
+- Verify file is not empty
+
+**"Category column required" error:**
+- Add "Category" column to your CSV
+- Ensure it's spelled correctly
+- Must be in first row
+
+**Missing products on frontend:**
+- Verify import completed successfully
+- Check Created count in results
+- Ensure hierarchy is complete (Category → ... → Model or Product)
+- Refresh frontend page
 
 ---
 
