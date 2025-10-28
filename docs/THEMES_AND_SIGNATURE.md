@@ -1,8 +1,8 @@
-# PDF Themes & Approval Signature Block
+# PDF Themes, Watermarks & Approval Signature Block
 
-Quick reference for using PDF themes and approval signature features.
+Quick reference for using PDF themes, watermarks, and approval signature features.
 
-**Last Updated:** 2025-10-13
+**Last Updated:** 2025-01-27
 **Features:** Pro tier only
 **Implementation Status:** ✅ Fully implemented
 
@@ -91,6 +91,245 @@ Themes affect color styling in these PDF elements:
 - **Cannot change:** Theme selector disabled or hidden in UI
 - **Enforcement:** Gate at PDF generation time forces `theme = 'engineering'`
 - **Upsell opportunity:** Show theme selector with "Pro only" badge
+
+---
+
+## PDF Watermark (Pro)
+
+### Overview
+Pro and Agency users can add a custom text watermark that appears diagonally across all pages of generated PDFs. Perfect for marking documents as "DRAFT", "CONFIDENTIAL", "FOR REVIEW ONLY", or any custom text.
+
+### Visual Appearance
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                                                           │
+│                    D R A F T                              │
+│                  (diagonal, semi-transparent)             │
+│          [Your PDF content remains readable below]        │
+│                                                           │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Characteristics:**
+- Diagonal orientation (−20° rotation)
+- Semi-transparent (6% opacity = rgba(0,0,0,0.06))
+- Large font size (64px)
+- Fixed positioning at 38% from top
+- Centered horizontally
+- Appears on ALL pages (cover, TOC, summary, model sheets)
+
+### How to Enable
+
+**For Users:**
+1. Navigate to **Settings → Branding**
+2. Scroll to **"PDF Watermark"** section (Pro only)
+3. Enter custom watermark text (e.g., "DRAFT", "CONFIDENTIAL", "PRELIMINARY")
+4. Leave blank to disable watermark
+5. Click **"Save Changes"**
+6. Generate a new PDF to see watermark
+
+**Common Watermark Text Examples:**
+- `DRAFT` - Work in progress
+- `CONFIDENTIAL` - Sensitive information
+- `FOR REVIEW ONLY` - Review purposes
+- `PRELIMINARY` - Not finalized
+- `SAMPLE` - Example document
+- `VOID` - Obsolete/cancelled
+- `COPY` - Duplicate for reference
+
+**For Developers:**
+```php
+// Watermark text stored in brand settings
+$brand = sfb_get_brand_settings();
+$watermark = $brand['watermark'] ?? '';
+
+// Feature gate at PDF generation (submittal-form-builder.php)
+if (!sfb_feature_enabled('watermark')) {
+  $brand['watermark'] = ''; // Force free users to no watermark
+}
+
+// Template rendering (all PDF templates)
+if ($watermark !== '') {
+  // Render fixed-position diagonal watermark div
+}
+```
+
+### Implementation Details
+
+**Templates:** All four PDF template files include watermark support:
+- templates/pdf/cover.html.php:19-24
+- templates/pdf/toc.html.php (if applicable)
+- templates/pdf/summary.html.php (if applicable)
+- templates/pdf/model-sheet.html.php (if applicable)
+
+**CSS Styling:**
+```css
+position: fixed;
+top: 38%;
+left: 10%;
+right: 10%;
+text-align: center;
+font-size: 64px;
+color: rgba(0, 0, 0, 0.06); /* 6% opacity */
+transform: rotate(-20deg);
+z-index: 0; /* Behind content */
+```
+
+**Variable Name:** `$watermark` (NOT `watermark_text`)
+
+**Empty String Behavior:**
+- If `$watermark === ''`, watermark div is not rendered
+- No empty watermark placeholder appears
+- Clean conditional rendering
+
+### Styling Options (Customizable by Developers)
+
+**Opacity:**
+```php
+// Default: 0.06 (6% - very subtle)
+color: rgba(0, 0, 0, 0.06);
+
+// More visible: 0.12 (12%)
+color: rgba(0, 0, 0, 0.12);
+
+// High contrast: 0.20 (20%)
+color: rgba(0, 0, 0, 0.20);
+```
+
+**Rotation:**
+```php
+// Default: -20deg (diagonal upward right)
+transform: rotate(-20deg);
+
+// Steeper: -30deg
+transform: rotate(-30deg);
+
+// Horizontal: 0deg
+transform: rotate(0deg);
+```
+
+**Position:**
+```php
+// Default: 38% from top (center of page)
+top: 38%;
+
+// Higher on page: 25%
+top: 25%;
+
+// Lower on page: 50%
+top: 50%;
+```
+
+**Font Size:**
+```php
+// Default: 64px (large but readable)
+font-size: 64px;
+
+// Smaller: 48px
+font-size: 48px;
+
+// Larger: 80px
+font-size: 80px;
+```
+
+### Free Tier Behavior
+
+- **Disabled:** Watermark field hidden or disabled in settings
+- **Setting forced:** `watermark` always set to empty string
+- **Gate enforcement:** `sfb_feature_enabled('watermark')` returns false
+- **No rendering:** Watermark div never appears in PDF
+- **Upsell opportunity:** Show watermark setting with "Pro only" badge
+
+### Use Cases
+
+**Draft Documents:**
+```
+Watermark: "DRAFT"
+Purpose: Indicate work in progress, not final
+```
+
+**Confidential Submittals:**
+```
+Watermark: "CONFIDENTIAL"
+Purpose: Mark sensitive pricing or proprietary specs
+```
+
+**Review Packets:**
+```
+Watermark: "FOR REVIEW ONLY"
+Purpose: Distinguish review copies from official submittals
+```
+
+**Preliminary Designs:**
+```
+Watermark: "PRELIMINARY - NOT FOR CONSTRUCTION"
+Purpose: Prevent use of early-stage designs
+```
+
+**Sample Documents:**
+```
+Watermark: "SAMPLE"
+Purpose: Demo or training materials
+```
+
+### Common Issues
+
+**Issue:** Watermark too light, barely visible
+**Solution:** Increase opacity in template CSS (change 0.06 to 0.12 or 0.15)
+
+**Issue:** Watermark obscures important content
+**Solution:** Reduce opacity, adjust positioning, or use shorter text
+
+**Issue:** Watermark doesn't appear on all pages
+**Solution:** Verify watermark rendering code exists in ALL template files (cover, toc, summary, model-sheet)
+
+**Issue:** Free users can set watermark text
+**Solution:** Verify feature gate is enforced at PDF generation time, not just UI level
+
+**Issue:** Watermark text too long, wraps or overflows
+**Solution:** Recommend keeping text under 20 characters; implement character limit in UI
+
+### Testing Instructions
+
+1. **Free Tier Test:**
+   ```php
+   delete_option('sfb_license');
+   update_option('sfb_brand_settings', ['watermark' => 'TEST']);
+   ```
+   - Watermark field should be disabled/hidden in settings
+   - Generated PDFs should NOT show watermark
+   - Manual setting should be overridden at generation time
+
+2. **Pro Tier Test:**
+   ```php
+   update_option('sfb_license', [
+     'key' => 'test-key',
+     'email' => 'test@example.com',
+     'status' => 'active'
+   ]);
+   ```
+   - Watermark field should be enabled in settings
+   - Test with "DRAFT" text
+   - Test with "CONFIDENTIAL" text
+   - Test with empty string (no watermark)
+   - Test with very long text (should handle gracefully)
+   - Verify watermark appears on ALL pages (cover, TOC, summary, each model sheet)
+   - Verify watermark is semi-transparent (content visible underneath)
+   - Verify watermark is diagonal (~-20° rotation)
+
+### QA Checklist
+
+- [ ] Free users cannot enable watermark
+- [ ] Pro users can set custom watermark text
+- [ ] Watermark appears on ALL PDF pages
+- [ ] Watermark is semi-transparent (content readable beneath)
+- [ ] Watermark is diagonal (~-20° rotation)
+- [ ] Empty watermark text = no watermark rendered
+- [ ] Watermark text escapes HTML properly (no XSS)
+- [ ] Long watermark text doesn't break layout
+- [ ] Watermark doesn't obscure critical content
+- [ ] Watermark styling is consistent across all pages
 
 ---
 
@@ -217,6 +456,32 @@ if (sfb_is_pro_enabled() && !empty($meta['approve_block'])) {
    - Verify color changes in headers, tables, borders across all PDF pages
    - Compare PDFs side-by-side to confirm obvious visual differences
 
+### Testing Watermark
+
+1. **Free Tier Test:**
+   ```php
+   delete_option('sfb_license');
+   ```
+   - Watermark field should be disabled/hidden in settings
+   - Generated PDFs should NOT show watermark
+   - Manually setting watermark in settings should be overridden
+
+2. **Pro Tier Test:**
+   ```php
+   update_option('sfb_license', [
+     'key' => 'test-key',
+     'email' => 'test@example.com',
+     'status' => 'active'
+   ]);
+   ```
+   - Watermark field should be enabled in settings
+   - Test with "DRAFT" text → verify diagonal watermark appears
+   - Test with "CONFIDENTIAL" text → verify appears on all pages
+   - Test with empty string → verify no watermark
+   - Test with very long text (30+ chars) → verify layout remains stable
+   - Verify watermark is semi-transparent (can read content beneath)
+   - Verify watermark appears on cover, TOC, summary, and each model sheet
+
 ### Testing Signature Block
 
 1. **Free Tier Test:**
@@ -257,6 +522,18 @@ if (sfb_is_pro_enabled() && !empty($meta['approve_block'])) {
 - [ ] Theme colors apply to model sheet product titles and table headers
 - [ ] Visual differences are "obvious" (not subtle)
 - [ ] No layout regressions across themes
+
+### PDF Watermark
+- [ ] Free users cannot enable watermark
+- [ ] Pro users can set custom watermark text
+- [ ] Watermark appears on ALL pages (cover, TOC, summary, model sheets)
+- [ ] Watermark is diagonal (~-20° rotation)
+- [ ] Watermark is semi-transparent (6% opacity)
+- [ ] Watermark doesn't obscure critical content
+- [ ] Empty watermark text = no watermark rendered
+- [ ] Long text (20+ chars) handles gracefully without overflow
+- [ ] Watermark text escapes HTML (no XSS vulnerability)
+- [ ] Watermark styling is consistent across all pages
 
 ### Approval Signature Block
 - [ ] Free users cannot enable signature block

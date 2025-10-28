@@ -530,57 +530,138 @@ Settings → Advanced → Click "Run Cleanup Now"
 
 ---
 
-## PDF Themes (Pro)
+## Pro PDF Features
 
-Apply preset design themes for different aesthetics and use cases.
+Unlock advanced PDF customization with Pro or Agency licenses.
 
-**Available in:** Pro and Agency licenses
+**Available Features:**
+- ✅ PDF Themes (3 color schemes)
+- ✅ PDF Watermark (custom text overlay)
+- ✅ Approval Signature Block (3-column approval table)
 
 **Access:**
 ```
-Settings → PDF → Enable PDF Themes
+Settings → Branding → Pro Features
 ```
 
 ---
 
-### Available Themes
+### PDF Themes (Pro)
 
-**Default Theme**
-- Clean, professional
-- High readability
-- Versatile for all industries
-- Blue accents (customizable)
+**Overview:**
+Select from three professionally designed color themes that apply across your entire PDF (cover page, table of contents, summary, and product sheets).
 
-**Corporate Theme**
-- Bold, modern
-- Strong color presence
-- Ideal for marketing materials
-- Impression-focused
+**Available Themes:**
 
-**Architectural Theme**
-- Minimal, elegant
-- Lots of whitespace
-- Subtle colors
-- Blueprint-inspired
+| Theme | Color | Best For |
+|-------|-------|----------|
+| **Engineering** (Default) | Dark Gray (#111827) | Technical submittals, construction |
+| **Architectural** | Sky Blue (#0ea5e9) | Architecture, design, modern aesthetic |
+| **Corporate** | Emerald Green (#10b981) | Corporate, sustainability, healthcare |
 
-**Industrial Theme**
-- Strong, utilitarian
-- High contrast
-- Easy to read in shop environments
-- Rugged aesthetic
+**How to Enable:**
+1. Navigate to **Settings → Branding**
+2. Find **"PDF Theme"** dropdown (Pro only)
+3. Select: Engineering, Architectural, or Corporate
+4. Click **"Save Changes"**
+5. Generate a new PDF to see theme applied
+
+**What Changes:**
+- Cover page accent colors
+- Section header colors
+- Table header backgrounds
+- Border colors
+- Overall color scheme
+
+**Note:** Your logo and brand colors are preserved; only accent colors change.
 
 ---
 
-### Applying Themes
+### PDF Watermark (Pro)
 
-**Steps:**
-1. Navigate to **Settings → PDF**
-2. Enable **"Use PDF Themes"** checkbox
-3. Select theme from dropdown
-4. Click **"Save Changes"**
-5. Generate test PDF to preview
+**Overview:**
+Add a custom text watermark that appears diagonally across all pages. Perfect for marking documents as "DRAFT", "CONFIDENTIAL", or "FOR REVIEW ONLY".
 
-**Note:** Themes respect your brand color and logo settings while adjusting layout, fonts, and overall aesthetic.
+**Visual Style:**
+- Diagonal orientation (-20° rotation)
+- Semi-transparent (6% opacity)
+- Large, prominent text (64px)
+- Appears on ALL pages
+
+**How to Enable:**
+1. Navigate to **Settings → Branding**
+2. Find **"PDF Watermark"** field (Pro only)
+3. Enter custom text (e.g., "DRAFT", "CONFIDENTIAL")
+4. Leave blank to disable watermark
+5. Click **"Save Changes"**
+6. Generate PDF to see watermark
+
+**Common Uses:**
+- `DRAFT` - Work in progress
+- `CONFIDENTIAL` - Sensitive information
+- `FOR REVIEW ONLY` - Review copies
+- `PRELIMINARY` - Not finalized
+- `SAMPLE` - Demo materials
+
+**Best Practices:**
+- Keep text short (under 20 characters)
+- Use all caps for visibility
+- Test opacity on printed pages
+- Consider contrast with content
+
+---
+
+### Approval Signature Block (Pro)
+
+**Overview:**
+Add a professional 3-column approval table at the end of each product sheet. Includes fields for approver name, title, and date.
+
+**Visual Layout:**
+```
+┌─────────────────────────────────────────────────────────┐
+│ APPROVED BY       │ TITLE              │ DATE           │
+│ ───────────────   │ ─────────────────  │ ──────────     │
+│ [Name]            │ [Job Title]        │ [Date]         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**How to Enable:**
+1. Navigate to **Frontend Builder** or Review page
+2. Check **"Include Approval Signature Block"** (Pro only)
+3. Fill in fields:
+   - Approved By: Name of approver
+   - Title: Job title or role
+   - Date: Approval date
+4. Generate PDF
+5. Signature block appears at end of each product sheet
+
+**Features:**
+- Appears on EACH product page
+- Professional table layout
+- Print-friendly signature lines
+- Page-break protection (won't split across pages)
+
+**Use Cases:**
+- Construction submittals requiring approval
+- Compliance documentation
+- Quality assurance sign-offs
+- Project manager approvals
+
+---
+
+### Detailed Documentation
+
+For comprehensive technical details, implementation notes, and testing instructions:
+
+**📖 See:** [THEMES_AND_SIGNATURE.md](../THEMES_AND_SIGNATURE.md)
+
+Includes:
+- Technical implementation details
+- Template file locations
+- Free vs Pro tier differences
+- QA testing checklists
+- Developer customization options
+- Common issues and solutions
 
 ---
 
