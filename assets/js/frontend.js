@@ -1410,9 +1410,16 @@
         nonce: elements.nonce // Add nonce to payload for backend verification
       };
 
+      // DIAGNOSTIC: Log payload details
+      console.log('[SFB] Nonce being sent:', elements.nonce ? elements.nonce.substring(0, 10) + '...' : 'MISSING');
+      console.log('[SFB] Payload has nonce:', 'nonce' in payload);
+      console.log('[SFB] Product count:', payload.review?.products?.length || 0);
+
       // Generate PDF via REST API (NEW!)
       // restUrl already includes '/wp-json/sfb/v1/' so just append 'generate'
       const restUrl = elements.restUrl + 'generate';
+      console.log('[SFB] REST URL:', restUrl);
+
       const response = await fetch(restUrl, {
         method: 'POST',
         headers: {
@@ -1423,6 +1430,8 @@
         },
         body: JSON.stringify(payload)
       });
+
+      console.log('[SFB] Response status:', response.status, response.statusText);
 
       // Parse JSON response
       let data;

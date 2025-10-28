@@ -7196,21 +7196,41 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
    */
   function api_generate_frontend_pdf_rest($p) {
     try {
+      // --- COMPREHENSIVE DIAGNOSTICS ---
+      error_log('[SFB REST] === PDF Generation Request Started ===');
+      error_log('[SFB REST] Payload keys: ' . implode(', ', array_keys($p)));
+      error_log('[SFB REST] Nonce present in \$p: ' . (isset($p['nonce']) ? 'yes' : 'NO'));
+
+      // Check raw request body
+      $raw_body = file_get_contents('php://input');
+      $decoded_body = json_decode($raw_body, true);
+      if ($decoded_body) {
+        error_log('[SFB REST] Raw JSON has nonce: ' . (isset($decoded_body['nonce']) ? 'yes' : 'NO'));
+        if (isset($decoded_body['nonce'])) {
+          error_log('[SFB REST] Nonce from raw body: ' . substr($decoded_body['nonce'], 0, 10) . '...');
+          // Use raw body nonce if $p doesn't have it
+          if (!isset($p['nonce'])) {
+            $p['nonce'] = $decoded_body['nonce'];
+            error_log('[SFB REST] Copied nonce from raw body to \$p');
+          }
+        }
+      }
+
       // --- Verify nonce for security ---
-      // Debug: Log nonce verification details
-      error_log('[SFB REST] Nonce present: ' . (isset($p['nonce']) ? 'yes' : 'no'));
       if (isset($p['nonce'])) {
-        error_log('[SFB REST] Nonce value: ' . substr($p['nonce'], 0, 10) . '...');
+        error_log('[SFB REST] Verifying nonce: ' . substr($p['nonce'], 0, 10) . '...');
         $verify_result = wp_verify_nonce($p['nonce'], 'sfb_frontend_builder');
         error_log('[SFB REST] Nonce verification result: ' . var_export($verify_result, true));
+      } else {
+        error_log('[SFB REST] ERROR: No nonce found in payload or raw body');
       }
 
       if (!isset($p['nonce']) || !wp_verify_nonce($p['nonce'], 'sfb_frontend_builder')) {
-        error_log('[SFB REST] Nonce verification FAILED');
+        error_log('[SFB REST] === NONCE VERIFICATION FAILED ===');
         return new WP_Error('invalid_nonce', __('Invalid security token', 'submittal-builder'), ['status' => 403]);
       }
 
-      error_log('[SFB REST] Nonce verification PASSED');
+      error_log('[SFB REST] === Nonce verification PASSED ===');
 
       // --- Extract parameters (same as AJAX handler) ---
       $review_raw = $p['review'] ?? null;
