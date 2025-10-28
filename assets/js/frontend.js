@@ -1386,47 +1386,47 @@
         review = window.SFB_collectReviewPayload(state.projectName || '');
       }
 
-      const formData = new FormData();
-      formData.append('action', 'sfb_generate_frontend_pdf');
-      formData.append('nonce', elements.nonce);
-
       // Convert selectedFieldValues Map to plain object for JSON
       const fieldValuesObj = {};
       state.selectedFieldValues.forEach((values, compositeKey) => {
         fieldValuesObj[compositeKey] = values;
       });
 
-      if (review) {
-        // Use review payload (includes quantities, notes, overrides)
-        formData.append('review', JSON.stringify(review));
-        formData.append('selected_field_values', JSON.stringify(fieldValuesObj));
-      } else {
-        // Fallback to legacy format
-        const products = Array.from(state.selectedProducts.values());
-        const productsData = products.map(p => ({ id: p.id, node_id: p.node_id || p.id }));
-        formData.append('products', JSON.stringify(productsData));
-        formData.append('project_name', state.projectName || '');
-        formData.append('notes', state.projectNotes || '');
-        formData.append('selected_field_values', JSON.stringify(fieldValuesObj));
-      }
+      // Build REST API payload
+      const payload = {
+        review: review || {
+          project: {
+            name: state.projectName || '',
+            notes: state.projectNotes || ''
+          },
+          products: Array.from(state.selectedProducts.values()).map(p => ({
+            id: p.id || p.node_id,
+            node_id: p.node_id || p.id,
+            quantity: 1,
+            note: ''
+          }))
+        },
+        selected_field_values: fieldValuesObj
+      };
 
-      // Generate PDF via AJAX with robust error handling
-      const response = await fetch(elements.ajaxUrl, {
+      // Generate PDF via REST API (NEW!)
+      const restUrl = elements.restUrl + '/sfb/v1/generate';
+      const response = await fetch(restUrl, {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+          'X-WP-Nonce': elements.nonce // WordPress REST API nonce
+        },
+        body: JSON.stringify(payload)
       });
 
-      // Read response as text first
-      const responseText = await response.text();
-
-      // Try to parse as JSON
+      // Parse JSON response
       let data;
       try {
-        data = JSON.parse(responseText);
+        data = await response.json();
       } catch (parseError) {
         console.error('[SFB] Failed to parse JSON response:', parseError);
-        console.error('[SFB] Full response body:', responseText);
-        throw new Error('Server returned an error page. Check the browser console and wp-content/debug.log for details.');
+        throw new Error('Server returned an invalid response. Check the browser console for details.');
       }
 
       // Hide loading
@@ -1434,16 +1434,24 @@
         elements.loadingOverlay.style.display = 'none';
       }
 
-      // Check for success
+      // Check for success (REST format: {ok: true, url})
       if (!response.ok) {
-        throw new Error(data?.data?.message || `Server error: ${response.status}`);
+        // Handle REST API error format
+        const errorMessage = data?.message || data?.code || `Server error: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
-      if (data.success && data.data && data.data.url) {
-        state.pdfUrl = data.data.url;
+      if (data.ok && data.url) {
+        state.pdfUrl = data.url;
+
+        // Log Pro features status (for debugging)
+        if (data.pro_active) {
+          console.log('[SFB] Pro features active:', data.features);
+        }
+
         goToStep(3);
       } else {
-        throw new Error(data?.data?.message || 'PDF generation failed - no URL returned');
+        throw new Error(data?.message || 'PDF generation failed - no URL returned');
       }
 
     } catch (error) {

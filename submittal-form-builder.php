@@ -7185,6 +7185,263 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
     }
   }
 
+  /**
+   * REST API handler for frontend PDF generation (uses same logic as AJAX but returns REST format)
+   *
+   * This is called by api_generate_packet() when it detects a "review" payload from the frontend.
+   * It reuses the ajax_generate_frontend_pdf() logic but returns REST-compatible format.
+   *
+   * @param array $p Request parameters (review, selected_field_values)
+   * @return array|WP_Error REST response {ok: true, url, ...} or error
+   */
+  function api_generate_frontend_pdf_rest($p) {
+    try {
+      // --- Extract parameters (same as AJAX handler) ---
+      $review_raw = $p['review'] ?? null;
+      $review = is_array($review_raw) ? $review_raw : null;
+
+      $project_name = '';
+      $notes = '';
+      $products = [];
+
+      if ($review && is_array($review)) {
+        // New format: review payload with quantities and notes
+        $project_name = sanitize_text_field($review['project']['name'] ?? '');
+        $notes = sanitize_textarea_field($review['project']['notes'] ?? '');
+        $products = is_array($review['products'] ?? null) ? $review['products'] : [];
+      }
+
+      if (empty($products)) {
+        return new WP_Error('bad_request', __('No products selected', 'submittal-builder'), ['status' => 400]);
+      }
+
+      // --- Receive user-selected field values from frontend dropdowns ---
+      $selected_field_values = $p['selected_field_values'] ?? [];
+      if (!is_array($selected_field_values)) {
+        $selected_field_values = [];
+      }
+
+      // --- Extract and validate product IDs ---
+      $product_ids = [];
+      $composite_key_to_id_map = [];
+      foreach ($products as $product) {
+        $id = null;
+        if (isset($product['id']) && is_numeric($product['id'])) {
+          $id = (int)$product['id'];
+        } elseif (isset($product['product_id']) && is_numeric($product['product_id'])) {
+          $id = (int)$product['product_id'];
+        } elseif (isset($product['node_id']) && is_numeric($product['node_id'])) {
+          $id = (int)$product['node_id'];
+        }
+
+        if ($id) {
+          $product_ids[] = $id;
+          if (isset($product['composite_key'])) {
+            $composite_key_to_id_map[$product['composite_key']] = $id;
+          }
+        }
+      }
+
+      if (empty($product_ids)) {
+        return new WP_Error('bad_request', __('Invalid product data - no valid product IDs', 'submittal-builder'), ['status' => 400]);
+      }
+
+      // --- Load full product data from database (reuse existing logic) ---
+      global $wpdb;
+      $table = $wpdb->prefix . 'sfb_nodes';
+      $placeholders = implode(',', array_fill(0, count($product_ids), '%d'));
+      $full_products = $wpdb->get_results(
+        $wpdb->prepare(
+          "SELECT * FROM {$table} WHERE id IN ($placeholders)",
+          ...$product_ids
+        ),
+        ARRAY_A
+      );
+
+      if (empty($full_products)) {
+        return new WP_Error('bad_request', __('No products found in database', 'submittal-builder'), ['status' => 400]);
+      }
+
+      // --- Create product metadata map ---
+      $product_meta_map = [];
+      if ($review && is_array($review['products'] ?? null)) {
+        foreach ($review['products'] as $rp) {
+          $id = isset($rp['id']) ? (int)$rp['id'] : (isset($rp['node_id']) ? (int)$rp['node_id'] : 0);
+          if ($id) {
+            $product_meta_map[$id] = [
+              'quantity' => isset($rp['quantity']) ? max(1, (int)$rp['quantity']) : 1,
+              'note' => isset($rp['note']) ? sanitize_textarea_field($rp['note']) : ''
+            ];
+          }
+        }
+      }
+
+      // --- Format products for PDF generator ---
+      $formatted_products = [];
+      foreach ($full_products as $product) {
+        $product_id = isset($product['id']) ? (int)$product['id'] : 0;
+
+        $settings_json = isset($product['settings_json']) ? $product['settings_json'] : '{}';
+        $settings = json_decode($settings_json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+          $settings = [];
+        }
+
+        $specs = isset($settings['fields']) ? $settings['fields'] : [];
+        $base_note = isset($settings['note']) ? $settings['note'] : '';
+
+        // Merge user-selected field values
+        $product_composite_key = array_search($product_id, $composite_key_to_id_map);
+        if ($product_composite_key && isset($selected_field_values[$product_composite_key])) {
+          $user_selected = $selected_field_values[$product_composite_key];
+          if (is_array($user_selected)) {
+            $specs = array_merge($specs, $user_selected);
+          }
+        }
+
+        // Get quantity and note
+        $quantity = 1;
+        $note = $base_note;
+        if (isset($product_meta_map[$product_id])) {
+          $quantity = $product_meta_map[$product_id]['quantity'];
+          if (!empty($product_meta_map[$product_id]['note'])) {
+            $note = $product_meta_map[$product_id]['note'];
+          }
+        }
+
+        // Get product path/category
+        $path = $this->get_node_breadcrumb($product['id']);
+        $category = isset($path[0]) ? $path[0] : __('Uncategorized', 'submittal-builder');
+        $product_label = isset($path[1]) ? $path[1] : '';
+        $type_label = isset($path[2]) ? $path[2] : '';
+
+        $formatted_products[] = [
+          'id' => $product_id,
+          'node_id' => $product_id,
+          'model' => isset($product['title']) ? $product['title'] : __('Unnamed Product', 'submittal-builder'),
+          'name' => isset($product['title']) ? $product['title'] : __('Unnamed Product', 'submittal-builder'),
+          'title' => isset($product['title']) ? $product['title'] : __('Unnamed Product', 'submittal-builder'),
+          'category' => $category,
+          'product_label' => $product_label,
+          'type_label' => $type_label,
+          'path' => $path,
+          'specs' => $specs,
+          'specifications' => $specs,
+          'note' => $note,
+          'description' => $note,
+          'quantity' => $quantity,
+        ];
+      }
+
+      // --- Get branding settings ---
+      $settings = get_option('sfb_settings', []);
+      if (sfb_is_agency_license() && get_option('sfb_brand_use_default_on_pdf', false)) {
+        $default_preset = SFB_Branding::get_default_preset();
+        if ($default_preset && !empty($default_preset['data'])) {
+          $settings = $default_preset['data'];
+        }
+      }
+
+      // --- Generate PDF (reuse existing Dompdf logic) ---
+      $autoload = plugin_dir_path(__FILE__) . 'vendor/autoload.php';
+      if (!file_exists($autoload)) {
+        return new WP_Error('server_error', __('PDF engine not installed. Please run composer install.', 'submittal-builder'), ['status' => 500]);
+      }
+      require_once $autoload;
+      require_once plugin_dir_path(__FILE__) . 'Includes/pdf-generator.php';
+
+      $html = SFB_PDF_Generator::generate_packet([
+        'products' => $formatted_products,
+        'project_name' => $project_name,
+        'project_notes' => $notes,
+        'branding' => $settings,
+        'pro_active' => sfb_is_pro_active(),
+      ]);
+
+      // Save PDF
+      $upload_dir = wp_upload_dir();
+      $sfb_dir = trailingslashit($upload_dir['basedir']) . 'sfb';
+      if (!file_exists($sfb_dir)) {
+        wp_mkdir_p($sfb_dir);
+      }
+
+      $filename = 'Submittal_' . sanitize_file_name($project_name ?: 'Packet') . '_' . date('Y-m-d') . '.pdf';
+      $filepath = trailingslashit($sfb_dir) . $filename;
+
+      // Configure Dompdf
+      $options = new \Dompdf\Options();
+      $options->set('isRemoteEnabled', true);
+      $options->set('isPhpEnabled', true);
+      $options->set('isHtml5ParserEnabled', true);
+      $options->set('defaultFont', 'Helvetica');
+      $options->set('pdfBackend', 'CPDF');
+
+      $dompdf = new \Dompdf\Dompdf($options);
+      $dompdf->loadHtml($html, 'UTF-8');
+      $dompdf->setPaper('letter', 'portrait');
+      $dompdf->render();
+
+      // Add page numbers
+      $canvas = $dompdf->getCanvas();
+      $is_pro = sfb_is_pro_active();
+      $brand_settings = sfb_get_brand_settings();
+      $white_label_enabled = !empty($brand_settings['white_label']['enabled']);
+
+      $footerText = '';
+      if (!$is_pro || !$white_label_enabled) {
+        $footerText = sfb_brand_credit_plain('pdf');
+      } elseif (!empty($brand_settings['white_label']['custom_footer'])) {
+        $footerText = $brand_settings['white_label']['custom_footer'];
+      }
+
+      $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($footerText) {
+        $font = $fontMetrics->getFont('helvetica', 'normal');
+        $size = 9;
+        $color = array(0.42, 0.45, 0.50);
+        $height = $canvas->get_height();
+        $width = $canvas->get_width();
+
+        if (!empty($footerText)) {
+          $canvas->text(36, $height - 36, $footerText, $font, $size, $color);
+        }
+
+        $pageText = "Page " . $pageNumber . " of " . $pageCount;
+        $canvas->text($width - 156, $height - 36, $pageText, $font, $size, $color);
+      });
+
+      $pdf_output = $dompdf->output();
+      $bytes_written = file_put_contents($filepath, $pdf_output);
+
+      if ($bytes_written === false || !file_exists($filepath)) {
+        return new WP_Error('server_error', __('Failed to write PDF file', 'submittal-builder'), ['status' => 500]);
+      }
+
+      $url = trailingslashit($upload_dir['baseurl']) . 'sfb/' . $filename;
+
+      // Track PDF generation
+      if (class_exists('SFB_Agency_Analytics')) {
+        SFB_Agency_Analytics::track_pdf_generated($product_ids);
+      }
+
+      $total_pdfs = (int) get_option('sfb_total_pdfs_generated', 0);
+      update_option('sfb_total_pdfs_generated', $total_pdfs + 1, false);
+
+      // --- Return REST format (different from AJAX format!) ---
+      return [
+        'ok' => true,
+        'url' => $url,
+        'filename' => $filename,
+        'format' => 'pdf',
+        'pro_active' => sfb_is_pro_active(),
+        'features' => sfb_enabled_features(),
+      ];
+
+    } catch (\Throwable $e) {
+      error_log('[SFB] REST PDF generation error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+      return new WP_Error('server_error', $e->getMessage(), ['status' => 500]);
+    }
+  }
+
   /** AJAX handler for saving brand settings (Phase 7: delegates to SFB_Branding) */
   function ajax_save_brand() {
     // Clean output buffer to prevent stray output corrupting JSON
@@ -9584,6 +9841,18 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
       $this->ensure_tables();
       $p = $req->get_json_params();
 
+      // ========================================
+      // FRONTEND COMPATIBILITY MODE
+      // ========================================
+      // Check if this is a frontend request using the "review" format
+      // If so, delegate to the same logic as ajax_generate_frontend_pdf but return REST format
+      if (isset($p['review']) && is_array($p['review'])) {
+        return $this->api_generate_frontend_pdf_rest($p);
+      }
+
+      // ========================================
+      // ADMIN/TEMPLATE MODE (original)
+      // ========================================
       $form_id = intval($p['form_id'] ?? 0);
       $items   = $p['items'] ?? [];  // [{id,title,meta:{size,flange,thickness,ksi}, path:[cat,prod,type]}]
       $meta    = $p['meta'] ?? [];   // ['project','contractor','submittal','include_cover','include_leed']
