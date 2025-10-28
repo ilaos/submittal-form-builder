@@ -394,7 +394,20 @@
 
 /* Product Grid */
 .sfb-products-grid {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Product groups with collapsible headers span full width */
+.sfb-product-group {
+  grid-column: 1 / -1;
+}
+
+/* Leaf products (no children) - take up one grid cell */
+.sfb-leaf-product {
+  grid-column: span 1;
+  margin-bottom: 0; /* Remove bottom margin since grid gap handles spacing */
 }
 
 .sfb-product-card {

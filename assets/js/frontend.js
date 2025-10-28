@@ -301,6 +301,7 @@
         // Expose catalog to Review step
         window.SFB = window.SFB || {};
         window.SFB.productsById = state.productsMap;
+        window.sfbProductsMap = state.productsMap; // Alias for review.js compatibility
 
         renderCategories();
         renderProducts();
@@ -569,6 +570,109 @@
 
       // Extract category from the first model (all models in group share same category)
       const category = models[0]?.category || 'Uncategorized';
+
+      // Check if this is a "leaf" product (single model with no meaningful hierarchy)
+      // A leaf product has only 1 model and the product_label matches (or is very similar to) the model name
+      const isLeafProduct = models.length === 1 &&
+        (models[0].model === productLabel ||
+         models[0].product_label === models[0].model ||
+         !models[0].type_label ||
+         models[0].type_label === productLabel);
+
+      // If this is a leaf product, render it as a simple card without the product-group wrapper
+      if (isLeafProduct) {
+        const product = models[0];
+        const isSelected = state.selected.has(product.composite_key);
+
+        // Format specs inline
+        let specsHtml = '';
+        let specs = product.specs;
+        let hasSpecs = false;
+
+        if (specs) {
+          if (Array.isArray(specs)) {
+            hasSpecs = specs.length > 0;
+          } else if (typeof specs === 'object') {
+            hasSpecs = Object.keys(specs).length > 0;
+          }
+        }
+
+        if (hasSpecs) {
+          const lines = [];
+
+          if (!Array.isArray(specs)) {
+            // Line 1: Size and Thickness/Gauge
+            const line1Parts = [];
+            if (specs.Size || specs.size) {
+              const size = specs.Size || specs.size;
+              line1Parts.push(`Size: ${escapeHtml(size)}`);
+            }
+            if (specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge) {
+              const thickness = specs.Thickness || specs.thickness || specs['Gauge/Thickness'] || specs.Gauge || specs.gauge;
+              line1Parts.push(`Thick: ${escapeHtml(thickness)}`);
+            }
+            if (line1Parts.length > 0) {
+              lines.push(line1Parts.join(' · '));
+            }
+
+            // Line 2: KSI and/or Flange
+            const line2Parts = [];
+            if (specs.KSI || specs.ksi) {
+              const ksi = specs.KSI || specs.ksi;
+              line2Parts.push(`KSI: ${escapeHtml(ksi)}`);
+            }
+            if (specs.Flange || specs.flange) {
+              const flange = specs.Flange || specs.flange;
+              line2Parts.push(`Flange: ${escapeHtml(flange)}`);
+            }
+            if (line2Parts.length > 0) {
+              lines.push(line2Parts.join(' · '));
+            }
+
+            // Fallback: if no specific fields found, show first 2-3 specs
+            if (lines.length === 0) {
+              const specEntries = Object.entries(specs).slice(0, 3);
+              const line1 = specEntries.slice(0, 2).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(v)}`).join(' · ');
+              const line2 = specEntries.length > 2 ? `${escapeHtml(specEntries[2][0])}: ${escapeHtml(specEntries[2][1])}` : '';
+              if (line1) lines.push(line1);
+              if (line2) lines.push(line2);
+            }
+          }
+
+          if (lines.length > 0) {
+            specsHtml = `
+              <div class="sfb-card-specs">
+                ${lines.map(line => `<div>${line}</div>`).join('')}
+              </div>
+            `;
+          }
+        }
+
+        // Build card head with category crumb
+        let cardHead = '';
+        if (product.category) {
+          cardHead = `<div class="sfb-card__head"><span class="crumb--category">${escapeHtml(product.category)}</span></div>`;
+        }
+
+        // Return leaf product as a simple card (no product-group wrapper)
+        return `
+          <div class="sfb-product-card sfb-leaf-product ${isSelected ? 'sfb-product-card-selected' : ''}"
+               data-composite-key="${escapeHtml(product.composite_key)}"
+               role="button"
+               tabindex="0"
+               aria-pressed="${isSelected ? 'true' : 'false'}"
+               aria-label="${escapeHtml(product.model)} - ${isSelected ? 'Selected' : 'Not selected'}. ${product.category ? 'Category: ' + escapeHtml(product.category) + '.' : ''} Press Enter or Space to ${isSelected ? 'remove' : 'add'}.">
+            <button class="sfb-sr-only sfb-card__toggle" aria-pressed="${isSelected ? 'true' : 'false'}">
+              Toggle selection for ${escapeHtml(product.model)}
+            </button>
+            <div class="sfb-card__selected-indicator" aria-hidden="true">✓ ADDED</div>
+            ${cardHead}
+            <h4 class="sfb-product-name">${escapeHtml(product.model)}</h4>
+            ${specsHtml}
+            ${buildConfigurableFields(product)}
+          </div>
+        `;
+      }
 
       // NEW: Group models by type_label within this product
       const groupedByType = {};
