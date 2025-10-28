@@ -1406,7 +1406,8 @@
             note: ''
           }))
         },
-        selected_field_values: fieldValuesObj
+        selected_field_values: fieldValuesObj,
+        _nonce: elements.nonce // Add nonce to payload for backend verification
       };
 
       // Generate PDF via REST API (NEW!)
@@ -1414,8 +1415,10 @@
       const response = await fetch(restUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-WP-Nonce': elements.nonce // WordPress REST API nonce
+          'Content-Type': 'application/json'
+          // Note: X-WP-Nonce intentionally omitted for public endpoint
+          // The endpoint uses permission_callback: __return_true and handles
+          // its own nonce verification inside the handler
         },
         body: JSON.stringify(payload)
       });

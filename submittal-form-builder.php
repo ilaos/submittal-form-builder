@@ -7191,11 +7191,16 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
    * This is called by api_generate_packet() when it detects a "review" payload from the frontend.
    * It reuses the ajax_generate_frontend_pdf() logic but returns REST-compatible format.
    *
-   * @param array $p Request parameters (review, selected_field_values)
+   * @param array $p Request parameters (review, selected_field_values, _nonce)
    * @return array|WP_Error REST response {ok: true, url, ...} or error
    */
   function api_generate_frontend_pdf_rest($p) {
     try {
+      // --- Verify nonce for security ---
+      if (!isset($p['_nonce']) || !wp_verify_nonce($p['_nonce'], 'sfb_frontend_builder')) {
+        return new WP_Error('invalid_nonce', __('Invalid security token', 'submittal-builder'), ['status' => 403]);
+      }
+
       // --- Extract parameters (same as AJAX handler) ---
       $review_raw = $p['review'] ?? null;
       $review = is_array($review_raw) ? $review_raw : null;
