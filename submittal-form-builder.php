@@ -7197,9 +7197,20 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
   function api_generate_frontend_pdf_rest($p) {
     try {
       // --- Verify nonce for security ---
-      if (!isset($p['_nonce']) || !wp_verify_nonce($p['_nonce'], 'sfb_frontend_builder')) {
+      // Debug: Log nonce verification details
+      error_log('[SFB REST] Nonce present: ' . (isset($p['nonce']) ? 'yes' : 'no'));
+      if (isset($p['nonce'])) {
+        error_log('[SFB REST] Nonce value: ' . substr($p['nonce'], 0, 10) . '...');
+        $verify_result = wp_verify_nonce($p['nonce'], 'sfb_frontend_builder');
+        error_log('[SFB REST] Nonce verification result: ' . var_export($verify_result, true));
+      }
+
+      if (!isset($p['nonce']) || !wp_verify_nonce($p['nonce'], 'sfb_frontend_builder')) {
+        error_log('[SFB REST] Nonce verification FAILED');
         return new WP_Error('invalid_nonce', __('Invalid security token', 'submittal-builder'), ['status' => 403]);
       }
+
+      error_log('[SFB REST] Nonce verification PASSED');
 
       // --- Extract parameters (same as AJAX handler) ---
       $review_raw = $p['review'] ?? null;

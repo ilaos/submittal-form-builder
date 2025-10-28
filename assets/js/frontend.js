@@ -1407,7 +1407,7 @@
           }))
         },
         selected_field_values: fieldValuesObj,
-        _nonce: elements.nonce // Add nonce to payload for backend verification
+        nonce: elements.nonce // Add nonce to payload for backend verification
       };
 
       // Generate PDF via REST API (NEW!)
