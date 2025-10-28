@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Submittal & Spec Sheet Builder
  * Plugin URI:  https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/
- * Description: Generate professional submittal and spec sheet PDFs with full branding, summaries, and TOCs. Perfect for construction, manufacturing, and professional services.
+ * Description: Generate professional submittal and spec sheet PDFs with full branding, summaries, and TOCs. Perfect for construction submittals and complex product catalogs - serve contractors, distributors, equipment suppliers, and any B2B business with hundreds of SKUs.
  * Version:     1.2.3
  * Author:      Webstuffguy Labs
  * Author URI:  https://webstuffguylabs.com
@@ -52,6 +52,9 @@ require_once plugin_dir_path(__FILE__) . 'Includes/agency-lead-routing.php';
 
 // Load lead capture (Pro feature)
 require_once plugin_dir_path(__FILE__) . 'Includes/lead-capture.php';
+
+// Load telemetry (opt-in analytics)
+require_once plugin_dir_path(__FILE__) . 'Includes/telemetry.php';
 
 // Phase 1 Refactor: Load modular classes
 require_once plugin_dir_path(__FILE__) . 'Includes/class-sfb-admin.php';
@@ -185,6 +188,11 @@ final class SFB_Plugin {
     $this->ensure_operator_role();
     // Set flag for first-time activation redirect
     update_option('sfb_just_activated', 1, false);
+
+    // Track activation date (for telemetry - days since activation)
+    if (!get_option('sfb_activation_date')) {
+      update_option('sfb_activation_date', current_time('mysql'), false);
+    }
   }
 
   /** Run database migrations if needed */
@@ -659,8 +667,14 @@ final class SFB_Plugin {
 
   /** Branding Page Renderer */
   function render_branding_page() {
-    // Get current settings
+    // Get current settings from new format (sfb_brand_settings)
+    $brand_settings = sfb_get_brand_settings();
+
+    // Convert to old flat format for template compatibility
     $options = wp_parse_args(get_option($this->option_key(), []), $this->default_settings());
+
+    // Merge white-label settings from new format into options
+    $options['white_label'] = $brand_settings['white_label'] ?? sfb_brand_defaults()['white_label'];
 
     // Check if settings were just saved
     $settings_saved = isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true';
@@ -943,7 +957,8 @@ final class SFB_Plugin {
             // White-Label Mode Card (Pro + Agency)
             $is_pro_or_agency = sfb_is_pro_active();
             if ($is_pro_or_agency):
-              $white_label_settings = $options['white_label'] ?? sfb_brand_defaults()['white_label'];
+              // White-label settings already loaded from new format at top of function
+              $white_label_settings = $options['white_label'];
             ?>
             <!-- White-Label Mode (Pro Feature) -->
             <div class="sfb-card sfb-white-label-card">
@@ -2892,7 +2907,7 @@ final class SFB_Plugin {
           </div>
 
           <!-- Lead Notification Email (Pro) -->
-          <?php if (sfb_is_pro_license()): ?>
+          <?php if (sfb_is_pro_active()): ?>
           <div class="sfb-setting-row">
             <div class="sfb-setting-icon">📧</div>
             <div class="sfb-setting-content">
@@ -3864,7 +3879,7 @@ final class SFB_Plugin {
            value="<?php echo esc_attr($email); ?>"
            placeholder="<?php echo esc_attr($placeholder); ?>"
            class="regular-text"
-           <?php echo !sfb_is_pro_license() ? 'disabled' : ''; ?>>
+           <?php echo !sfb_is_pro_active() ? 'disabled' : ''; ?>>
     <p class="description">
       <?php esc_html_e('Email address to receive lead notifications. Leave blank to use site admin email.', 'submittal-builder'); ?>
       <?php if (!empty($placeholder)): ?>
@@ -3872,7 +3887,7 @@ final class SFB_Plugin {
         <?php printf(esc_html__('Default: %s', 'submittal-builder'), '<code>' . esc_html($placeholder) . '</code>'); ?>
       <?php endif; ?>
     </p>
-    <?php if (!sfb_is_pro_license()): ?>
+    <?php if (!sfb_is_pro_active()): ?>
       <p class="description" style="color: #d97706;">
         <?php esc_html_e('⚠️ This is a Pro feature. Upgrade to customize the notification email address.', 'submittal-builder'); ?>
       </p>
@@ -7087,26 +7102,35 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
 
         // Add page numbers using canvas - must be done BEFORE output
         $canvas = $dompdf->getCanvas();
-        $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
+
+        // Determine footer text based on Pro status and white-label mode
+        $is_pro = sfb_is_pro_active();
+        $brand_settings = sfb_get_brand_settings();
+        $white_label_enabled = !empty($brand_settings['white_label']['enabled']);
+
+        // Get footer text
+        $footerText = '';
+        if (!$is_pro || !$white_label_enabled) {
+          // Free users OR Pro users without white-label: show branding
+          $footerText = sfb_brand_credit_plain('pdf');
+        } elseif (!empty($brand_settings['white_label']['custom_footer'])) {
+          // Pro users with white-label and custom footer: use custom text
+          $footerText = $brand_settings['white_label']['custom_footer'];
+        }
+        // else: Pro users with white-label and no custom footer: show nothing
+
+        $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($footerText) {
           $font = $fontMetrics->getFont('helvetica', 'normal');
           $size = 9;
           $color = array(0.42, 0.45, 0.50);
-          $linkColor = array(0.4, 0.49, 0.91); // Blue color for link
 
           $height = $canvas->get_height();
           $width = $canvas->get_width();
 
-          // Footer text on left with clickable link
-          $canvas->text(36, $height - 36, "Generated with ", $font, $size, $color);
-
-          // Add clickable link
-          $linkText = "Submittal & Spec Sheet Builder";
-          $linkX = 36 + $fontMetrics->getTextWidth("Generated with ", $font, $size);
-          $canvas->text($linkX, $height - 36, $linkText, $font, $size, $linkColor);
-
-          // Add the actual hyperlink annotation
-          $linkWidth = $fontMetrics->getTextWidth($linkText, $font, $size);
-          $canvas->add_link("https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/", $linkX, $height - 36 - $size, $linkX + $linkWidth, $height - 36 + 2);
+          // Footer text on left (only if not empty)
+          if (!empty($footerText)) {
+            $canvas->text(36, $height - 36, $footerText, $font, $size, $color);
+          }
 
           // Page numbers on right
           $pageText = "Page " . $pageNumber . " of " . $pageCount;
@@ -7134,6 +7158,10 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
         if (class_exists('SFB_Agency_Analytics')) {
           SFB_Agency_Analytics::track_pdf_generated($product_ids);
         }
+
+        // Increment PDF generation counter (for telemetry)
+        $total_pdfs = (int) get_option('sfb_total_pdfs_generated', 0);
+        update_option('sfb_total_pdfs_generated', $total_pdfs + 1, false);
 
         wp_send_json_success([
           'url' => $url,
@@ -7712,27 +7740,35 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
         // Add page numbers using canvas - must be done BEFORE output
         $canvas = $dompdf->getCanvas();
 
+        // Determine footer text based on Pro status and white-label mode
+        $is_pro = sfb_is_pro_active();
+        $brand_settings = sfb_get_brand_settings();
+        $white_label_enabled = !empty($brand_settings['white_label']['enabled']);
+
+        // Get footer text
+        $footerText = '';
+        if (!$is_pro || !$white_label_enabled) {
+          // Free users OR Pro users without white-label: show branding
+          $footerText = sfb_brand_credit_plain('pdf');
+        } elseif (!empty($brand_settings['white_label']['custom_footer'])) {
+          // Pro users with white-label and custom footer: use custom text
+          $footerText = $brand_settings['white_label']['custom_footer'];
+        }
+        // else: Pro users with white-label and no custom footer: show nothing
+
         // Add footer text and page numbers on ALL pages
-        $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
+        $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($footerText) {
           $font = $fontMetrics->getFont('helvetica', 'normal');
           $size = 9;
           $color = array(0.42, 0.45, 0.50);
-          $linkColor = array(0.4, 0.49, 0.91); // Blue color for link
 
           $height = $canvas->get_height();
           $width = $canvas->get_width();
 
-          // Footer text on left with clickable link
-          $canvas->text(36, $height - 36, "Generated with ", $font, $size, $color);
-
-          // Add clickable link
-          $linkText = "Submittal & Spec Sheet Builder";
-          $linkX = 36 + $fontMetrics->getTextWidth("Generated with ", $font, $size);
-          $canvas->text($linkX, $height - 36, $linkText, $font, $size, $linkColor);
-
-          // Add the actual hyperlink annotation
-          $linkWidth = $fontMetrics->getTextWidth($linkText, $font, $size);
-          $canvas->add_link("https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/", $linkX, $height - 36 - $size, $linkX + $linkWidth, $height - 36 + 2);
+          // Footer text on left (only if not empty)
+          if (!empty($footerText)) {
+            $canvas->text(36, $height - 36, $footerText, $font, $size, $color);
+          }
 
           // Page numbers on right
           $pageText = "Page " . $pageNumber . " of " . $pageCount;
@@ -9729,26 +9765,35 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
 
       // Add page numbers using canvas - must be done BEFORE output
       $canvas = $dompdf->getCanvas();
-      $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) {
+
+      // Determine footer text based on Pro status and white-label mode
+      $is_pro = sfb_is_pro_active();
+      $brand_settings = sfb_get_brand_settings();
+      $white_label_enabled = !empty($brand_settings['white_label']['enabled']);
+
+      // Get footer text
+      $footerText = '';
+      if (!$is_pro || !$white_label_enabled) {
+        // Free users OR Pro users without white-label: show branding
+        $footerText = sfb_brand_credit_plain('pdf');
+      } elseif (!empty($brand_settings['white_label']['custom_footer'])) {
+        // Pro users with white-label and custom footer: use custom text
+        $footerText = $brand_settings['white_label']['custom_footer'];
+      }
+      // else: Pro users with white-label and no custom footer: show nothing
+
+      $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($footerText) {
         $font = $fontMetrics->getFont('helvetica', 'normal');
         $size = 9;
         $color = array(0.42, 0.45, 0.50);
-        $linkColor = array(0.4, 0.49, 0.91); // Blue color for link
 
         $height = $canvas->get_height();
         $width = $canvas->get_width();
 
-        // Footer text on left with clickable link
-        $canvas->text(36, $height - 36, "Generated with ", $font, $size, $color);
-
-        // Add clickable link
-        $linkText = "Submittal & Spec Sheet Builder";
-        $linkX = 36 + $fontMetrics->getTextWidth("Generated with ", $font, $size);
-        $canvas->text($linkX, $height - 36, $linkText, $font, $size, $linkColor);
-
-        // Add the actual hyperlink annotation
-        $linkWidth = $fontMetrics->getTextWidth($linkText, $font, $size);
-        $canvas->add_link("https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/", $linkX, $height - 36 - $size, $linkX + $linkWidth, $height - 36 + 2);
+        // Footer text on left (only if not empty)
+        if (!empty($footerText)) {
+          $canvas->text(36, $height - 36, $footerText, $font, $size, $color);
+        }
 
         // Page numbers on right
         $pageText = "Page " . $pageNumber . " of " . $pageCount;
