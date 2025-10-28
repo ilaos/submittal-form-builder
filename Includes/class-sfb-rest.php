@@ -180,11 +180,12 @@ final class SFB_Rest {
     ]);
 
     // PDF Generation (Public - Phase 6: route through SFB_Pdf facade)
-    register_rest_route('sfb/v1', '/generate', [
+    $registered = register_rest_route('sfb/v1', '/generate', [
       'methods' => 'POST',
       'permission_callback' => '__return_true', // public submission allowed
       'callback' => ['SFB_Pdf', 'generate_packet']
     ]);
+    error_log('[SFB_Rest::register_routes] /generate endpoint registered: ' . ($registered ? 'SUCCESS' : 'FAILED'));
 
     // Drafts (Pro - Public with nonce)
     register_rest_route('sfb/v1', '/drafts', [

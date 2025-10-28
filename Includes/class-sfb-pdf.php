@@ -49,12 +49,18 @@ final class SFB_Pdf {
    * @return array|WP_Error Response or error
    */
   public static function generate_packet($req) {
+    error_log('[SFB_Pdf::generate_packet] === FACADE ENTRY POINT ===');
+    error_log('[SFB_Pdf::generate_packet] Request method: ' . $req->get_method());
+    error_log('[SFB_Pdf::generate_packet] Request route: ' . $req->get_route());
+
     global $sfb_plugin;
 
     if ($sfb_plugin && method_exists($sfb_plugin, 'api_generate_packet')) {
+      error_log('[SFB_Pdf::generate_packet] Plugin found, calling api_generate_packet()');
       return $sfb_plugin->api_generate_packet($req);
     }
 
+    error_log('[SFB_Pdf::generate_packet] ERROR: Plugin not found or method missing');
     return new WP_Error('pdf_unavailable', __('PDF generator not available', 'submittal-builder'), ['status' => 500]);
   }
 
