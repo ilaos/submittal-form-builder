@@ -6853,6 +6853,12 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
    * AJAX: Generate PDF from frontend builder
    * Receives selected products and generates a submittal packet
    */
+  /*
+   * COMMENTED OUT FOR MONITORING (2025-01-29)
+   * Old AJAX handler - migrated to REST API (api_generate_frontend_pdf_rest)
+   * Monitor for 1-2 days, then permanently delete per OLD-HANDLER-REMOVAL.md
+   */
+  /*
   function ajax_generate_frontend_pdf() {
     // Ensure no stray output corrupts JSON
     if (function_exists('ob_get_length') && ob_get_length()) {
@@ -7184,6 +7190,8 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
       wp_send_json_error(['message' => __('Server error during PDF generation. Please check the error log.', 'submittal-builder')], 500);
     }
   }
+  */
+  // END COMMENTED OUT SECTION
 
   /**
    * REST API handler for frontend PDF generation (uses same logic as AJAX but returns REST format)
