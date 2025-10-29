@@ -3660,7 +3660,8 @@ final class SFB_Plugin {
       $sanitized['theme'] = $requested_theme;
     }
 
-    $sanitized['watermark'] = isset($input['watermark']) ? sanitize_text_field($input['watermark']) : $defaults['watermark'];
+    // Watermark - Pro only
+    $sanitized['watermark'] = $is_pro && isset($input['watermark']) ? sanitize_text_field($input['watermark']) : '';
 
     // Draft settings
     $sanitized['drafts_autosave_enabled'] = !empty($input['drafts_autosave_enabled']);
