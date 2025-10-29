@@ -53,14 +53,24 @@ final class SFB_Pdf {
     error_log('[SFB_Pdf::generate_packet] Request method: ' . $req->get_method());
     error_log('[SFB_Pdf::generate_packet] Request route: ' . $req->get_route());
 
-    // Ensure WordPress determines current user from cookies for nonce verification
-    // This is critical for REST API cookie authentication
-    if (!is_user_logged_in()) {
-      // For non-logged-in users, WordPress needs to determine user from session
-      wp_set_current_user(0); // Explicitly set to guest user
-      error_log('[SFB_Pdf::generate_packet] User context: Guest (not logged in)');
+    // CRITICAL FIX: Manually determine current user from cookies
+    // WordPress REST API doesn't automatically do this like AJAX does
+    // This is required for wp_verify_nonce() to work correctly
+    $current_user_id = get_current_user_id();
+    error_log('[SFB_Pdf::generate_packet] Initial user ID: ' . $current_user_id);
+
+    if ($current_user_id === 0) {
+      // Try to authenticate user from cookies manually
+      // This mimics what wp-ajax.php does automatically
+      $user_id = wp_validate_auth_cookie('', 'logged_in');
+      if ($user_id) {
+        wp_set_current_user($user_id);
+        error_log('[SFB_Pdf::generate_packet] Authenticated user from cookie: ' . $user_id);
+      } else {
+        error_log('[SFB_Pdf::generate_packet] No valid auth cookie, user remains guest (0)');
+      }
     } else {
-      error_log('[SFB_Pdf::generate_packet] User context: Logged in as user ID ' . get_current_user_id());
+      error_log('[SFB_Pdf::generate_packet] User already authenticated: ' . $current_user_id);
     }
 
     global $sfb_plugin;
