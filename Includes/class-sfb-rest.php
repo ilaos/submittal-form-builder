@@ -183,7 +183,15 @@ final class SFB_Rest {
     $registered = register_rest_route('sfb/v1', '/generate', [
       'methods' => 'POST',
       'permission_callback' => '__return_true', // public submission allowed
-      'callback' => ['SFB_Pdf', 'generate_packet']
+      'callback' => ['SFB_Pdf', 'generate_packet'],
+      // Enable cookie authentication so wp_verify_nonce works with user session
+      'args' => [
+        'nonce' => [
+          'required' => false,
+          'type' => 'string',
+          'description' => 'WordPress nonce for security verification'
+        ]
+      ]
     ]);
     error_log('[SFB_Rest::register_routes] /generate endpoint registered: ' . ($registered ? 'SUCCESS' : 'FAILED'));
 

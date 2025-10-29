@@ -53,6 +53,16 @@ final class SFB_Pdf {
     error_log('[SFB_Pdf::generate_packet] Request method: ' . $req->get_method());
     error_log('[SFB_Pdf::generate_packet] Request route: ' . $req->get_route());
 
+    // Ensure WordPress determines current user from cookies for nonce verification
+    // This is critical for REST API cookie authentication
+    if (!is_user_logged_in()) {
+      // For non-logged-in users, WordPress needs to determine user from session
+      wp_set_current_user(0); // Explicitly set to guest user
+      error_log('[SFB_Pdf::generate_packet] User context: Guest (not logged in)');
+    } else {
+      error_log('[SFB_Pdf::generate_packet] User context: Logged in as user ID ' . get_current_user_id());
+    }
+
     global $sfb_plugin;
 
     if ($sfb_plugin && method_exists($sfb_plugin, 'api_generate_packet')) {
