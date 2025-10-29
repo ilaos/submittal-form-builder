@@ -126,7 +126,7 @@ function sfb_features(): array {
 
   // Base features (can be overridden)
   sfb_register_features([
-    // Pro
+    // Pro Features
     'auto_email'   => ['label'=>'Auto Email Packet','group'=>'Automation','pro'=>true,'desc'=>'Automatically email generated packets to recipients with tracking links.','since'=>'1.0.0'],
     'archive'      => ['label'=>'Auto Archive to History','group'=>'Automation','pro'=>true,'desc'=>'Auto-archive packets by project/date.','since'=>'1.0.0'],
     'tracking'     => ['label'=>'Public Tracking Link','group'=>'Distribution','pro'=>true,'desc'=>'Public links to share packets and verify downloads.','since'=>'1.0.0'],
@@ -136,7 +136,18 @@ function sfb_features(): array {
     'signature'    => ['label'=>'Approval Signature Block','group'=>'Branding','pro'=>true,'desc'=>'Approval/signature block with name, title, date.','since'=>'1.0.0'],
     'server_drafts'=> ['label'=>'Shareable Drafts','group'=>'Data','pro'=>true,'desc'=>'Save selections to server and share via short URL. Drafts auto-expire after 45 days.','since'=>'1.0.0'],
     'lead_capture' => ['label'=>'Lead Capture & CRM','group'=>'Data','pro'=>true,'desc'=>'Collect email/phone before PDF download with UTM tracking, rate limiting, honeypot protection, and CSV export.','since'=>'1.0.2'],
-    // Free
+    'csv_import'   => ['label'=>'CSV Catalog Import','group'=>'Data','pro'=>true,'desc'=>'Bulk import products from CSV with flexible hierarchy detection and merge/replace modes.','since'=>'1.0.0'],
+
+    // Agency Features (Note: Most Agency features use direct sfb_is_agency_license() checks rather than registry)
+    'brand_presets'     => ['label'=>'Brand Presets Library','group'=>'Agency','pro'=>true,'agency'=>true,'desc'=>'Save, load, and apply brand configurations with auto-apply option.','since'=>'1.0.0'],
+    'lead_routing'      => ['label'=>'Lead Routing & Webhooks','group'=>'Agency','pro'=>true,'agency'=>true,'desc'=>'Route leads by domain/UTM rules with webhook integration.','since'=>'1.0.0'],
+    'weekly_export'     => ['label'=>'Weekly Lead Export','group'=>'Agency','pro'=>true,'agency'=>true,'desc'=>'Automated weekly CSV email with Send Now option.','since'=>'1.0.0'],
+    'agency_analytics'  => ['label'=>'Agency Analytics','group'=>'Agency','pro'=>true,'agency'=>true,'desc'=>'Aggregated non-PII metrics dashboard.','since'=>'1.0.0'],
+    'agency_library'    => ['label'=>'Agency Library (Packs)','group'=>'Agency','pro'=>true,'agency'=>true,'desc'=>'Save catalogs as reusable Packs with JSON export.','since'=>'1.0.0'],
+    'client_handoff'    => ['label'=>'Client Handoff Mode','group'=>'Agency','pro'=>true,'agency'=>true,'desc'=>'Hide agency-specific UI for client sites.','since'=>'1.0.0'],
+    'operator_role'     => ['label'=>'Operator Role','group'=>'Agency','pro'=>true,'agency'=>true,'desc'=>'Custom WordPress role with limited catalog access.','since'=>'1.0.0'],
+
+    // Free Features
     'summary'      => ['label'=>'Summary Page','group'=>'Core','pro'=>false,'desc'=>'Front summary grouped by category with key specs.','since'=>'1.0.0'],
     'toc'          => ['label'=>'Table of Contents','group'=>'Core','pro'=>false,'desc'=>'Clickable internal TOC for fast navigation.','since'=>'1.0.0'],
   ]);
@@ -152,7 +163,13 @@ function sfb_feature_enabled(string $key): bool {
   $all = sfb_features();
   if (!isset($all[$key])) return false;
   $def = $all[$key];
+
+  // Check Agency-only features
+  if (!empty($def['agency']) && !sfb_is_agency_license()) return false;
+
+  // Check Pro features (Agency license includes all Pro features)
   if (!empty($def['pro']) && !sfb_is_pro_active()) return false;
+
   return true;
 }
 

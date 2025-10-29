@@ -235,7 +235,7 @@ None. All 35 features are now fully implemented.
 - **Implementation:**
   - 3-column signature table (Approved By, Title, Date)
   - Uses `$meta['approve_name']`, `$meta['approve_title']`, `$meta['approve_date']`
-  - Conditional: `sfb_is_pro_enabled() && !empty($meta['approve_block'])`
+  - Conditional: `sfb_feature_enabled('signature') && !empty($meta['approve_block'])`
   - Page-break-inside:avoid for placement control
   - Min-height:930px on .model-content wrapper for short pages
 - **Free tier behavior:** Signature block hidden, approve_block setting disabled
@@ -289,6 +289,8 @@ Key gated endpoints:
 ### Primary Gate Functions
 **File:** `Includes/pro/registry.php`
 
+**Feature Registry:** Contains 18 registered features (10 Pro + 7 Agency + 1 Free). Agency features use `'agency'=>true` flag and are checked via `sfb_feature_enabled()`. Most Agency features also use direct `sfb_is_agency_license()` checks in their implementations for backward compatibility.
+
 1. **`sfb_is_pro_active()`** (Lines 61-78)
    - Returns: `true` for Pro or Agency
    - Dev override: `SFB_PRO_DEV`
@@ -305,9 +307,11 @@ Key gated endpoints:
    - Product name: `stripos($license['product_name'], 'agency')`
    - Fallback: `get_option('sfb_license')['tier'] === 'agency'`
 
-3. **`sfb_feature_enabled(string $key)`** (Lines 151-157)
+3. **`sfb_feature_enabled(string $key)`** (Lines 162-174)
    - Checks if feature exists and is enabled for license
+   - Agency features blocked if `!sfb_is_agency_license()`
    - Pro features blocked if `!sfb_is_pro_active()`
+   - Note: Agency license includes all Pro features
 
 ### Gate Usage Examples
 

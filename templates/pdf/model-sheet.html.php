@@ -92,7 +92,7 @@ $watermark = sfb_text($brand['watermark'] ?? '');
     <?php endif; ?>
   <?php endif; ?>
 
-  <?php if (function_exists('sfb_is_pro_enabled') ? sfb_is_pro_enabled() && !empty($meta['approve_block']) : !empty($meta['approve_block'])): ?>
+  <?php if (sfb_feature_enabled('signature') && !empty($meta['approve_block'])): ?>
     <?php
     $approve_name = sfb_text($meta['approve_name'] ?? '');
     $approve_title = sfb_text($meta['approve_title'] ?? '');
