@@ -3,7 +3,7 @@
  * Plugin Name: Submittal & Spec Sheet Builder
  * Plugin URI:  https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/
  * Description: Generate professional submittal and spec sheet PDFs with full branding, summaries, and TOCs. Perfect for construction submittals and complex product catalogs - serve contractors, distributors, equipment suppliers, and any B2B business with hundreds of SKUs.
- * Version:     1.2.3
+ * Version:     1.2.4
  * Author:      Webstuffguy Labs
  * Author URI:  https://webstuffguylabs.com
  * License:     GPL v2 or later
@@ -88,7 +88,7 @@ function sfb_text_list($arr): array {
 }
 
 final class SFB_Plugin {
-  const VERSION = '1.2.3';
+  const VERSION = '1.2.4';
   private static $instance = null;
 
   static function instance() { return self::$instance ?: self::$instance = new self; }
