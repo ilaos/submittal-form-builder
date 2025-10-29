@@ -99,6 +99,15 @@ Yes. The shortcode works inside Elementor, Gutenberg, and most other editors.
 
 == Changelog ==
 
+= 1.2.4 =
+Enhancement:
+
+* Migrated frontend PDF generation to WordPress REST API for improved reliability
+* Fixed: Pro features (PDF Themes, Watermark, Signature Block) now accessible to all Pro users
+* Fixed: Nonce verification now works correctly with REST API cookie authentication
+* Improved: Better security with proper WordPress session handling
+* Deprecated: Old AJAX handler (will be removed in future version after monitoring period)
+
 = 1.2.1 =
 Maintenance:
 
@@ -117,4 +126,8 @@ Added catalog manager, presets, and agency-ready structure.
 
 == Upgrade Notice ==
 
-1.2.1 — Maintenance update. Codebase cleanup for better performance and long-term stability.
+= 1.2.4 =
+Important update: Enables Pro PDF features (Themes, Watermark, Signature Block) for all Pro users. Improves PDF generation reliability and security. Recommended for all users.
+
+= 1.2.1 =
+Maintenance update. Codebase cleanup for better performance and long-term stability.
