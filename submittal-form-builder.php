@@ -7229,18 +7229,13 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
         error_log('[SFB REST] ERROR: No nonce found in payload or raw body');
       }
 
-      // TEMPORARY: Skip nonce verification to test if that's the issue
-      // TODO: Re-enable after fixing REST API cookie authentication
-      if (false && (!isset($p['nonce']) || !$nonce_valid)) {
+      // Verify nonce for security (now that credentials: 'same-origin' sends cookies)
+      if (!isset($p['nonce']) || !$nonce_valid) {
         error_log('[SFB REST] === NONCE VERIFICATION FAILED ===');
         return new WP_Error('invalid_nonce', __('Invalid security token', 'submittal-builder'), ['status' => 403]);
       }
 
-      if ($nonce_valid) {
-        error_log('[SFB REST] === Nonce verification PASSED ===');
-      } else {
-        error_log('[SFB REST] === Nonce verification SKIPPED (temporarily disabled for testing) ===');
-      }
+      error_log('[SFB REST] === Nonce verification PASSED ===');
 
       // --- Extract parameters (same as AJAX handler) ---
       $review_raw = $p['review'] ?? null;

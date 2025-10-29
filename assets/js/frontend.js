@@ -1428,6 +1428,7 @@
           // The endpoint uses permission_callback: __return_true and handles
           // its own nonce verification inside the handler
         },
+        credentials: 'same-origin', // CRITICAL: Send cookies so WordPress can verify nonce
         body: JSON.stringify(payload)
       });
 
