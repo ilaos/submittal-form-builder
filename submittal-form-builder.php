@@ -7196,46 +7196,10 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
    */
   function api_generate_frontend_pdf_rest($p) {
     try {
-      // --- COMPREHENSIVE DIAGNOSTICS ---
-      error_log('[SFB REST] === PDF Generation Request Started ===');
-      error_log('[SFB REST] Payload keys: ' . implode(', ', array_keys($p)));
-      error_log('[SFB REST] Nonce present in \$p: ' . (isset($p['nonce']) ? 'yes' : 'NO'));
-
-      // Check raw request body
-      $raw_body = file_get_contents('php://input');
-      $decoded_body = json_decode($raw_body, true);
-      if ($decoded_body) {
-        error_log('[SFB REST] Raw JSON has nonce: ' . (isset($decoded_body['nonce']) ? 'yes' : 'NO'));
-        if (isset($decoded_body['nonce'])) {
-          error_log('[SFB REST] Nonce from raw body: ' . substr($decoded_body['nonce'], 0, 10) . '...');
-          // Use raw body nonce if $p doesn't have it
-          if (!isset($p['nonce'])) {
-            $p['nonce'] = $decoded_body['nonce'];
-            error_log('[SFB REST] Copied nonce from raw body to \$p');
-          }
-        }
-      }
-
       // --- Verify nonce for security ---
-      $nonce_valid = false;
-      if (isset($p['nonce'])) {
-        error_log('[SFB REST] Verifying nonce: ' . substr($p['nonce'], 0, 10) . '...');
-        error_log('[SFB REST] Current user ID: ' . get_current_user_id());
-        error_log('[SFB REST] User logged in: ' . (is_user_logged_in() ? 'yes' : 'NO'));
-        $verify_result = wp_verify_nonce($p['nonce'], 'sfb_frontend_builder');
-        error_log('[SFB REST] Nonce verification result: ' . var_export($verify_result, true));
-        $nonce_valid = ($verify_result !== false);
-      } else {
-        error_log('[SFB REST] ERROR: No nonce found in payload or raw body');
-      }
-
-      // Verify nonce for security (now that credentials: 'same-origin' sends cookies)
-      if (!isset($p['nonce']) || !$nonce_valid) {
-        error_log('[SFB REST] === NONCE VERIFICATION FAILED ===');
+      if (!isset($p['nonce']) || !wp_verify_nonce($p['nonce'], 'sfb_frontend_builder')) {
         return new WP_Error('invalid_nonce', __('Invalid security token', 'submittal-builder'), ['status' => 403]);
       }
-
-      error_log('[SFB REST] === Nonce verification PASSED ===');
 
       // --- Extract parameters (same as AJAX handler) ---
       $review_raw = $p['review'] ?? null;
@@ -9878,13 +9842,9 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
 
   /** Create a submittal packet (HTML or PDF) in uploads/sfb/ and return its URL */
   function api_generate_packet($req){
-    error_log('[api_generate_packet] === MAIN HANDLER ENTRY ===');
     try {
       $this->ensure_tables();
       $p = $req->get_json_params();
-
-      error_log('[api_generate_packet] Payload keys: ' . implode(', ', array_keys($p)));
-      error_log('[api_generate_packet] Has review parameter: ' . (isset($p['review']) ? 'YES' : 'NO'));
 
       // ========================================
       // FRONTEND COMPATIBILITY MODE
@@ -9892,11 +9852,8 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
       // Check if this is a frontend request using the "review" format
       // If so, delegate to the same logic as ajax_generate_frontend_pdf but return REST format
       if (isset($p['review']) && is_array($p['review'])) {
-        error_log('[api_generate_packet] ROUTING to api_generate_frontend_pdf_rest()');
         return $this->api_generate_frontend_pdf_rest($p);
       }
-
-      error_log('[api_generate_packet] ROUTING to admin/template mode (no review param)');
 
       // ========================================
       // ADMIN/TEMPLATE MODE (original)

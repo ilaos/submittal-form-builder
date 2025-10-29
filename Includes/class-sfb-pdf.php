@@ -49,15 +49,10 @@ final class SFB_Pdf {
    * @return array|WP_Error Response or error
    */
   public static function generate_packet($req) {
-    error_log('[SFB_Pdf::generate_packet] === FACADE ENTRY POINT ===');
-    error_log('[SFB_Pdf::generate_packet] Request method: ' . $req->get_method());
-    error_log('[SFB_Pdf::generate_packet] Request route: ' . $req->get_route());
-
     // CRITICAL FIX: Manually determine current user from cookies
     // WordPress REST API doesn't automatically do this like AJAX does
     // This is required for wp_verify_nonce() to work correctly
     $current_user_id = get_current_user_id();
-    error_log('[SFB_Pdf::generate_packet] Initial user ID: ' . $current_user_id);
 
     if ($current_user_id === 0) {
       // Try to authenticate user from cookies manually
@@ -65,22 +60,15 @@ final class SFB_Pdf {
       $user_id = wp_validate_auth_cookie('', 'logged_in');
       if ($user_id) {
         wp_set_current_user($user_id);
-        error_log('[SFB_Pdf::generate_packet] Authenticated user from cookie: ' . $user_id);
-      } else {
-        error_log('[SFB_Pdf::generate_packet] No valid auth cookie, user remains guest (0)');
       }
-    } else {
-      error_log('[SFB_Pdf::generate_packet] User already authenticated: ' . $current_user_id);
     }
 
     global $sfb_plugin;
 
     if ($sfb_plugin && method_exists($sfb_plugin, 'api_generate_packet')) {
-      error_log('[SFB_Pdf::generate_packet] Plugin found, calling api_generate_packet()');
       return $sfb_plugin->api_generate_packet($req);
     }
 
-    error_log('[SFB_Pdf::generate_packet] ERROR: Plugin not found or method missing');
     return new WP_Error('pdf_unavailable', __('PDF generator not available', 'submittal-builder'), ['status' => 500]);
   }
 
