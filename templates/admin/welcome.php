@@ -30,6 +30,21 @@ $license_url   = admin_url('admin.php?page=sfb-license');
 // Check license
 $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
 
+// Get plugin version
+$plugin_data = get_plugin_data(SFB_PLUGIN_FILE);
+$plugin_version = $plugin_data['Version'];
+
+// Get quick stats
+global $wpdb;
+$stats = [
+  'products' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sfb_nodes WHERE type = 'model'"),
+  'categories' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sfb_nodes WHERE type = 'category'"),
+  'pdfs_month' => $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(*) FROM {$wpdb->prefix}sfb_shares WHERE created_at >= %s",
+    date('Y-m-01 00:00:00')
+  )),
+];
+
 ?>
 <div class="wrap sfb-welcome-modern">
 
@@ -56,6 +71,25 @@ $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
             <?php esc_html_e('Upgrade to Pro', 'submittal-builder'); ?>
           </a>
         <?php endif; ?>
+      </div>
+    </div>
+    <!-- Quick Stats -->
+    <div class="sfb-welcome-stats">
+      <div class="sfb-stat">
+        <span class="sfb-stat-number"><?php echo esc_html(number_format_i18n($stats['products'])); ?></span>
+        <span class="sfb-stat-label"><?php esc_html_e('Products', 'submittal-builder'); ?></span>
+      </div>
+      <div class="sfb-stat">
+        <span class="sfb-stat-number"><?php echo esc_html(number_format_i18n($stats['categories'])); ?></span>
+        <span class="sfb-stat-label"><?php esc_html_e('Categories', 'submittal-builder'); ?></span>
+      </div>
+      <div class="sfb-stat">
+        <span class="sfb-stat-number"><?php echo esc_html(number_format_i18n($stats['pdfs_month'])); ?></span>
+        <span class="sfb-stat-label"><?php esc_html_e('PDFs This Month', 'submittal-builder'); ?></span>
+      </div>
+      <div class="sfb-stat">
+        <span class="sfb-stat-number">v<?php echo esc_html($plugin_version); ?></span>
+        <span class="sfb-stat-label"><?php esc_html_e('Plugin Version', 'submittal-builder'); ?></span>
       </div>
     </div>
   </div>
@@ -128,17 +162,17 @@ $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
           <div class="sfb-checklist-item">
             <span class="sfb-checklist-number">1</span>
             <div>
-              <h4><?php esc_html_e('Build your product catalog', 'submittal-builder'); ?></h4>
-              <p><?php esc_html_e('Add categories, products, and specifications to your catalog.', 'submittal-builder'); ?></p>
-              <a href="<?php echo esc_url($builder_url); ?>"><?php esc_html_e('Open Builder', 'submittal-builder'); ?> →</a>
+              <h4><?php esc_html_e('Set up your branding', 'submittal-builder'); ?></h4>
+              <p><?php esc_html_e('Upload your logo and choose your brand colors.', 'submittal-builder'); ?></p>
+              <a href="<?php echo esc_url($branding_url); ?>"><?php esc_html_e('Branding Settings', 'submittal-builder'); ?> →</a>
             </div>
           </div>
           <div class="sfb-checklist-item">
             <span class="sfb-checklist-number">2</span>
             <div>
-              <h4><?php esc_html_e('Set up your branding', 'submittal-builder'); ?></h4>
-              <p><?php esc_html_e('Upload your logo and choose your brand colors.', 'submittal-builder'); ?></p>
-              <a href="<?php echo esc_url($branding_url); ?>"><?php esc_html_e('Branding Settings', 'submittal-builder'); ?> →</a>
+              <h4><?php esc_html_e('Build your product catalog', 'submittal-builder'); ?></h4>
+              <p><?php esc_html_e('Add categories, products, and specifications to your catalog.', 'submittal-builder'); ?></p>
+              <a href="<?php echo esc_url($builder_url); ?>"><?php esc_html_e('Open Builder', 'submittal-builder'); ?> →</a>
             </div>
           </div>
           <div class="sfb-checklist-item">
@@ -171,7 +205,7 @@ $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
             <div>
               <h4><?php esc_html_e('Documentation', 'submittal-builder'); ?></h4>
               <p><?php esc_html_e('Learn how to use all features', 'submittal-builder'); ?></p>
-              <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/documentation/" target="_blank" rel="noopener noreferrer">
+              <a href="https://webstuffguylabs.com/docs/submittal-getting-started/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('View Docs', 'submittal-builder'); ?> ↗
               </a>
             </div>
@@ -191,9 +225,20 @@ $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
             <span class="dashicons dashicons-star-filled"></span>
             <div>
               <h4><?php esc_html_e('Upgrade to Pro or Agency', 'submittal-builder'); ?></h4>
-              <p><?php esc_html_e('Unlock tracking, lead capture, and more', 'submittal-builder'); ?></p>
+              <p><?php esc_html_e('Unlock PDF themes, watermarks, signature blocks, tracking, lead capture, and more', 'submittal-builder'); ?></p>
               <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('See Pro Features', 'submittal-builder'); ?> ↗
+              </a>
+            </div>
+          </div>
+          <?php else: ?>
+          <div class="sfb-resource-item">
+            <span class="dashicons dashicons-admin-network"></span>
+            <div>
+              <h4><?php esc_html_e('Pro Features Guide', 'submittal-builder'); ?></h4>
+              <p><?php esc_html_e('Learn about themes, watermarks, and signature blocks', 'submittal-builder'); ?></p>
+              <a href="https://webstuffguylabs.com/docs/submittal-getting-started/" target="_blank" rel="noopener noreferrer">
+                <?php esc_html_e('View Pro Docs', 'submittal-builder'); ?> ↗
               </a>
             </div>
           </div>
@@ -201,6 +246,44 @@ $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
         </div>
       </div>
 
+    </div>
+
+    <!-- What's New -->
+    <div class="sfb-welcome-section sfb-welcome-whats-new">
+      <div class="sfb-welcome-card-header">
+        <span class="dashicons dashicons-megaphone"></span>
+        <h2><?php esc_html_e("What's New in Version {$plugin_version}", 'submittal-builder'); ?></h2>
+      </div>
+      <div class="sfb-whats-new-grid">
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-art"></span>
+          <div>
+            <h4><?php esc_html_e('PDF Themes', 'submittal-builder'); ?> <span class="sfb-badge-pro">Pro</span></h4>
+            <p><?php esc_html_e('Choose from Engineering, Architectural, or Corporate color schemes', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-welcome-view-site"></span>
+          <div>
+            <h4><?php esc_html_e('PDF Watermarks', 'submittal-builder'); ?> <span class="sfb-badge-pro">Pro</span></h4>
+            <p><?php esc_html_e('Add custom diagonal watermarks like DRAFT or CONFIDENTIAL', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-yes-alt"></span>
+          <div>
+            <h4><?php esc_html_e('Approval Signature Blocks', 'submittal-builder'); ?> <span class="sfb-badge-pro">Pro</span></h4>
+            <p><?php esc_html_e('Professional approval tables for AHJ and code compliance', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-shield"></span>
+          <div>
+            <h4><?php esc_html_e('Enhanced Security', 'submittal-builder'); ?></h4>
+            <p><?php esc_html_e('Pro feature gates prevent unauthorized settings saves', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
