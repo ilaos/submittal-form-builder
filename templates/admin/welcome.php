@@ -46,12 +46,9 @@ $plugin_version = $plugin_data['Version'];
 // Get quick stats
 global $wpdb;
 $stats = [
-  'products' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sfb_nodes WHERE type = 'model'"),
-  'categories' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sfb_nodes WHERE type = 'category'"),
-  'pdfs_month' => $wpdb->get_var($wpdb->prepare(
-    "SELECT COUNT(*) FROM {$wpdb->prefix}sfb_shares WHERE created_at >= %s",
-    date('Y-m-01 00:00:00')
-  )),
+  'products' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sfb_nodes WHERE node_type = 'model'"),
+  'categories' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}sfb_nodes WHERE node_type = 'category'"),
+  'pdfs_month' => 0, // Legacy wp_sfb_shares table removed in v1.0.2 - using custom post type 'sfb_draft' instead
 ];
 
 ?>
