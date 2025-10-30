@@ -1,18 +1,40 @@
 <?php
 /**
- * Admin Template: License & Support (Pro Users)
+ * Admin Template: License & Support (Pro & Agency Users)
  *
- * Displays license information, renewal links, support resources, and changelog for active Pro users.
+ * Displays license information, renewal links, support resources, and changelog for active Pro/Agency users.
  */
 if (!defined('ABSPATH')) exit;
 
 $lic = sfb_get_license_details();
 $reg =& sfb_pro_registry();
 $links = sfb_get_links();
+
+// Check license tiers
+$is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
+$is_agency = function_exists('sfb_is_agency_license') && sfb_is_agency_license();
+
+// Determine user tier for display
+$user_tier = 'free';
+$tier_label = 'Pro';
+if ($is_agency) {
+  $user_tier = 'agency';
+  $tier_label = 'Agency';
+} elseif ($is_pro) {
+  $user_tier = 'pro';
+  $tier_label = 'Pro';
+}
+
+// Subtitle messaging
+$subtitle_messages = [
+  'pro' => __('Your Pro license is active. Manage your subscription and get support.', 'submittal-builder'),
+  'agency' => __('Your Agency license is active. Manage your subscription and get priority support.', 'submittal-builder'),
+];
+$subtitle = $subtitle_messages[$user_tier] ?? $subtitle_messages['pro'];
 ?>
 <div class="wrap sfb-license-support-wrap">
   <h1><?php esc_html_e('License & Support', 'submittal-builder'); ?></h1>
-  <p class="sfb-sub"><?php esc_html_e('Your Pro license is active. Manage your subscription and get support.', 'submittal-builder'); ?></p>
+  <p class="sfb-sub"><?php echo esc_html($subtitle); ?></p>
 
   <!-- License Summary Banner Card -->
   <div class="sfb-license-banner" style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:32px; margin:35px 0 24px 0; max-width:1000px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -21,7 +43,7 @@ $links = sfb_get_links();
       <div style="flex:1; min-width:300px;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
           <h2 style="margin:0; font-size:20px; font-weight:600; color:#111827;">
-            <?php esc_html_e('Submittal & Spec Sheet Builder Pro', 'submittal-builder'); ?>
+            <?php echo esc_html(sprintf(__('Submittal & Spec Sheet Builder %s', 'submittal-builder'), $tier_label)); ?>
           </h2>
           <span class="sfb-status-badge" style="display:inline-block; padding:6px 14px; background:<?php echo esc_attr($lic['status_color']); ?>; color:#fff; border-radius:6px; font-size:12px; font-weight:600; letter-spacing:0.5px;">
             ✓ <?php echo esc_html($lic['status_label']); ?>
@@ -138,6 +160,83 @@ $links = sfb_get_links();
     </div>
   </div>
 
+  <!-- Agency Features / Upgrade to Agency (for Pro users) -->
+  <?php if ($user_tier === 'pro'): ?>
+  <div class="sfb-upgrade-agency-banner" style="margin:24px 0; max-width:1000px; background:linear-gradient(135deg, #8b5cf6, #6d28d9); border-radius:12px; padding:32px; color:#fff; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:300px;">
+        <h2 style="margin:0 0 12px 0; font-size:22px; font-weight:700; color:#fff;">
+          <?php esc_html_e('Upgrade to Agency', 'submittal-builder'); ?>
+        </h2>
+        <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6; color:rgba(255,255,255,0.95);">
+          <?php esc_html_e('Take your business to the next level with Agency features:', 'submittal-builder'); ?>
+        </p>
+        <ul style="margin:0; padding-left:20px; list-style:disc; font-size:14px; line-height:1.8; color:rgba(255,255,255,0.9);">
+          <li><?php esc_html_e('White-Label Mode - Remove all plugin branding', 'submittal-builder'); ?></li>
+          <li><?php esc_html_e('Lead Routing & Webhooks - Automated lead distribution', 'submittal-builder'); ?></li>
+          <li><?php esc_html_e('Agency Analytics - Track performance across clients', 'submittal-builder'); ?></li>
+          <li><?php esc_html_e('Multi-Client Support - Manage multiple installations', 'submittal-builder'); ?></li>
+        </ul>
+      </div>
+      <div style="min-width:200px;">
+        <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/" target="_blank" rel="noopener" class="button button-hero" style="display:inline-block; padding:14px 32px; background:#fff; color:#6d28d9; border:none; border-radius:8px; font-size:16px; font-weight:600; text-decoration:none; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.15); transition:all 0.2s ease;">
+          <?php esc_html_e('See Agency Features', 'submittal-builder'); ?> →
+        </a>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
+
+  <?php if ($user_tier === 'agency'): ?>
+  <!-- Agency Features Info -->
+  <div class="sfb-agency-features" style="margin:24px 0; max-width:1000px;">
+    <h2 style="margin:0 0 20px 0; font-size:18px; font-weight:600; color:#111827;"><?php esc_html_e('Your Agency Features', 'submittal-builder'); ?></h2>
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px;">
+
+      <div style="background:#fff; border:2px solid #8b5cf6; border-radius:10px; padding:24px;">
+        <div style="font-size:32px; margin-bottom:12px;">🎨</div>
+        <h3 style="margin:0 0 8px 0; font-size:16px; font-weight:600; color:#111827;">
+          <?php esc_html_e('White-Label Mode', 'submittal-builder'); ?>
+        </h3>
+        <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.5;">
+          <?php esc_html_e('Remove all plugin branding from PDFs and admin interface for seamless client experiences.', 'submittal-builder'); ?>
+        </p>
+      </div>
+
+      <div style="background:#fff; border:2px solid #8b5cf6; border-radius:10px; padding:24px;">
+        <div style="font-size:32px; margin-bottom:12px;">📧</div>
+        <h3 style="margin:0 0 8px 0; font-size:16px; font-weight:600; color:#111827;">
+          <?php esc_html_e('Lead Routing & Webhooks', 'submittal-builder'); ?>
+        </h3>
+        <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.5;">
+          <?php esc_html_e('Automated lead distribution and CRM integration via webhooks for instant notifications.', 'submittal-builder'); ?>
+        </p>
+      </div>
+
+      <div style="background:#fff; border:2px solid #8b5cf6; border-radius:10px; padding:24px;">
+        <div style="font-size:32px; margin-bottom:12px;">📊</div>
+        <h3 style="margin:0 0 8px 0; font-size:16px; font-weight:600; color:#111827;">
+          <?php esc_html_e('Agency Analytics', 'submittal-builder'); ?>
+        </h3>
+        <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.5;">
+          <?php esc_html_e('Track performance, conversions, and engagement across all your client installations.', 'submittal-builder'); ?>
+        </p>
+      </div>
+
+      <div style="background:#fff; border:2px solid #8b5cf6; border-radius:10px; padding:24px;">
+        <div style="font-size:32px; margin-bottom:12px;">👥</div>
+        <h3 style="margin:0 0 8px 0; font-size:16px; font-weight:600; color:#111827;">
+          <?php esc_html_e('Multi-Client Management', 'submittal-builder'); ?>
+        </h3>
+        <p style="margin:0; color:#6b7280; font-size:14px; line-height:1.5;">
+          <?php esc_html_e('Manage multiple client accounts and installations from a centralized dashboard.', 'submittal-builder'); ?>
+        </p>
+      </div>
+
+    </div>
+  </div>
+  <?php endif; ?>
+
   <!-- What's New (Collapsible) -->
   <div class="sfb-whats-new-container" style="margin:24px 0; max-width:1000px;">
     <div class="sfb-whats-new-card" style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -189,7 +288,13 @@ $links = sfb_get_links();
   </div>
 
   <p style="color:#9ca3af; margin-top:32px; font-size:13px; text-align:center;">
-    <?php esc_html_e('Thank you for being a Pro member!', 'submittal-builder'); ?>
+    <?php
+    $thank_you_messages = [
+      'pro' => __('Thank you for being a Pro member!', 'submittal-builder'),
+      'agency' => __('Thank you for being an Agency partner!', 'submittal-builder'),
+    ];
+    echo esc_html($thank_you_messages[$user_tier] ?? $thank_you_messages['pro']);
+    ?>
   </p>
 
   <!-- Feedback Footer -->
@@ -244,6 +349,14 @@ $links = sfb_get_links();
 
   .sfb-support-resources > div {
     grid-template-columns: 1fr;
+  }
+
+  .sfb-agency-features > div {
+    grid-template-columns: 1fr;
+  }
+
+  .sfb-upgrade-agency-banner > div {
+    flex-direction: column;
   }
 
   #sfb-license-key-display {

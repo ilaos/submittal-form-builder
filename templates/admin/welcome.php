@@ -219,7 +219,7 @@ $stats = [
             <div>
               <h4><?php esc_html_e('Documentation', 'submittal-builder'); ?></h4>
               <p><?php esc_html_e('Learn how to use all features', 'submittal-builder'); ?></p>
-              <a href="https://webstuffguylabs.com/docs/submittal-getting-started/" target="_blank" rel="noopener noreferrer">
+              <a href="https://webstuffguylabs.com/docs/submittal-user-guide/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('View Docs', 'submittal-builder'); ?> ↗
               </a>
             </div>
@@ -251,7 +251,7 @@ $stats = [
             <div>
               <h4><?php esc_html_e('Pro Features Guide', 'submittal-builder'); ?></h4>
               <p><?php esc_html_e('Learn about themes, watermarks, and signature blocks', 'submittal-builder'); ?></p>
-              <a href="https://webstuffguylabs.com/docs/submittal-getting-started/" target="_blank" rel="noopener noreferrer">
+              <a href="https://webstuffguylabs.com/docs/submittal-user-guide/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('View Pro Docs', 'submittal-builder'); ?> ↗
               </a>
             </div>
@@ -272,7 +272,7 @@ $stats = [
             <div>
               <h4><?php esc_html_e('Agency Features Guide', 'submittal-builder'); ?></h4>
               <p><?php esc_html_e('Learn about white-label, lead routing, webhooks, and analytics', 'submittal-builder'); ?></p>
-              <a href="https://webstuffguylabs.com/docs/submittal-getting-started/" target="_blank" rel="noopener noreferrer">
+              <a href="https://webstuffguylabs.com/docs/submittal-user-guide/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('View Agency Docs', 'submittal-builder'); ?> ↗
               </a>
             </div>

@@ -19,7 +19,7 @@ function sfb_get_links() {
 	$links = [
 		'account'    => get_option('sfb_link_account') ?: 'https://webstuffguylabs.com/my-account/',
 		'invoices'   => get_option('sfb_link_invoices') ?: 'https://webstuffguylabs.com/my-account/orders/',
-		'docs'       => get_option('sfb_link_docs') ?: 'https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/documentation/',
+		'docs'       => get_option('sfb_link_docs') ?: 'https://webstuffguylabs.com/docs/submittal-user-guide/',
 		'tutorials'  => get_option('sfb_link_tutorials') ?: 'https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/tutorials/',
 		'roadmap'    => get_option('sfb_link_roadmap') ?: 'https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/roadmap-feature-requests/',
 		'support'    => get_option('sfb_link_support') ?: 'https://webstuffguylabs.com/support/',
