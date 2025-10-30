@@ -27,8 +27,17 @@ $utilities_url = admin_url('admin.php?page=sfb-tools');
 $upgrade_url   = admin_url('admin.php?page=sfb-upgrade');
 $license_url   = admin_url('admin.php?page=sfb-license');
 
-// Check license
+// Check license tiers
 $is_pro = function_exists('sfb_is_pro_active') && sfb_is_pro_active();
+$is_agency = function_exists('sfb_is_agency_license') && sfb_is_agency_license();
+
+// Determine user tier for display
+$user_tier = 'free';
+if ($is_agency) {
+  $user_tier = 'agency';
+} elseif ($is_pro) {
+  $user_tier = 'pro';
+}
 
 // Get plugin version
 $plugin_data = get_plugin_data(SFB_PLUGIN_FILE);
@@ -65,10 +74,15 @@ $stats = [
           <span class="dashicons dashicons-admin-site-alt3"></span>
           <?php esc_html_e('Launch Builder', 'submittal-builder'); ?>
         </a>
-        <?php if (!$is_pro): ?>
+        <?php if ($user_tier === 'free'): ?>
           <a href="<?php echo esc_url($upgrade_url); ?>" class="button button-secondary button-hero">
             <span class="dashicons dashicons-star-filled"></span>
-            <?php esc_html_e('Upgrade to Pro', 'submittal-builder'); ?>
+            <?php esc_html_e('Upgrade to Pro or Agency', 'submittal-builder'); ?>
+          </a>
+        <?php elseif ($user_tier === 'pro'): ?>
+          <a href="<?php echo esc_url($upgrade_url); ?>" class="button button-secondary button-hero">
+            <span class="dashicons dashicons-businessman"></span>
+            <?php esc_html_e('Upgrade to Agency', 'submittal-builder'); ?>
           </a>
         <?php endif; ?>
       </div>
@@ -220,7 +234,7 @@ $stats = [
               </a>
             </div>
           </div>
-          <?php if (!$is_pro): ?>
+          <?php if ($user_tier === 'free'): ?>
           <div class="sfb-resource-item sfb-resource-highlight">
             <span class="dashicons dashicons-star-filled"></span>
             <div>
@@ -231,7 +245,7 @@ $stats = [
               </a>
             </div>
           </div>
-          <?php else: ?>
+          <?php elseif ($user_tier === 'pro'): ?>
           <div class="sfb-resource-item">
             <span class="dashicons dashicons-admin-network"></span>
             <div>
@@ -239,6 +253,27 @@ $stats = [
               <p><?php esc_html_e('Learn about themes, watermarks, and signature blocks', 'submittal-builder'); ?></p>
               <a href="https://webstuffguylabs.com/docs/submittal-getting-started/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('View Pro Docs', 'submittal-builder'); ?> ↗
+              </a>
+            </div>
+          </div>
+          <div class="sfb-resource-item sfb-resource-highlight">
+            <span class="dashicons dashicons-businessman"></span>
+            <div>
+              <h4><?php esc_html_e('Upgrade to Agency', 'submittal-builder'); ?></h4>
+              <p><?php esc_html_e('Unlock white-label mode, lead routing, webhooks, analytics, and multi-client features', 'submittal-builder'); ?></p>
+              <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/" target="_blank" rel="noopener noreferrer">
+                <?php esc_html_e('See Agency Features', 'submittal-builder'); ?> ↗
+              </a>
+            </div>
+          </div>
+          <?php elseif ($user_tier === 'agency'): ?>
+          <div class="sfb-resource-item">
+            <span class="dashicons dashicons-businessman"></span>
+            <div>
+              <h4><?php esc_html_e('Agency Features Guide', 'submittal-builder'); ?></h4>
+              <p><?php esc_html_e('Learn about white-label, lead routing, webhooks, and analytics', 'submittal-builder'); ?></p>
+              <a href="https://webstuffguylabs.com/docs/submittal-getting-started/" target="_blank" rel="noopener noreferrer">
+                <?php esc_html_e('View Agency Docs', 'submittal-builder'); ?> ↗
               </a>
             </div>
           </div>
@@ -283,6 +318,38 @@ $stats = [
             <p><?php esc_html_e('Pro feature gates prevent unauthorized settings saves', 'submittal-builder'); ?></p>
           </div>
         </div>
+        <?php if ($user_tier === 'free' || $user_tier === 'pro'): ?>
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-admin-generic"></span>
+          <div>
+            <h4><?php esc_html_e('White-Label Mode', 'submittal-builder'); ?> <span class="sfb-badge-agency">Agency</span></h4>
+            <p><?php esc_html_e('Remove all plugin branding for client-facing deployments', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-email-alt"></span>
+          <div>
+            <h4><?php esc_html_e('Lead Routing & Webhooks', 'submittal-builder'); ?> <span class="sfb-badge-agency">Agency</span></h4>
+            <p><?php esc_html_e('Automated lead distribution and CRM integration', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+        <?php endif; ?>
+        <?php if ($user_tier === 'agency'): ?>
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-chart-bar"></span>
+          <div>
+            <h4><?php esc_html_e('Agency Analytics', 'submittal-builder'); ?> <span class="sfb-badge-agency">Agency</span></h4>
+            <p><?php esc_html_e('Track performance across all client installations', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+        <div class="sfb-whats-new-item">
+          <span class="dashicons dashicons-groups"></span>
+          <div>
+            <h4><?php esc_html_e('Multi-Client Support', 'submittal-builder'); ?> <span class="sfb-badge-agency">Agency</span></h4>
+            <p><?php esc_html_e('Manage multiple client accounts from one dashboard', 'submittal-builder'); ?></p>
+          </div>
+        </div>
+        <?php endif; ?>
       </div>
     </div>
 
