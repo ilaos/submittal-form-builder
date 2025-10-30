@@ -31,8 +31,8 @@ class SFB_Telemetry {
    * Initialize telemetry hooks
    */
   public static function init() {
-    // Admin notice for opt-in (shown once)
-    add_action('admin_notices', [__CLASS__, 'show_opt_in_notice']);
+    // Admin notice for opt-in (disabled - checkbox now in settings page)
+    // add_action('admin_notices', [__CLASS__, 'show_opt_in_notice']);
 
     // Handle opt-in/opt-out actions
     add_action('admin_init', [__CLASS__, 'handle_opt_in_action']);
@@ -54,7 +54,7 @@ class SFB_Telemetry {
    * Check if telemetry is enabled
    */
   public static function is_enabled(): bool {
-    return (bool) get_option('sfb_telemetry_enabled', false);
+    return (bool) get_option('sfb_telemetry_enabled', true);
   }
 
   /**
@@ -164,7 +164,7 @@ class SFB_Telemetry {
   public static function register_settings() {
     register_setting('sfb_settings_group', 'sfb_telemetry_enabled', [
       'type' => 'boolean',
-      'default' => false,
+      'default' => true,
       'sanitize_callback' => 'rest_sanitize_boolean',
     ]);
   }
@@ -420,13 +420,6 @@ class SFB_Telemetry {
     <div class="sfb-settings-section">
       <h3><?php esc_html_e('Anonymous Usage Tracking', 'submittal-builder'); ?></h3>
 
-      <p class="description">
-        <?php esc_html_e('Help us improve the plugin by sharing anonymous usage data. No personal information is collected.', 'submittal-builder'); ?>
-        <a href="https://webstuffguylabs.com/privacy-policy" target="_blank">
-          <?php esc_html_e('Privacy Policy', 'submittal-builder'); ?>
-        </a>
-      </p>
-
       <label>
         <input
           type="checkbox"
@@ -434,7 +427,10 @@ class SFB_Telemetry {
           value="1"
           <?php checked($enabled); ?>
         >
-        <?php esc_html_e('Share anonymous usage data', 'submittal-builder'); ?>
+        <?php esc_html_e('Become a super contributor by helping us understand how you use our service to enhance your experience and improve our product.', 'submittal-builder'); ?>
+        <a href="https://webstuffguylabs.com/share-usage-data/" target="_blank">
+          <?php esc_html_e('Learn more', 'submittal-builder'); ?>
+        </a>
       </label>
 
       <?php if ($enabled && $last_ping !== __('Never', 'submittal-builder')): ?>
