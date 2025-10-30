@@ -11,13 +11,16 @@ if (!defined('ABSPATH')) exit;
 
 // WooCommerce Software API Configuration
 define('SFB_LICENSE_API_URL', 'https://webstuffguylabs.com/?wc-api=software-api');
-define('SFB_LICENSE_PRODUCT_ID', 'SUBMITTAL-BUILDER');
-define('SFB_LICENSE_VERSION', '1.0.2');
+define('SFB_LICENSE_VERSION', '1.0.0');
+
+// Product IDs for license tiers (returned by WooCommerce API)
+define('SFB_PRODUCT_ID_PRO', 'SUBMITTAL-BUILDER-PRO');
+define('SFB_PRODUCT_ID_AGENCY', 'SUBMITTAL-BUILDER-AGENCY');
 
 /**
  * Get current license data from WordPress options
  *
- * @return array License data with keys: key, email, status, expires, last_check, error
+ * @return array License data with keys: key, email, status, expires, last_check, error, product_id
  */
 function sfb_get_license_data() {
 	$defaults = [
@@ -28,6 +31,7 @@ function sfb_get_license_data() {
 		'last_check' => 0,
 		'error'      => '',
 		'activations_remaining' => null,
+		'product_id' => '', // License tier: SUBMITTAL-BUILDER-PRO or SUBMITTAL-BUILDER-AGENCY
 		'instance'   => sfb_get_instance_id(),
 	];
 
@@ -75,12 +79,11 @@ function sfb_remote_license_request($action, $args = []) {
 
 	$args = wp_parse_args($args, $defaults);
 
-	// Build API URL
+	// Build API URL (product_id is returned by API based on license key)
 	$url = add_query_arg([
 		'request'    => $action,
 		'email'      => $args['email'],
 		'license_key' => $args['license_key'],
-		'product_id' => SFB_LICENSE_PRODUCT_ID,
 		'instance'   => sfb_get_instance_id(),
 		'version'    => SFB_LICENSE_VERSION,
 	], SFB_LICENSE_API_URL);
@@ -153,6 +156,7 @@ function sfb_activate_license($license_key, $email) {
 			'status' => 'active',
 			'expires' => isset($response['expire_date']) ? $response['expire_date'] : '',
 			'activations_remaining' => isset($response['activations_remaining']) ? $response['activations_remaining'] : null,
+			'product_id' => isset($response['product_id']) ? $response['product_id'] : '',
 			'error'  => '',
 		];
 
@@ -317,6 +321,7 @@ function sfb_check_license_status($force_check = false) {
 		'expires' => $status_data['expires'] ?? '',
 		'error'   => '',
 		'activations_remaining' => $status_data['activations_remaining'] ?? null,
+		'product_id' => $status_data['product_id'] ?? '',
 	]);
 
 	// Cache the result
@@ -337,6 +342,7 @@ function sfb_parse_license_check_response($response) {
 		'message' => '',
 		'expires' => '',
 		'activations_remaining' => null,
+		'product_id' => '',
 	];
 
 	// Check for active license
@@ -370,6 +376,11 @@ function sfb_parse_license_check_response($response) {
 	// Get activations remaining
 	if (isset($response['activations_remaining'])) {
 		$status_data['activations_remaining'] = intval($response['activations_remaining']);
+	}
+
+	// Get product_id (license tier)
+	if (isset($response['product_id'])) {
+		$status_data['product_id'] = $response['product_id'];
 	}
 
 	return $status_data;
@@ -464,19 +475,68 @@ function sfb_mask_license_key($key) {
 /**
  * Check if Pro features should be enabled
  *
- * Replaces/enhances the existing sfb_is_pro_active() function.
+ * Returns true for both Pro and Agency licenses.
+ * For backwards compatibility with existing licenses (no product_id), defaults to Pro-level access.
  *
- * @return bool True if license is active
+ * @return bool True if license is active (Pro or Agency)
  */
-function sfb_is_license_active() {
+function sfb_is_pro_active() {
 	// Allow dev bypass
 	if (defined('SFB_PRO_DEV') && SFB_PRO_DEV === true) {
 		return true;
 	}
 
-	$status = sfb_get_license_status();
+	$license_data = sfb_get_license_data();
 
-	return $status['is_active'] === true;
+	// Check if license is active
+	if ($license_data['status'] !== 'active') {
+		return false;
+	}
+
+	// If no product_id (backwards compatibility), assume Pro-level access
+	if (empty($license_data['product_id'])) {
+		return true;
+	}
+
+	// Check if product_id matches Pro or Agency
+	return in_array($license_data['product_id'], [
+		SFB_PRODUCT_ID_PRO,
+		SFB_PRODUCT_ID_AGENCY
+	], true);
+}
+
+/**
+ * Check if Agency features should be enabled
+ *
+ * Returns true ONLY for Agency licenses.
+ *
+ * @return bool True if license is active Agency tier
+ */
+function sfb_is_agency_license() {
+	// Allow dev bypass
+	if (defined('SFB_AGENCY_DEV') && SFB_AGENCY_DEV === true) {
+		return true;
+	}
+
+	$license_data = sfb_get_license_data();
+
+	// Check if license is active
+	if ($license_data['status'] !== 'active') {
+		return false;
+	}
+
+	// Check if product_id matches Agency
+	return $license_data['product_id'] === SFB_PRODUCT_ID_AGENCY;
+}
+
+/**
+ * Backwards compatibility alias
+ *
+ * @deprecated Use sfb_is_pro_active() instead
+ * @return bool True if license is active
+ */
+function sfb_is_license_active() {
+	return sfb_is_pro_active();
 }
 
 /**

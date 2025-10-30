@@ -4,7 +4,7 @@ Tags: submittals, spec-sheets, pdf, construction, leads, catalog, branding
 Requires at least: 6.1
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.4
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,35 +99,21 @@ Yes. The shortcode works inside Elementor, Gutenberg, and most other editors.
 
 == Changelog ==
 
-= 1.2.4 =
-Enhancement:
-
-* Migrated frontend PDF generation to WordPress REST API for improved reliability
-* Fixed: Pro features (PDF Themes, Watermark, Signature Block) now accessible to all Pro users
-* Fixed: Nonce verification now works correctly with REST API cookie authentication
-* Improved: Better security with proper WordPress session handling
-* Deprecated: Old AJAX handler (will be removed in future version after monitoring period)
-
-= 1.2.1 =
-Maintenance:
-
-Removed deprecated internal methods for cleaner codebase.
-
-Verified admin and front-end stability.
-
-Ready for WordPress.org submission.
-
 = 1.0.0 =
-Initial release:
+Initial WordPress.org release
 
-Product builder, PDF generation, lead capture, and branding tools.
-
-Added catalog manager, presets, and agency-ready structure.
+* Complete submittal and spec sheet PDF generation system
+* Visual product catalog builder with category/product/model hierarchy
+* Customizable branding (logo, colors, footer text)
+* Lead capture forms with CSV export
+* REST API for frontend PDF generation
+* Pro features: PDF themes, watermarks, approval signature blocks
+* Agency features: White-label mode, analytics, lead routing, webhooks
+* Multi-tier licensing system (Free, Pro, Agency)
+* Internationalization ready (i18n)
+* Freemium architecture with feature gating
 
 == Upgrade Notice ==
 
-= 1.2.4 =
-Important update: Enables Pro PDF features (Themes, Watermark, Signature Block) for all Pro users. Improves PDF generation reliability and security. Recommended for all users.
-
-= 1.2.1 =
-Maintenance update. Codebase cleanup for better performance and long-term stability.
+= 1.0.0 =
+Initial release of Submittal & Spec Sheet Builder for WordPress.org. Create professional PDF submittal packets with full branding and lead capture capabilities.
