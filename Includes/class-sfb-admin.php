@@ -246,6 +246,17 @@ final class SFB_Admin {
         [$sfb_plugin, 'render_license_support_page'],
         $last_position
       );
+
+      // License Tier Testing Page (for testing license tier detection)
+      add_submenu_page(
+        'sfb',
+        __('License Test', 'submittal-builder'),
+        __('🧪 License Test', 'submittal-builder'),
+        'manage_options',
+        'sfb-license-test',
+        [$sfb_plugin, 'render_license_test_page'],
+        $last_position + 1
+      );
     } elseif ($license_state === 'free') {
       // Free user: show upgrade option
       add_submenu_page(

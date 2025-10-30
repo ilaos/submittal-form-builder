@@ -3919,6 +3919,11 @@ final class SFB_Plugin {
     include plugin_dir_path(__FILE__) . 'templates/admin/license-support.php';
   }
 
+  /** License Test Page Renderer (Testing license tier detection) */
+  function render_license_test_page() {
+    include plugin_dir_path(__FILE__) . 'templates/admin/license-test.php';
+  }
+
   /** License Management Page Renderer (Expired/Invalid licenses) */
   function render_license_management_page() {
     include plugin_dir_path(__FILE__) . 'templates/admin/license-management.php';
