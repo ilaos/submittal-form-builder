@@ -468,29 +468,113 @@ How individual product spec sheets are formatted.
 
 ### PDF Themes (Pro)
 
-**Enable PDF Themes**
+**Select PDF Theme**
 
-Apply preset design themes to PDFs.
+Choose from three professionally designed color themes that apply across your entire PDF.
 
 **Available in:** Pro and Agency licenses
 
 **Themes Available:**
-- **Default** - Clean, professional
-- **Corporate** - Bold, modern
-- **Architectural** - Minimal, elegant
-- **Industrial** - Strong, utilitarian
 
-**Each Theme Includes:**
-- Custom fonts
-- Color schemes
-- Layout adjustments
-- Visual styling
+| Theme | Color | Best For |
+|-------|-------|----------|
+| **Engineering** (Default) | Dark Gray (#111827) | Technical submittals, construction |
+| **Architectural** | Sky Blue (#0ea5e9) | Architecture, design, modern aesthetic |
+| **Corporate** | Emerald Green (#10b981) | Corporate, sustainability, healthcare |
+
+**What Changes:**
+- Cover page accent colors
+- Section header colors
+- Table header backgrounds
+- Border colors
+- Overall color scheme
 
 **To Apply:**
-1. Enable checkbox
-2. Select theme from dropdown
-3. Preview with test PDF
-4. Save settings
+1. Navigate to Settings → Branding
+2. Find "PDF Theme" dropdown (Pro only)
+3. Select: Engineering, Architectural, or Corporate
+4. Click "Save Changes"
+5. Generate a new PDF to see theme applied
+
+**Note:** Your logo and brand colors are preserved; only accent colors change.
+
+---
+
+### PDF Watermark (Pro)
+
+**Add Custom Watermark**
+
+Add a custom text watermark that appears diagonally across all pages.
+
+**Available in:** Pro and Agency licenses
+
+**Visual Style:**
+- Diagonal orientation (-20° rotation)
+- Semi-transparent (6% opacity)
+- Large, prominent text (64px)
+- Appears on ALL pages
+
+**How to Enable:**
+1. Navigate to Settings → Branding
+2. Find "PDF Watermark" field (Pro only)
+3. Enter custom text (e.g., "DRAFT", "CONFIDENTIAL")
+4. Leave blank to disable watermark
+5. Click "Save Changes"
+
+**Common Uses:**
+- `DRAFT` - Work in progress
+- `CONFIDENTIAL` - Sensitive information
+- `FOR REVIEW ONLY` - Review copies
+- `PRELIMINARY` - Not finalized
+- `SAMPLE` - Demo materials
+
+**Best Practices:**
+- Keep text short (under 20 characters)
+- Use all caps for visibility
+- Test opacity on printed pages
+
+---
+
+### Approval Signature Block (Pro)
+
+**Include Signature Block**
+
+Add a professional 3-column approval table at the end of each product sheet.
+
+**Available in:** Pro and Agency licenses
+
+**Note:** This option is configured during PDF generation on the Frontend Builder review page, not in Settings.
+
+**Visual Layout:**
+```
+┌─────────────────────────────────────────────────────────┐
+│ APPROVED BY       │ TITLE              │ DATE           │
+│ ───────────────   │ ─────────────────  │ ──────────     │
+│ [Name]            │ [Job Title]        │ [Date]         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**How to Enable:**
+1. Navigate to Frontend Builder or Review page
+2. Check "Include Approval Signature Block" (Pro only)
+3. Fill in fields:
+   - Approved By: Name of approver
+   - Title: Job title or role
+   - Date: Approval date
+4. Generate PDF
+
+**Features:**
+- Appears on EACH product page
+- Professional table layout
+- Print-friendly signature lines
+- Page-break protection
+
+**Use Cases:**
+- Construction submittals requiring approval
+- Compliance documentation
+- Quality assurance sign-offs
+- Project manager approvals
+- AHJ (Authority Having Jurisdiction) approval
 
 ---
 
@@ -815,25 +899,3 @@ Import previously exported settings.
 
 ---
 
-## Next Steps
-
-### Related Documentation
-
-- [Branding & PDFs](./branding-pdfs.md) - Detailed branding customization
-- [Product Management](./product-management.md) - Managing your catalog
-- [Troubleshooting](./troubleshooting.md) - Common issues and solutions
-- [Pro Features](./tracking.md) - Using Pro features
-
-### Need Help?
-
-- **Documentation:** [Full Documentation](./index.md)
-- **WordPress.org Forum:** https://wordpress.org/support/plugin/submittal-builder/
-- **Email Support:** support@webstuffguylabs.com (Pro users)
-
----
-
-[← Back to Documentation](./index.md) | [Next: Product Management →](./product-management.md)
-
----
-
-© 2025 WebStuff Guy Labs. All rights reserved.

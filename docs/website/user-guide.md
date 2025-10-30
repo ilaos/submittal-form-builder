@@ -175,6 +175,7 @@ Review your selections, reorder items, add project information, and prepare for 
 - Project name field
 - Company/contact info (optional)
 - Additional notes (optional)
+- Pro PDF options (theme, watermark, signature block)
 - Generate PDF button
 
 ### Reviewing Selections
@@ -251,6 +252,82 @@ Add any additional context or instructions.
 - "Alternate products for value engineering"
 - "For submittal package #5"
 
+### Pro PDF Options (Pro)
+
+Customize your PDF appearance and add professional elements with Pro features.
+
+#### PDF Theme Selection (Pro)
+
+Choose from three professionally designed color schemes that apply across your entire PDF.
+
+**Available Themes:**
+- **Engineering** (Default) - Professional blue color scheme
+- **Architectural** - Modern gray/silver palette
+- **Corporate** - Elegant navy/charcoal styling
+
+**How to Select:**
+1. Look for "PDF Theme" dropdown in right panel (Pro users only)
+2. Select your preferred theme
+3. Theme applies to cover page, TOC, summary table, and product sheets
+
+**Theme Colors:**
+Each theme provides consistent color coding throughout the PDF, affecting:
+- Header backgrounds
+- Accent colors
+- Table styling
+- Section dividers
+
+#### PDF Watermark (Pro)
+
+Add a custom diagonal text watermark across all pages.
+
+**Common Uses:**
+- "DRAFT" - For review copies
+- "CONFIDENTIAL" - For sensitive documents
+- "FOR REVIEW ONLY" - For preliminary submittals
+- "PRELIMINARY" - For early-stage documents
+
+**How to Add:**
+1. Find "PDF Watermark" field in right panel (Pro users only)
+2. Enter your custom text (e.g., "DRAFT")
+3. Leave blank to disable watermark
+4. Watermark appears diagonally across all PDF pages
+
+**Display:**
+- Appears in semi-transparent gray
+- Rotated 45 degrees diagonally
+- Large text spanning center of each page
+- Does not obscure content readability
+
+#### Approval Signature Block (Pro)
+
+Add a professional 3-column approval table at the end of each product sheet.
+
+**How to Enable:**
+1. Check "Include Approval Signature Block" checkbox (Pro users only)
+2. Optionally pre-fill approval fields:
+   - **Approved By:** Name of approver
+   - **Title:** Job title or role
+   - **Date:** Approval date
+3. Leave fields blank to provide empty signature lines
+4. Block appears at bottom of each product sheet
+
+**Use Cases:**
+- AHJ (Authority Having Jurisdiction) approval
+- Engineering review and sign-off
+- Architect/designer approval
+- Code compliance verification
+- Quality assurance documentation
+
+**Layout:**
+```
+┌──────────────┬──────────────┬──────────────┐
+│ Approved By  │    Title     │     Date     │
+├──────────────┼──────────────┼──────────────┤
+│ [Signature]  │ [Title/Role] │ [Date/Stamp] │
+└──────────────┴──────────────┴──────────────┘
+```
+
 ### Branding Preview
 
 The right panel shows a preview of your branding:
@@ -260,6 +337,8 @@ The right panel shows a preview of your branding:
 - Contact information
 
 This is what will appear on the PDF cover page.
+
+**Pro Users:** The selected PDF theme will affect the color scheme throughout your PDF, while the branding preview shows your logo and company information.
 
 ### Generating the PDF
 
@@ -334,10 +413,11 @@ Your generated PDF includes:
 
 **1. Cover Page**
 - Your logo
-- Brand color scheme
+- Brand color scheme (customized by PDF theme if Pro)
 - Project name
 - Date generated
 - Company contact information
+- Watermark overlay (if enabled - Pro)
 
 **2. Table of Contents**
 - List of all products
@@ -349,6 +429,7 @@ Your generated PDF includes:
 - Columns: Qty, Type, Model, Key Specifications, Notes
 - Type column with prominent blue styling for easy scanning
 - Quick reference overview of entire packet
+- Watermark overlay (if enabled - Pro)
 
 **4. Individual Spec Sheets**
 - One page per product model
@@ -356,6 +437,8 @@ Your generated PDF includes:
 - Complete specifications
 - Product images and details
 - Formatted for compliance and code requirements
+- Approval signature block at bottom (if enabled - Pro)
+- Watermark overlay (if enabled - Pro)
 
 **5. Footer**
 - Page numbers
@@ -622,25 +705,4 @@ Apply different PDF templates based on project type or client.
 
 ---
 
-## Next Steps
-
-### Learn More
-
-- [Product Management](./product-management.md) - For administrators adding products
-- [Branding & PDFs](./branding-pdfs.md) - Customizing PDF appearance
-- [Admin Settings](./admin-settings.md) - Configuring the builder
-- [Troubleshooting](./troubleshooting.md) - Solving common issues
-
-### Get Support
-
-- **Documentation:** [Full Documentation](./index.md)
-- **WordPress.org Forum:** https://wordpress.org/support/plugin/submittal-builder/
-- **Email Support:** support@webstuffguylabs.com (Pro users)
-
----
-
-[← Back to Documentation](./index.md) | [Next: Admin Settings →](./admin-settings.md)
-
----
-
-© 2025 WebStuff Guy Labs. All rights reserved.
+© 2025 Webstuffguy Labs. All rights reserved.

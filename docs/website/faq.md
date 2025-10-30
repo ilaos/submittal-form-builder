@@ -245,9 +245,52 @@ See [PDF Tracking Guide](./tracking.md) for details.
 - Set brand colors
 - Company information
 - Custom footer text
-- PDF themes (Pro)
+
+**Pro Features:**
+- PDF themes (Engineering, Architectural, Corporate)
+- Custom watermarks (DRAFT, CONFIDENTIAL, etc.)
+- Approval signature blocks
 
 See [Branding Guide](./branding-pdfs.md) for details.
+
+---
+
+### Can I add a watermark to PDFs?
+
+**Yes (Pro feature).** Add custom diagonal watermarks across all PDF pages.
+
+**Common uses:**
+- DRAFT - For review copies
+- CONFIDENTIAL - Sensitive documents
+- FOR REVIEW ONLY - Preliminary submittals
+- PRELIMINARY - Early-stage documents
+
+**How to enable:**
+Settings → Branding → PDF Watermark (Pro only)
+
+**Available in:** Pro and Agency licenses
+
+---
+
+### Can I add approval signature blocks?
+
+**Yes (Pro feature).** Add a 3-column approval table at the end of each product sheet.
+
+**Includes fields for:**
+- Approved By (name)
+- Title (role)
+- Date
+
+**Use cases:**
+- AHJ approval
+- Engineering sign-off
+- Code compliance
+- Quality assurance
+
+**How to enable:**
+Frontend Builder → Review page → Check "Include Approval Signature Block"
+
+**Available in:** Pro and Agency licenses
 
 ---
 
@@ -655,4 +698,4 @@ Email: support@webstuffguylabs.com
 
 ---
 
-© 2025 WebStuff Guy Labs. All rights reserved.
+© 2025 Webstuffguy Labs. All rights reserved.

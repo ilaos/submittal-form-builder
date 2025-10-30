@@ -128,6 +128,11 @@ Review Selection → Add Project Info → Generate PDF
 - Email-friendly file size
 - Temporary download links
 
+**Pro PDF Features:**
+- PDF themes (Engineering, Architectural, Corporate)
+- Custom watermarks (DRAFT, CONFIDENTIAL, etc.)
+- Approval signature blocks for sign-offs
+
 ---
 
 ## Quick Start (5 Minutes)
@@ -507,4 +512,4 @@ When you click on any item (Category, Product, Type, or Subtype), the Inspector 
 
 ---
 
-© 2025 WebStuff Guy Labs. All rights reserved.
+© 2025 Webstuffguy Labs. All rights reserved.

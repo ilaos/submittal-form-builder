@@ -564,35 +564,4 @@ Tracking stops working:
 
 ---
 
-## Next Steps
-
-### Recommended Reading
-
-- [Lead Capture & CRM](./lead-capture.md) - Collect recipient emails automatically
-- [Auto Email Packet](./auto-email.md) - Automatically send PDFs with tracking
-- [Admin Settings](./admin-settings.md) - Configure Pro features
-- [Upgrade to Pro](./upgrade.md) - Get tracking + 8 other Pro features
-
-### Related Features
-
-**Also Pro Features:**
-- **Lead Capture:** Collect emails before download
-- **Auto Email:** Automatically send packets with tracking
-- **White-Label:** Remove plugin branding from PDFs
-- **Brand Themes:** Apply architectural/corporate themes
-
----
-
-[← Back to Documentation](./index.md) | [Next: Lead Capture →](./lead-capture.md)
-
----
-
-**Questions about Tracking?**
-
-- **WordPress.org Forum:** [Community Support](https://wordpress.org/support/plugin/submittal-builder/)
-- **Email Support:** support@webstuffguylabs.com (Pro users)
-- **Documentation:** [Full Documentation](./index.md)
-
----
-
-© 2025 WebStuff Guy Labs. All rights reserved.
+© 2025 Webstuffguy Labs. All rights reserved.

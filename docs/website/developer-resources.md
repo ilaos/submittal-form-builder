@@ -900,4 +900,4 @@ Lazy load product images:
 
 ---
 
-© 2025 WebStuff Guy Labs. All rights reserved.
+© 2025 Webstuffguy Labs. All rights reserved.

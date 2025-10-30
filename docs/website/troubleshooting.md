@@ -805,4 +805,4 @@ support@webstuffguylabs.com (Pro license holders)
 
 ---
 
-© 2025 WebStuff Guy Labs. All rights reserved.
+© 2025 Webstuffguy Labs. All rights reserved.

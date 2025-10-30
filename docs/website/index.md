@@ -194,7 +194,7 @@ Quick answers to common questions.
 
 ## 📖 About This Documentation
 
-This documentation is maintained by WebStuff Guy Labs and covers:
+This documentation is maintained by Webstuffguy Labs and covers:
 
 - ✅ Complete feature guide
 - ✅ Step-by-step instructions
@@ -215,4 +215,4 @@ New features and improvements are added regularly. Check the [Changelog](https:/
 
 ---
 
-© 2025 WebStuff Guy Labs. All rights reserved.
+© 2025 Webstuffguy Labs. All rights reserved.
