@@ -3109,6 +3109,32 @@ final class SFB_Plugin {
         </script>
         <?php endif; ?>
 
+        <!-- Help Us Improve Card -->
+        <div class="sfb-card">
+          <h2>📊 <?php echo esc_html__('Help Us Improve', 'submittal-builder'); ?></h2>
+          <p class="sfb-muted">
+            <?php echo esc_html__('Share anonymous usage data to help us make the plugin better for everyone.', 'submittal-builder'); ?>
+          </p>
+
+          <div class="sfb-setting-row">
+            <div class="sfb-setting-icon">✨</div>
+            <div class="sfb-setting-content">
+              <label class="sfb-checkbox-label">
+                <input type="checkbox"
+                       name="sfb_telemetry_enabled"
+                       value="1"
+                       <?php checked(SFB_Telemetry::is_enabled()); ?>>
+                <span class="sfb-setting-title">
+                  <?php esc_html_e('Become a super contributor by helping us understand how you use our service to enhance your experience and improve our product.', 'submittal-builder'); ?>
+                  <a href="https://webstuffguylabs.com/share-usage-data/" target="_blank" style="text-decoration: none;">
+                    <?php esc_html_e('Learn more', 'submittal-builder'); ?> ↗
+                  </a>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <!-- Save Button -->
         <div class="sfb-save-section">
           <button type="submit" class="button button-primary button-large">
