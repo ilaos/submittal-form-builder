@@ -8,7 +8,7 @@
  * Author URI:  https://webstuffguylabs.com
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: submittal-spec-sheet-builder
+ * Text Domain: submittal-builder
  * Domain Path: /languages
  * Requires at least: 6.1
  * Requires PHP: 7.4

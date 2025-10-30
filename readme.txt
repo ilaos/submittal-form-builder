@@ -2,7 +2,7 @@
 Contributors: webstuffguy
 Tags: submittals, spec-sheets, pdf, construction, leads, catalog, branding
 Requires at least: 6.1
-Tested up to: 6.5
+Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: 1.2.4
 License: GPLv2 or later
