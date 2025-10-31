@@ -194,7 +194,7 @@ $is_returning = $onboarding_completed && !empty($company_name);
         <?php if (function_exists('sfb_is_pro_active') && sfb_is_pro_active()): ?>
           <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-license')); ?>"><?php echo esc_html__('License & Support', 'submittal-builder'); ?></a>
         <?php else: ?>
-          <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-upgrade')); ?>"><?php echo esc_html__('Upgrade', 'submittal-builder'); ?></a>
+          <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Upgrade', 'submittal-builder'); ?></a>
         <?php endif; ?>
       </li>
     </ul>

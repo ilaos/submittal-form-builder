@@ -31,6 +31,108 @@ $category_icons = [
 <div class="wrap sfb-upgrade-wrap-modern">
 
   <?php if (!$pro): ?>
+    <!-- License Activation Section (Top Priority) -->
+    <div class="sfb-license-activation-section">
+      <div class="sfb-activation-card">
+        <div class="sfb-activation-header">
+          <span class="sfb-activation-icon">🔑</span>
+          <h2><?php esc_html_e('Already Purchased? Activate Your License', 'submittal-builder'); ?></h2>
+        </div>
+        <p class="sfb-activation-intro">
+          <?php esc_html_e('Enter your license key and email below to unlock Pro or Agency features.', 'submittal-builder'); ?>
+        </p>
+
+        <?php
+        // Get current license details
+        $current_lic = get_option('sfb_license', []);
+        $current_key = $current_lic['key'] ?? '';
+        $current_email = $current_lic['email'] ?? '';
+
+        // Handle license activation
+        $activation_message = '';
+        $activation_type = '';
+        if (isset($_POST['sfb_activate_license_quick']) && wp_verify_nonce($_POST['sfb_license_nonce'], 'sfb_license_action')) {
+          $new_key = sanitize_text_field($_POST['license_key'] ?? '');
+          $new_email = sanitize_email($_POST['license_email'] ?? '');
+
+          if ($new_key && $new_email) {
+            $result = sfb_activate_license($new_key, $new_email);
+
+            if (is_wp_error($result)) {
+              $activation_message = $result->get_error_message();
+              $activation_type = 'error';
+            } else {
+              $activation_message = $result['message'];
+              $activation_type = 'success';
+              // Refresh page to update Pro status
+              echo '<script>setTimeout(function(){ window.location.reload(); }, 1500);</script>';
+            }
+          } else {
+            $activation_message = __('Please enter both license key and email address.', 'submittal-builder');
+            $activation_type = 'error';
+          }
+        }
+        ?>
+
+        <?php if ($activation_message): ?>
+          <div class="notice notice-<?php echo esc_attr($activation_type); ?> inline" style="margin:16px 0;">
+            <p><?php echo esc_html($activation_message); ?></p>
+          </div>
+        <?php endif; ?>
+
+        <form method="post" action="" class="sfb-activation-form">
+          <?php wp_nonce_field('sfb_license_action', 'sfb_license_nonce'); ?>
+          <input type="hidden" name="sfb_activate_license_quick" value="1">
+
+          <div class="sfb-form-row">
+            <label for="license_key"><?php esc_html_e('License Key', 'submittal-builder'); ?> <span style="color:#dc2626;">*</span></label>
+            <input
+              type="text"
+              name="license_key"
+              id="license_key"
+              value="<?php echo esc_attr($current_key); ?>"
+              placeholder="<?php esc_attr_e('SFB-XXXX-XXXX-XXXX-XXXX', 'submittal-builder'); ?>"
+              required
+            >
+            <p class="sfb-field-hint">
+              <?php esc_html_e('Enter the license key you received after purchase.', 'submittal-builder'); ?>
+            </p>
+          </div>
+
+          <div class="sfb-form-row">
+            <label for="license_email"><?php esc_html_e('License Email', 'submittal-builder'); ?> <span style="color:#dc2626;">*</span></label>
+            <input
+              type="email"
+              name="license_email"
+              id="license_email"
+              value="<?php echo esc_attr($current_email); ?>"
+              placeholder="<?php esc_attr_e('your@email.com', 'submittal-builder'); ?>"
+              required
+            >
+            <p class="sfb-field-hint">
+              <?php esc_html_e('The email address used during purchase (required for activation).', 'submittal-builder'); ?>
+            </p>
+          </div>
+
+          <div class="sfb-form-actions">
+            <button type="submit" class="button button-primary button-large sfb-activate-btn">
+              <?php esc_html_e('Activate License', 'submittal-builder'); ?>
+            </button>
+          </div>
+        </form>
+
+        <div class="sfb-activation-help">
+          <p>
+            <strong><?php esc_html_e('Need help?', 'submittal-builder'); ?></strong>
+            <?php esc_html_e('Check your purchase confirmation email for your license key, or', 'submittal-builder'); ?>
+            <a href="https://webstuffguylabs.com/support/" target="_blank" rel="noopener noreferrer">
+              <?php esc_html_e('contact support', 'submittal-builder'); ?>
+            </a>.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Hero Banner -->
     <div class="sfb-hero-banner">
       <div class="sfb-hero-content">
@@ -1013,6 +1115,142 @@ $category_icons = [
   margin: 24px 0;
 }
 
+/* License Activation Section */
+.sfb-license-activation-section {
+  margin: 35px 0 48px 0;
+}
+
+.sfb-activation-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fff 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 700px;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.15);
+}
+
+.sfb-activation-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.sfb-activation-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.sfb-activation-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.sfb-activation-intro {
+  color: #6b7280;
+  font-size: 16px;
+  margin: 0 0 24px 0;
+  line-height: 1.6;
+}
+
+.sfb-activation-form {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.sfb-form-row {
+  margin-bottom: 20px;
+}
+
+.sfb-form-row:last-child {
+  margin-bottom: 0;
+}
+
+.sfb-form-row label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.sfb-form-row input[type="text"],
+.sfb-form-row input[type="email"] {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.sfb-form-row input[type="text"]:focus,
+.sfb-form-row input[type="email"]:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.sfb-field-hint {
+  margin: 6px 0 0 0;
+  font-size: 13px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.sfb-form-actions {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.sfb-activate-btn {
+  background: #667eea !important;
+  border-color: #667eea !important;
+  color: #fff !important;
+  padding: 12px 32px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25) !important;
+  transition: all 0.2s ease !important;
+}
+
+.sfb-activate-btn:hover {
+  background: #5568d3 !important;
+  border-color: #5568d3 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35) !important;
+}
+
+.sfb-activation-help {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.sfb-activation-help p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.sfb-activation-help a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.sfb-activation-help a:hover {
+  text-decoration: underline;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .sfb-hero-banner {
@@ -1041,6 +1279,14 @@ $category_icons = [
 
   .sfb-comparison-table table {
     min-width: 500px;
+  }
+
+  .sfb-activation-card {
+    padding: 24px 20px;
+  }
+
+  .sfb-activation-header h2 {
+    font-size: 20px;
   }
 }
 </style>

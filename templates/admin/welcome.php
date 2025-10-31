@@ -24,7 +24,7 @@ $builder_url   = admin_url('admin.php?page=sfb');
 $branding_url  = admin_url('admin.php?page=sfb-branding');
 $settings_url  = admin_url('admin.php?page=sfb-settings');
 $utilities_url = admin_url('admin.php?page=sfb-tools');
-$upgrade_url   = admin_url('admin.php?page=sfb-upgrade');
+$upgrade_url   = 'https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/';
 $license_url   = admin_url('admin.php?page=sfb-license');
 
 // Check license tiers
@@ -63,7 +63,12 @@ $stats = [
         <?php endif; ?>
         <div class="sfb-welcome-title-group">
           <h1><?php esc_html_e('Submittal & Spec Sheet Builder', 'submittal-builder'); ?></h1>
-          <p class="sfb-welcome-tagline"><?php esc_html_e('Built by Webstuffguy Labs', 'submittal-builder'); ?></p>
+          <p class="sfb-welcome-tagline">
+            <?php esc_html_e('Built by', 'submittal-builder'); ?>
+            <a href="https://webstuffguylabs.com/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor;">
+              <?php esc_html_e('Webstuffguy Labs', 'submittal-builder'); ?>
+            </a>
+          </p>
         </div>
       </div>
       <div class="sfb-welcome-hero-actions">
@@ -72,12 +77,12 @@ $stats = [
           <?php esc_html_e('Launch Builder', 'submittal-builder'); ?>
         </a>
         <?php if ($user_tier === 'free'): ?>
-          <a href="<?php echo esc_url($upgrade_url); ?>" class="button button-secondary button-hero">
+          <a href="<?php echo esc_url($upgrade_url); ?>" target="_blank" rel="noopener noreferrer" class="button button-secondary button-hero">
             <span class="dashicons dashicons-star-filled"></span>
             <?php esc_html_e('Upgrade to Pro or Agency', 'submittal-builder'); ?>
           </a>
         <?php elseif ($user_tier === 'pro'): ?>
-          <a href="<?php echo esc_url($upgrade_url); ?>" class="button button-secondary button-hero">
+          <a href="<?php echo esc_url($upgrade_url); ?>" target="_blank" rel="noopener noreferrer" class="button button-secondary button-hero">
             <span class="dashicons dashicons-businessman"></span>
             <?php esc_html_e('Upgrade to Agency', 'submittal-builder'); ?>
           </a>
@@ -237,7 +242,7 @@ $stats = [
             <div>
               <h4><?php esc_html_e('Upgrade to Pro or Agency', 'submittal-builder'); ?></h4>
               <p><?php esc_html_e('Unlock PDF themes, watermarks, signature blocks, tracking, lead capture, and more', 'submittal-builder'); ?></p>
-              <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/" target="_blank" rel="noopener noreferrer">
+              <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('See Pro Features', 'submittal-builder'); ?> ↗
               </a>
             </div>
@@ -258,7 +263,7 @@ $stats = [
             <div>
               <h4><?php esc_html_e('Upgrade to Agency', 'submittal-builder'); ?></h4>
               <p><?php esc_html_e('Unlock white-label mode, lead routing, webhooks, analytics, and multi-client features', 'submittal-builder'); ?></p>
-              <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/" target="_blank" rel="noopener noreferrer">
+              <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('See Agency Features', 'submittal-builder'); ?> ↗
               </a>
             </div>

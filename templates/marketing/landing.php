@@ -98,7 +98,7 @@ if (!defined('ABSPATH')) exit;
       <a href="<?php echo esc_url(admin_url('admin.php?page=sfb')); ?>" class="btn" style="padding:14px 28px;border-radius:8px;text-decoration:none;background:rgba(255,255,255,0.2);color:#fff;font-weight:600;font-size:16px;border:2px solid rgba(255,255,255,0.4);">Try the live builder</a>
     </div>
     <p style="margin:24px 0 0;font-size:14px;opacity:0.8;">
-      <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-upgrade')); ?>" style="color:#fff;text-decoration:underline;">Save & Share drafts (Pro)</a>
+      <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer" style="color:#fff;text-decoration:underline;">Save & Share drafts (Pro)</a>
     </p>
   </div>
 </section>
@@ -108,7 +108,7 @@ if (!defined('ABSPATH')) exit;
   <div class="container" style="max-width:1100px;margin:0 auto;padding:0 24px;">
     <p style="margin:0;font-size:15px;">
       Want server drafts, white-label exports, and automation?
-      <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-upgrade')); ?>" style="color:#a78bfa;font-weight:600;text-decoration:none;">Upgrade to Pro →</a>
+      <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer" style="color:#a78bfa;font-weight:600;text-decoration:none;">Upgrade to Pro →</a>
     </p>
   </div>
 </section>

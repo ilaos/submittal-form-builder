@@ -2771,36 +2771,30 @@ final class SFB_Plugin {
             </div>
           </div>
 
-          <!-- Server Drafts -->
-          <div class="sfb-setting-row <?php echo !$is_pro ? 'sfb-setting-disabled' : ''; ?>">
+          <!-- Server Drafts (Pro only) -->
+          <?php if ($is_pro): ?>
+          <div class="sfb-setting-row">
             <div class="sfb-setting-icon">☁️</div>
             <div class="sfb-setting-content">
               <label class="sfb-checkbox-label">
                 <input type="checkbox"
                        name="<?php echo esc_attr($this->option_key()); ?>[drafts_server_enabled]"
                        value="1"
-                       <?php checked(!empty($options['drafts_server_enabled'])); ?>
-                       <?php disabled(!$is_pro); ?>>
+                       <?php checked(!empty($options['drafts_server_enabled'])); ?>>
                 <span class="sfb-setting-title">
                   <?php esc_html_e('Enable server-side shareable drafts', 'submittal-builder'); ?>
-                  <?php if (!$is_pro): ?>
-                    <span class="sfb-pro-badge"><?php esc_html_e('PRO', 'submittal-builder'); ?></span>
-                  <?php endif; ?>
                 </span>
               </label>
               <p class="sfb-setting-desc">
                 <?php esc_html_e('Allows users to save progress to the server and generate a shareable URL. Ideal for collaboration or accessing drafts from multiple devices.', 'submittal-builder'); ?>
               </p>
-              <?php if (!$is_pro): ?>
-                <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-upgrade')); ?>" class="sfb-upgrade-link">
-                  <?php esc_html_e('Upgrade to Pro to unlock →', 'submittal-builder'); ?>
-                </a>
-              <?php endif; ?>
             </div>
           </div>
+          <?php endif; ?>
         </div>
 
-        <!-- Privacy & Retention Card -->
+        <!-- Privacy & Retention Card (Pro only - controls server draft settings) -->
+        <?php if ($is_pro): ?>
         <div class="sfb-card">
           <h2>🔒 <?php echo esc_html__('Privacy & Retention', 'submittal-builder'); ?></h2>
           <p class="sfb-muted">
@@ -2812,10 +2806,10 @@ final class SFB_Plugin {
             <div class="sfb-setting-icon">⏱️</div>
             <div class="sfb-setting-content">
               <label class="sfb-setting-title" for="sfb-expiry-days">
-                <?php esc_html_e('Draft expiry period', 'submittal-builder'); ?>
+                <?php esc_html_e('Automatic deletion after', 'submittal-builder'); ?>
               </label>
               <p class="sfb-setting-desc" style="margin-top: 4px;">
-                <?php esc_html_e('Server drafts are automatically deleted after this many days. Range: 1-365 days.', 'submittal-builder'); ?>
+                <?php esc_html_e('Automatically delete saved drafts from your server after this many days to free up database space and comply with data minimization policies. This only affects server-saved drafts (shareable links), not local browser storage.', 'submittal-builder'); ?>
               </p>
               <div class="sfb-input-group">
                 <input type="number"
@@ -2835,19 +2829,20 @@ final class SFB_Plugin {
             <div class="sfb-setting-icon">📝</div>
             <div class="sfb-setting-content">
               <label class="sfb-setting-title" for="sfb-privacy-note">
-                <?php esc_html_e('Privacy notice for users', 'submittal-builder'); ?>
+                <?php esc_html_e('Privacy message shown to users', 'submittal-builder'); ?>
               </label>
               <p class="sfb-setting-desc" style="margin-top: 4px;">
-                <?php esc_html_e('Optional message displayed to users when saving drafts (e.g., data retention policy, GDPR notice).', 'submittal-builder'); ?>
+                <?php esc_html_e('Add an optional privacy notice that users will see when saving a draft to the server. Use this to explain your data retention policy or comply with GDPR/CCPA requirements. Leave blank to hide the message.', 'submittal-builder'); ?>
               </p>
               <textarea id="sfb-privacy-note"
                         name="<?php echo esc_attr($this->option_key()); ?>[drafts_privacy_note]"
                         rows="3"
                         class="sfb-textarea"
-                        placeholder="<?php esc_attr_e('e.g., Draft data is stored for 45 days and automatically deleted.', 'submittal-builder'); ?>"><?php echo esc_textarea($options['drafts_privacy_note']); ?></textarea>
+                        placeholder="<?php esc_attr_e('Example: Your draft will be stored on our server for 45 days and then automatically deleted. No personal information is collected.', 'submittal-builder'); ?>"><?php echo esc_textarea($options['drafts_privacy_note']); ?></textarea>
             </div>
           </div>
         </div>
+        <?php endif; ?>
 
         <!-- Performance Card -->
         <div class="sfb-card">
@@ -2888,7 +2883,7 @@ final class SFB_Plugin {
           </p>
 
           <!-- Enable Lead Capture -->
-          <div class="sfb-setting-row">
+          <div class="sfb-setting-row <?php echo !$is_pro ? 'sfb-setting-disabled' : ''; ?>">
             <div class="sfb-setting-icon">🎯</div>
             <div class="sfb-setting-content">
               <label class="sfb-checkbox-label">
@@ -2897,12 +2892,23 @@ final class SFB_Plugin {
                 <input type="checkbox"
                        name="sfb_lead_capture_enabled"
                        value="1"
-                       <?php checked(get_option('sfb_lead_capture_enabled', false)); ?>>
-                <span class="sfb-setting-title"><?php esc_html_e('Enable lead capture modal', 'submittal-builder'); ?></span>
+                       <?php checked(get_option('sfb_lead_capture_enabled', false)); ?>
+                       <?php disabled(!$is_pro); ?>>
+                <span class="sfb-setting-title">
+                  <?php esc_html_e('Enable lead capture modal', 'submittal-builder'); ?>
+                  <?php if (!$is_pro): ?>
+                    <span class="sfb-pro-badge"><?php esc_html_e('PRO', 'submittal-builder'); ?></span>
+                  <?php endif; ?>
+                </span>
               </label>
               <p class="sfb-setting-desc">
                 <?php esc_html_e('When enabled, users must enter their email (and optionally phone) before downloading PDFs. Leads are stored in the database with timestamp, IP hash, and UTM tracking.', 'submittal-builder'); ?>
               </p>
+              <?php if (!$is_pro): ?>
+                <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer" class="sfb-upgrade-link">
+                  <?php esc_html_e('Upgrade to Pro to unlock →', 'submittal-builder'); ?>
+                </a>
+              <?php endif; ?>
             </div>
           </div>
 
@@ -2944,7 +2950,7 @@ final class SFB_Plugin {
               <p class="sfb-setting-desc">
                 <?php esc_html_e('Customize where lead notifications are sent. Upgrade to Pro to unlock this feature.', 'submittal-builder'); ?>
               </p>
-              <a href="<?php echo esc_url(admin_url('admin.php?page=submittal-builder-upgrade')); ?>" class="sfb-button sfb-button-primary">
+              <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer" class="sfb-button sfb-button-primary">
                 <?php esc_html_e('Upgrade to Pro', 'submittal-builder'); ?>
               </a>
             </div>
@@ -3733,7 +3739,7 @@ final class SFB_Plugin {
       <?php esc_html_e('Enable server-side shareable drafts', 'submittal-builder'); ?>
       <?php if (!$is_pro): ?>
         <span class="sfb-pro-badge"><?php esc_html_e('Pro', 'submittal-builder'); ?></span>
-        <a href="<?php echo esc_url(admin_url('admin.php?page=sfb-upgrade')); ?>" style="margin-left:6px;">
+        <a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer" style="margin-left:6px;">
           <?php esc_html_e('Upgrade to Pro', 'submittal-builder'); ?>
         </a>
       <?php endif; ?>
@@ -4178,6 +4184,183 @@ final class SFB_Plugin {
           display: none !important;
         }
       </style>
+
+      <script>
+      jQuery(document).ready(function($) {
+        // Test Email Button
+        $('#sfb-test-email-btn').on('click', function() {
+          const btn = $(this);
+          const email = $('#sfb-test-email-input').val().trim();
+          const status = $('#sfb-email-status');
+          const nonce = btn.data('nonce');
+
+          if (!email) {
+            status.html('❌ <?php esc_html_e('Please enter an email address.', 'submittal-builder'); ?>').css('color', '#dc2626');
+            return;
+          }
+
+          btn.prop('disabled', true).text('<?php esc_html_e('Sending...', 'submittal-builder'); ?>');
+          status.html('⏳ <?php esc_html_e('Sending test email...', 'submittal-builder'); ?>').css('color', '#f59e0b');
+
+          $.post(ajaxurl, {
+            action: 'sfb_test_email',
+            _ajax_nonce: nonce,
+            email: email
+          }, function(response) {
+            btn.prop('disabled', false).text('<?php esc_html_e('Send Test Email', 'submittal-builder'); ?>');
+            if (response.success) {
+              status.html(response.data.message).css('color', '#16a34a');
+            } else {
+              status.html(response.data.message || '❌ <?php esc_html_e('Failed to send email.', 'submittal-builder'); ?>').css('color', '#dc2626');
+            }
+          }).fail(function() {
+            btn.prop('disabled', false).text('<?php esc_html_e('Send Test Email', 'submittal-builder'); ?>');
+            status.html('❌ <?php esc_html_e('Network error. Please try again.', 'submittal-builder'); ?>').css('color', '#dc2626');
+          });
+        });
+
+        // Purge Expired Drafts Button
+        $('#sfb-purge-btn').on('click', function() {
+          const btn = $(this);
+          const status = $('#sfb-drafts-status');
+          const nonce = btn.data('nonce');
+
+          btn.prop('disabled', true).text('<?php esc_html_e('Purging...', 'submittal-builder'); ?>');
+          status.html('⏳ <?php esc_html_e('Deleting expired drafts...', 'submittal-builder'); ?>').css('color', '#f59e0b');
+
+          $.post(ajaxurl, {
+            action: 'sfb_purge_expired_drafts',
+            _ajax_nonce: nonce
+          }, function(response) {
+            btn.prop('disabled', false).text('<?php esc_html_e('Purge Expired Drafts', 'submittal-builder'); ?>');
+            if (response.success) {
+              status.html(response.data.message).css('color', '#16a34a');
+              if (response.data.stats_text) {
+                $('#sfb-draft-stats').html(response.data.stats_text);
+              }
+            } else {
+              status.html(response.data.message || '❌ <?php esc_html_e('Failed to purge drafts.', 'submittal-builder'); ?>').css('color', '#dc2626');
+            }
+          }).fail(function() {
+            btn.prop('disabled', false).text('<?php esc_html_e('Purge Expired Drafts', 'submittal-builder'); ?>');
+            status.html('❌ <?php esc_html_e('Network error. Please try again.', 'submittal-builder'); ?>').css('color', '#dc2626');
+          });
+        });
+
+        // Run Smoke Test Button
+        $('#sfb-smoke-btn').on('click', function() {
+          const btn = $(this);
+          const status = $('#sfb-drafts-status');
+          const nonce = btn.data('nonce');
+
+          btn.prop('disabled', true).text('<?php esc_html_e('Testing...', 'submittal-builder'); ?>');
+          status.html('⏳ <?php esc_html_e('Running smoke test...', 'submittal-builder'); ?>').css('color', '#f59e0b');
+
+          $.post(ajaxurl, {
+            action: 'sfb_run_smoke_test',
+            _ajax_nonce: nonce
+          }, function(response) {
+            btn.prop('disabled', false).text('<?php esc_html_e('Run Smoke Test', 'submittal-builder'); ?>');
+            if (response.success) {
+              status.html(response.data.message).css('color', '#16a34a');
+              if (response.data.stats_text) {
+                $('#sfb-draft-stats').html(response.data.stats_text);
+              }
+            } else {
+              status.html(response.data.message || '❌ <?php esc_html_e('Smoke test failed.', 'submittal-builder'); ?>').css('color', '#dc2626');
+            }
+          }).fail(function() {
+            btn.prop('disabled', false).text('<?php esc_html_e('Run Smoke Test', 'submittal-builder'); ?>');
+            status.html('❌ <?php esc_html_e('Network error. Please try again.', 'submittal-builder'); ?>').css('color', '#dc2626');
+          });
+        });
+
+        // Clear Tracking Data Button (Pro only)
+        $('#sfb-clear-tracking-btn').on('click', function() {
+          if (!confirm('<?php esc_html_e('Are you sure you want to clear all tracking data? This cannot be undone.', 'submittal-builder'); ?>')) {
+            return;
+          }
+
+          const btn = $(this);
+          const status = $('#sfb-tracking-status');
+          const nonce = btn.data('nonce');
+
+          btn.prop('disabled', true).text('<?php esc_html_e('Clearing...', 'submittal-builder'); ?>');
+          status.html('⏳ <?php esc_html_e('Clearing tracking data...', 'submittal-builder'); ?>').css('color', '#f59e0b');
+
+          $.post(ajaxurl, {
+            action: 'sfb_clear_tracking',
+            _ajax_nonce: nonce
+          }, function(response) {
+            btn.prop('disabled', false).text('<?php esc_html_e('Clear All Tracking Data', 'submittal-builder'); ?>');
+            if (response.success) {
+              status.html(response.data.message).css('color', '#16a34a');
+              $('#sfb-tracking-total').html('0');
+              $('#sfb-tracking-viewed').html('0');
+            } else {
+              status.html(response.data.message || '❌ <?php esc_html_e('Failed to clear tracking data.', 'submittal-builder'); ?>').css('color', '#dc2626');
+            }
+          }).fail(function() {
+            btn.prop('disabled', false).text('<?php esc_html_e('Clear All Tracking Data', 'submittal-builder'); ?>');
+            status.html('❌ <?php esc_html_e('Network error. Please try again.', 'submittal-builder'); ?>').css('color', '#dc2626');
+          });
+        });
+
+        // Optimize Database Button
+        $('#sfb-optimize-db-btn').on('click', function() {
+          const btn = $(this);
+          const status = $('#sfb-db-status');
+          const nonce = btn.data('nonce');
+
+          btn.prop('disabled', true).text('<?php esc_html_e('Optimizing...', 'submittal-builder'); ?>');
+          status.html('⏳ <?php esc_html_e('Optimizing database tables...', 'submittal-builder'); ?>').css('color', '#f59e0b');
+
+          $.post(ajaxurl, {
+            action: 'sfb_optimize_db',
+            _ajax_nonce: nonce
+          }, function(response) {
+            btn.prop('disabled', false).text('<?php esc_html_e('Optimize Database', 'submittal-builder'); ?>');
+            if (response.success) {
+              status.html(response.data.message).css('color', '#16a34a');
+            } else {
+              status.html(response.data.message || '❌ <?php esc_html_e('Failed to optimize database.', 'submittal-builder'); ?>').css('color', '#dc2626');
+            }
+          }).fail(function() {
+            btn.prop('disabled', false).text('<?php esc_html_e('Optimize Database', 'submittal-builder'); ?>');
+            status.html('❌ <?php esc_html_e('Network error. Please try again.', 'submittal-builder'); ?>').css('color', '#dc2626');
+          });
+        });
+
+        // Remove Orphaned Data Button
+        $('#sfb-clean-orphans-btn').on('click', function() {
+          if (!confirm('<?php esc_html_e('Remove orphaned data? This is safe but cannot be undone.', 'submittal-builder'); ?>')) {
+            return;
+          }
+
+          const btn = $(this);
+          const status = $('#sfb-db-status');
+          const nonce = btn.data('nonce');
+
+          btn.prop('disabled', true).text('<?php esc_html_e('Cleaning...', 'submittal-builder'); ?>');
+          status.html('⏳ <?php esc_html_e('Removing orphaned data...', 'submittal-builder'); ?>').css('color', '#f59e0b');
+
+          $.post(ajaxurl, {
+            action: 'sfb_clean_orphans',
+            _ajax_nonce: nonce
+          }, function(response) {
+            btn.prop('disabled', false).text('<?php esc_html_e('Remove Orphaned Data', 'submittal-builder'); ?>');
+            if (response.success) {
+              status.html(response.data.message).css('color', '#16a34a');
+            } else {
+              status.html(response.data.message || '❌ <?php esc_html_e('Failed to clean orphaned data.', 'submittal-builder'); ?>').css('color', '#dc2626');
+            }
+          }).fail(function() {
+            btn.prop('disabled', false).text('<?php esc_html_e('Remove Orphaned Data', 'submittal-builder'); ?>');
+            status.html('❌ <?php esc_html_e('Network error. Please try again.', 'submittal-builder'); ?>').css('color', '#dc2626');
+          });
+        });
+      });
+      </script>
 
       <?php $this->render_feedback_footer(); ?>
     </div>
@@ -6499,22 +6682,57 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
       wp_send_json_error(['message' => __('Invalid email address', 'submittal-builder')]);
     }
 
+    // Variable to capture PHPMailer errors
+    $mail_error = null;
+
+    // Hook to capture wp_mail failures
+    $error_handler = function($wp_error) use (&$mail_error) {
+      $mail_error = $wp_error;
+    };
+    add_action('wp_mail_failed', $error_handler);
+
     // Prepare test email
     $subject = __('Test Email from Submittal & Spec Sheet Builder', 'submittal-builder');
     $message = __('This is a test email to verify SMTP configuration.', 'submittal-builder') . "\n\n";
     $message .= sprintf(__('Sent at: %s', 'submittal-builder'), wp_date('Y-m-d H:i:s')) . "\n";
     $message .= sprintf(__('From site: %s', 'submittal-builder'), get_bloginfo('name')) . "\n";
 
+    // Add headers
+    $headers = ['Content-Type: text/plain; charset=UTF-8'];
+
     // Send email
-    $sent = wp_mail($to, $subject, $message);
+    $sent = wp_mail($to, $subject, $message, $headers);
+
+    // Remove error handler
+    remove_action('wp_mail_failed', $error_handler);
+
+    // Check for errors
+    if ($mail_error) {
+      $error_message = $mail_error->get_error_message();
+      wp_send_json_error([
+        'message' => sprintf(__('❌ Email failed: %s', 'submittal-builder'), $error_message)
+      ]);
+    }
 
     if ($sent) {
+      // Check if SMTP plugin is active
+      $smtp_info = '';
+      if (defined('WPMS_PLUGIN_VER')) {
+        $smtp_info = ' ' . __('(via WP Mail SMTP)', 'submittal-builder');
+      } elseif (function_exists('easy_wp_smtp')) {
+        $smtp_info = ' ' . __('(via Easy WP SMTP)', 'submittal-builder');
+      } elseif (class_exists('Postman')) {
+        $smtp_info = ' ' . __('(via Post SMTP)', 'submittal-builder');
+      } else {
+        $smtp_info = ' ' . __('(using PHP mail() - consider installing an SMTP plugin)', 'submittal-builder');
+      }
+
       wp_send_json_success([
-        'message' => sprintf(__('✅ Test email sent successfully to %s', 'submittal-builder'), $to)
+        'message' => sprintf(__('✅ Test email queued successfully to %s%s. Check your inbox (including spam folder).', 'submittal-builder'), $to, $smtp_info)
       ]);
     } else {
       wp_send_json_error([
-        'message' => __('❌ Failed to send test email. Check SMTP configuration.', 'submittal-builder')
+        'message' => __('❌ Failed to send test email. WordPress mail function returned false. This usually means: 1) No SMTP plugin is configured, 2) PHP mail() is disabled on your server, or 3) Your host blocks outgoing mail. Consider installing WP Mail SMTP or Easy WP SMTP plugin.', 'submittal-builder')
       ]);
     }
   }
@@ -8132,7 +8350,7 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
       $custom_links[] = '<a href="' . esc_url(add_query_arg('page', 'sfb-license-management', admin_url('admin.php'))) . '" style="color:#10b981;font-weight:600;">✓ Pro Active</a>';
     } else {
       // Free version - show upgrade link
-      $custom_links[] = '<a href="' . esc_url(add_query_arg('page', 'sfb-upgrade', admin_url('admin.php'))) . '" style="color:#7c3aed;font-weight:600;">⭐ Upgrade to Pro</a>';
+      $custom_links[] = '<a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer" style="color:#7c3aed;font-weight:600;">⭐ Upgrade to Pro</a>';
     }
 
     return array_merge($custom_links, $links);
@@ -8182,7 +8400,7 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
         'parent' => 'sfb',
         'id'     => 'sfb-upgrade',
         'title'  => '⭐ Upgrade to Pro',
-        'href'   => 'https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder/',
+        'href'   => 'https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/',
         'meta'   => ['target' => '_blank', 'rel' => 'noopener noreferrer'],
       ]);
     }
@@ -8265,7 +8483,7 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
         </ul>
         <h4>Support:</h4>
         <ul>
-          <li><a href="' . esc_url(add_query_arg('page', 'sfb-upgrade', admin_url('admin.php'))) . '">Upgrade to Pro</a> - Unlock advanced features</li>
+          <li><a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer">Upgrade to Pro</a> - Unlock advanced features</li>
           <li><a href="https://wordpress.org/support/" target="_blank">WordPress Support Forums</a></li>
         </ul>
         <h4>Developer Hooks:</h4>
@@ -8282,7 +8500,7 @@ Framing,C-Studs,20 Gauge,362S162-20,3-5/8",1-5/8",33</pre>
       <p><strong>Submittal & Spec Builder v' . self::VERSION . '</strong></p>
       <p><a href="' . esc_url(add_query_arg('page', 'sfb', admin_url('admin.php'))) . '">Builder</a></p>
       <p><a href="' . esc_url(add_query_arg('page', 'sfb-branding', admin_url('admin.php'))) . '">Branding</a></p>
-      <p><a href="' . esc_url(add_query_arg('page', 'sfb-upgrade', admin_url('admin.php'))) . '">Upgrade to Pro</a></p>
+      <p><a href="https://webstuffguylabs.com/plugins/submittal-spec-sheet-builder-pro/" target="_blank" rel="noopener noreferrer">Upgrade to Pro</a></p>
       <p><a href="' . esc_url(wp_nonce_url(add_query_arg('action', 'sfb_test_pdf', admin_url('admin-post.php')), 'sfb_test_pdf')) . '">Test PDF</a></p>
     ');
   }
